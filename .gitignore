@@ -1,0 +1,10 @@
+node_modules/
+.env
+.env.*
+!.env.example
+# 业务原始数据不入库
+data/raw/
+*.xlsx
+*.xls
+*.csv
+.DS_Store
