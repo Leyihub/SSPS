@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1920">
+<title>P10 系统管理 · SSPS 原型</title>
+<link rel="stylesheet" href="assets/app.css">
+<style>
+.btns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.viewer{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:12px;white-space:nowrap}
+.viewer select{height:28px;padding:0 6px;border:1px solid #d3d9e1;border-radius:6px;background:#fff}
+.tbl td,.tbl th{white-space:nowrap}
+.tbl td.wrap{white-space:normal;min-width:280px}
+.fbar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line-2)}
+.pad{padding:14px 16px}
+.cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.cc{padding:16px}
+.cc h3{margin:0 0 4px;font-size:16px;display:flex;align-items:center;gap:8px}
+.cc .sub{color:var(--muted);font-size:13px;margin-bottom:10px}
+.kv{display:grid;grid-template-columns:110px 1fr;gap:6px 10px;font-size:13px;margin-bottom:12px}
+.kv span:nth-child(odd){color:var(--muted)}
+.prog{height:6px;border-radius:3px;background:#e8ebef;overflow:hidden;margin:8px 0}
+.prog i{display:block;height:100%;width:0;background:var(--primary);transition:width .9s}
+.hc{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid var(--line-2)}
+.hc:first-child{border-top:0}
+.hc .n{flex:1}.hc .n b{display:block}.hc .n span{color:var(--muted);font-size:12.5px}
+.denied{padding:48px 16px;text-align:center;color:var(--muted)}
+.warnbox{margin:12px 16px 0;border-radius:8px;padding:8px 12px;font-size:13px;background:#fffbe6;border:1px solid #ffe58f;color:#ad6800}
+</style>
+</head>
+<body>
+<div class="app"><aside id="nav"></aside>
+  <div class="main"><header id="topbar"></header>
+    <main class="page">
+      <div class="ptitle"><div><h1>系统管理</h1><p>只有系统管理员能看到。同步运行情况、兼容表刷新、数据迁移和连通性自检。</p></div>
+        <div class="btns"><label class="viewer">模拟身份<select id="viewer"></select></label><button class="btn" id="reset">重置原型示例数据</button></div></div>
+      <section class="card"><div class="tabs2" id="tabs"></div><div id="body"></div></section>
+    </main>
+  </div>
+</div>
+<script src="mock-data.js"></script><script src="engine.js"></script><script src="assets/shell.js"></script><script src="assets/common.js"></script>
+<script>
+(function () {
+  const M = window.MOCK, C = window.C, $ = (id) => document.getElementById(id);
+  const VIEWERS = [['钟立诚', '仓储物流部', '系统管理员'], ['顾明远', '仓储物流部', '物流管理员']];
+  let who = VIEWERS[0], tab = C.qs.get('tab') || 'log', failOnly = false;
+  const TABS = [['log', '同步日志'], ['compat', '兼容表'], ['mig', '迁移 dry-run'], ['health', '连通性自检']];
+  const admin = () => who[2] === '系统管理员';
+  const head = () => SHELL.mount({ active: 'P10', title: '系统管理', user: who });
+  const tagOf = (r) => '<span class="tag ' + (r === '成功' ? 'green' : r === '失败' ? 'red' : 'amber') + '">' + r + '</span>';
+
+  function logTab() {
+    const L = M.syncLogs.filter((x) => !failOnly || x.ok !== '成功');
+    return '<div class="fbar"><button class="chipf' + (failOnly ? ' on' : '') + '" id="fo">只看失败</button><span class="muted" style="font-size:12.5px">写飞书、生成兼容表、拉取云空间、航程重算的运行记录。写飞书走单线程队列，同一个多维表格不并发写。</span></div>' +
+      '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>任务类型</th><th>开始</th><th>结束</th><th style="text-align:right">条数</th><th>结果</th><th>说明</th></tr></thead><tbody>' +
+      (L.length ? L.map((x) => '<tr><td><b>' + x.type + '</b></td><td>' + C.mdh(x.start) + '</td><td>' + C.mdh(x.end) + '</td><td style="text-align:right">' + C.fmt(x.n) + '</td><td>' + tagOf(x.ok) + '</td><td class="wrap">' + (x.err || '<span style="color:var(--faint)">—</span>') + '</td></tr>').join('') : '<tr><td colspan="6" class="empty">没有失败记录</td></tr>') + '</tbody></table></div>';
+  }
+  function compatTab() {
+    const card = (k, name, rows, desc) => '<div class="card cc"><h3>' + name + '</h3><div class="sub">' + desc + '</div><div class="kv"><span>每行对应</span><span>一份货物明细（一合同一行）</span><span>列结构</span><span>保留旧表' + (k === 'a' ? '原 33 列' : '原 87 列') + '的列名和顺序</span><span>数据行数</span><b>' + rows + '</b><span>最近刷新</span><b id="t' + k + '">' + (k === 'a' ? '今天 15:50' : '今天 15:52') + '</b><span>定时</span><span>每日 15:50 全量重写 + 航次保存后增量</span><span>谁能改</span><span>任何人都不能改，只由后端生成</span></div><div class="prog"><i id="p' + k + '"></i></div><button class="btn primary" data-r="' + k + '"' + (admin() ? '' : ' disabled') + '>手动刷新</button></div>';
+    return '<div class="pad"><div class="cols">' + card('a', '兼容_商务海运船舶动态（T09a）', '336', '给综合物流平台用的旧结构表，成品销售船。') + card('b', '兼容_大宗到船计划（T09b）', '643', '给综合物流平台用的旧结构表，大宗采购船，一合同一行。') + '</div><div class="warnbox" style="margin:14px 0 0">综合物流平台先把数据源换成兼容表，并行比对 2 周，再正式切换，避免大屏断数。</div></div>';
+  }
+  function migTab() {
+    const m = M.migration;
+    return '<div class="pad"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><b>最近一次 dry-run：' + m.runAt + '</b><span style="display:flex;gap:8px"><button class="btn" id="redo"' + (admin() ? '' : ' disabled') + '>重新 dry-run</button><button class="btn primary" id="go" disabled' + C.tipAttr('正式写入前，需要物流管理员确认港口别名、船舶匹配和人员映射，待人工确认清单清零后才能写入') + '>正式写入</button></span></div>' +
+      '<div class="warnbox" style="margin:12px 0">以下数字是实施计划书里的预估，最终以迁移脚本输出为准。任何一条无法自动判定的记录，进清单、不进表。</div>' +
+      '<h3 style="margin:14px 0 6px;font-size:14px">源表去向</h3><div class="tbl-wrap"><table class="tbl"><thead><tr><th>企微源表</th><th style="text-align:right">行数</th><th>去向</th></tr></thead><tbody>' + m.items.map((r) => '<tr><td><b>' + r[0] + '</b></td><td style="text-align:right">' + C.fmt(r[1]) + '</td><td class="wrap">' + r[2] + '</td></tr>').join('') + '</tbody></table></div>' +
+      '<h3 style="margin:18px 0 6px;font-size:14px">待人工确认清单</h3><div class="tbl-wrap"><table class="tbl"><thead><tr><th>类别</th><th style="text-align:right">数量</th><th>处理方式</th><th>状态</th></tr></thead><tbody>' + m.todo.map((r) => '<tr><td><b>' + r[0] + '</b></td><td style="text-align:right">' + C.fmt(r[1]) + '</td><td class="wrap">' + r[2] + '</td><td><span class="tag amber">待确认</span></td></tr>').join('') + '</tbody></table></div></div>';
+  }
+  function healthTab() {
+    return '<div class="fbar"><button class="btn primary" id="chk"' + (admin() ? '' : ' disabled') + '>重新检测</button><span class="muted" style="font-size:12.5px">检查飞书令牌、多维表格、云空间文件夹、应用数据库和兼容表。原型里的结果是模拟的。</span></div>' +
+      M.health.map((h) => '<div class="hc"><span class="tag ' + (h[1] === '正常' ? 'green' : h[1] === '提醒' ? 'amber' : 'red') + '">' + h[1] + '</span><div class="n"><b>' + h[0] + '</b><span>' + h[2] + '</span></div></div>').join('');
+  }
+  function draw() {
+    $('tabs').innerHTML = TABS.map((t) => '<button data-t="' + t[0] + '" class="' + (t[0] === tab ? 'on' : '') + '">' + t[1] + '</button>').join('');
+    $('tabs').querySelectorAll('button').forEach((b) => b.onclick = () => { tab = b.dataset.t; draw(); });
+    if (!admin()) { $('body').innerHTML = '<div class="denied"><b style="font-size:16px;color:var(--text)">没有权限</b><br>系统管理页只对系统管理员开放。请在右上角切换「模拟身份」。</div>'; return; }
+    $('body').innerHTML = { log: logTab, compat: compatTab, mig: migTab, health: healthTab }[tab]();
+    const fo = $('fo'); if (fo) fo.onclick = () => { failOnly = !failOnly; draw(); };
+    $('body').querySelectorAll('[data-r]').forEach((b) => { if (!b.disabled) b.onclick = () => { const k = b.dataset.r, bar = document.getElementById('p' + k); b.disabled = true; b.textContent = '刷新中…'; bar.style.width = '100%';
+      setTimeout(() => { M.syncLogs.unshift({ type: '生成兼容表（' + (k === 'a' ? 'T09a 商务海运' : 'T09b 大宗到船') + '）· 手动', start: M.now, end: M.now, n: k === 'a' ? 336 : 643, ok: '成功', err: '' }); C.persist(); document.getElementById('t' + k).textContent = '刚刚（' + M.now.slice(11) + '）'; b.disabled = false; b.textContent = '手动刷新'; bar.style.width = '0'; C.toast('兼容表已刷新，已记入同步日志'); }, 1000); }; });
+    const rd = $('redo'); if (rd && !rd.disabled) rd.onclick = () => { M.migration.runAt = M.now; C.persist(); draw(); C.toast('dry-run 已重新生成报告（原型：数字不变）'); };
+    const ck = $('chk'); if (ck && !ck.disabled) ck.onclick = () => { ck.textContent = '检测中…'; ck.disabled = true; setTimeout(() => { M.health[4][2] = 'T09b 最近一次刷新 15:52，距今 17 小时（下次定时 15:50）'; draw(); C.toast('检测完成：4 项正常，1 项提醒'); }, 800); };
+  }
+  $('viewer').innerHTML = VIEWERS.map((x, i) => '<option value="' + i + '">' + x[0] + ' · ' + x[2] + '</option>').join('');
+  $('viewer').onchange = (e) => { who = VIEWERS[+e.target.value]; head(); draw(); C.toast('已切换为 ' + who[0] + '（' + who[2] + '）'); };
+  $('reset').onclick = () => { C.resetData(); C.toast('已重置：本次会话里新建、修改的示例数据恢复原样'); setTimeout(() => location.reload(), 700); };
+  head(); draw();
+})();
+</script>
+</body>
+</html>

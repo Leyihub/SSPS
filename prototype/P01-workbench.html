@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>P01 工作台 · SSPS 原型</title>
+<link rel="stylesheet" href="assets/app.css">
+<style>
+.hello{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.hello h1{margin:0;font-size:20px}
+.hello p{margin:2px 0 0;color:var(--muted)}
+.go{display:flex;gap:8px;flex-wrap:wrap}
+.sumrow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
+.sm{padding:12px 16px;display:flex;flex-direction:column;gap:2px;cursor:pointer;border:1px solid transparent}
+.sm:hover{border-color:var(--primary)}
+.sm b{font-size:26px;line-height:1.2}
+.sm span{color:var(--muted);font-size:13px;display:flex;align-items:center}
+.sm.warn b{color:#d4380d}.sm.ok b{color:#237804}
+.panels{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.pn .card-h h2{display:flex;align-items:center;gap:8px;white-space:nowrap}
+.cnt{background:#f0f2f5;color:#5b6878;border-radius:10px;padding:0 8px;font-size:12px;line-height:20px;font-weight:500}
+.cnt.hot{background:#fff1f0;color:#cf1322}
+.todo{list-style:none;margin:0;padding:0}
+.todo li{display:flex;gap:10px;align-items:center;padding:10px 16px;border-top:1px solid var(--line-2)}
+.todo li:first-child{border-top:0}
+.todo .main{flex:1;min-width:0}
+.todo .t{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.todo .t b{white-space:nowrap}
+.todo .d{color:var(--muted);font-size:12.5px;margin-top:2px}
+.todo .btn{white-space:nowrap;flex:none;padding:3px 12px}
+.todo a.main{color:inherit;text-decoration:none}
+.nothing{padding:22px 16px;color:var(--muted);text-align:center}
+@media(max-width:900px){
+  .sumrow{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .panels{grid-template-columns:1fr}
+  .todo li{flex-wrap:wrap}
+  .todo .btn{margin-left:auto}
+}
+</style>
+</head>
+<body>
+<div class="app"><aside id="nav"></aside>
+  <div class="main"><header id="topbar"></header>
+    <main class="page">
+      <div class="hello">
+        <div><h1 id="hi"></h1><p id="sub"></p></div>
+        <div class="go"><a class="btn primary lg" href="P02-prediction.html" style="text-decoration:none">智能发船预测</a><a class="btn lg" href="P04-voyage-list.html" style="text-decoration:none">全部航次</a></div>
+      </div>
+      <div class="sumrow" id="sum"></div>
+      <div class="panels" id="panels"></div>
+    </main>
+  </div>
+</div>
+<script src="mock-data.js"></script><script src="engine.js"></script><script src="assets/shell.js"></script><script src="assets/common.js"></script>
+<script>
+(function () {
+  SHELL.mount({ active: 'P01', title: '工作台' });
+  const M = window.MOCK, C = window.C, $ = (id) => document.getElementById(id), me = C.me.name;
+  const mine = M.voyageList.filter((v) => v.owner === me);
+  $('hi').textContent = '你好，' + me;
+  $('sub').textContent = C.me.dept + ' · ' + C.role() + ' · 今天 ' + C.mdCn(M.today) + ' ' + C.wk(M.today);
+
+  // 四类待办
+  const missing = mine.filter(C.missingDep);
+  const stale = mine.filter(C.etaStale);
+  const dow = new Date(C.TODAY * 86400000).getUTCDay(), weekEnd = C.TODAY + ((7 - dow) % 7);
+  const arrDate = (v) => { const s = C.side(v), act = s === '装' ? v.actLoadArr : v.actDischArr; if (act) return null; const d = v.eta || (s === '装' ? v.laycanS : v.planDischS); return d && !['已结束', '已结束（取消）'].includes(C.statusOf(v)) ? d : null; };
+  const week = mine.filter((v) => { const d = arrDate(v); if (!d) return false; const n = C.dayNum(d); return n >= C.TODAY && n <= weekEnd; }).sort((a, b) => arrDate(a).localeCompare(arrDate(b)));
+  const dq = M.issues.filter((x) => x.owner === me && x.status !== '已关闭');
+
+  const card = (cls, n, label, tip, target) => '<div class="card sm ' + cls + '" data-go="' + target + '"><b>' + n + '</b><span>' + label + (tip ? C.ic(tip) : '') + '</span></div>';
+  $('sum').innerHTML = card(missing.length ? 'warn' : 'ok', missing.length, '待补节点', '已有「实际抵卸港」但「实际离装港」为空的航次。离装港时间是学习航程的关键样本，请尽快补录。', 'p0') +
+    card(stale.length ? 'warn' : 'ok', stale.length, 'ETA 超期未更新', '航行中的航次，预计到达时间超过 ' + C.ETA_STALE_DAYS + ' 天没有更新。这个天数是暂定值，待确认。', 'p1') +
+    card('', week.length, '本周到港', '从今天到本周日，预计抵达本港（或装港）的航次。', 'p2') +
+    card(dq.length ? 'warn' : 'ok', dq.length, '数据质量问题', '分配给你、尚未关闭的数据质量问题。', 'p3');
+
+  const li = (id, main, desc, btn, href) => '<li><a class="main" href="' + href + '"><div class="t">' + main + '</div><div class="d">' + desc + '</div></a>' + (btn ? '<a class="btn" href="' + btn[1] + '" style="text-decoration:none">' + btn[0] + '</a>' : '') + '</li>';
+  const name = (v) => '<b>' + (v.vessel || '待宣船') + '</b><span class="mut" style="color:var(--muted)">' + v.id.slice(-4) + '</span>' + C.stTag(C.statusOf(v));
+  const route = (v) => C.zh(v.load) + ' → ' + C.zh(v.disch);
+  const panel = (id, title, n, hot, tip, body) => '<section class="card pn" id="' + id + '"><div class="card-h"><h2>' + title + '<span class="cnt' + (hot && n ? ' hot' : '') + '">' + n + '</span>' + (tip ? C.ic(tip) : '') + '</h2></div>' + (n ? '<ul class="todo">' + body + '</ul>' : '<div class="nothing">没有待办，很好。</div>') + '</section>';
+  $('panels').innerHTML =
+    panel('p0', '待补节点', missing.length, true, '补录后状态会自动更新，这条航次才会进入航程样本。', missing.map((v) => li(v.id, name(v), route(v) + ' · 已于 ' + C.mdh(v.actDischArr) + ' 抵卸港，缺「实际离装港」', ['补录', 'P05-voyage-detail.html?id=' + v.id + '&act=node'], 'P05-voyage-detail.html?id=' + v.id)).join('')) +
+    panel('p1', 'ETA 超期未更新', stale.length, true, '点「修订 ETA」填写新的预计到达时间和依据（船讯网 / 船代 / 电话），每次修订都会留痕。', stale.map((v) => li(v.id, name(v), route(v) + ' · 当前预计 ' + C.mdh(v.eta) + ' 到 · 上次更新 ' + C.md(v.etaUpdated) + '（' + (C.TODAY - C.dayNum(v.etaUpdated)) + ' 天前）', ['修订 ETA', 'P05-voyage-detail.html?id=' + v.id + '&act=eta'], 'P05-voyage-detail.html?id=' + v.id)).join('')) +
+    panel('p2', '本周到港', week.length, false, '按预计抵达时间排序；已抵达或已结束的不再列出。', week.map((v) => li(v.id, name(v), C.md(arrDate(v)) + ' ' + C.wk(arrDate(v)) + ' ' + (C.side(v) === '装' ? '抵装港' : '抵本港') + ' · ' + route(v) + ' · ' + C.fmt(C.total(v)) + ' 吨', null, 'P05-voyage-detail.html?id=' + v.id)).join('')) +
+    panel('p3', '数据质量问题', dq.length, true, '点击跳到对应航次的相关字段；关闭问题需要责任人本人操作。', dq.map((x) => { const v = M.voyageList.find((q) => q.id === x.obj); return li(x.id, '<b>' + x.type + '</b>' + (v ? '<span style="color:var(--muted)">' + (v.vessel || '待宣船') + ' ' + v.id.slice(-4) + '</span>' : '<span style="color:var(--muted)">' + x.obj + '</span>'), x.note, ['处理', v ? 'P05-voyage-detail.html?id=' + v.id + '&focus=' + x.field : 'P09-data-quality.html'], v ? 'P05-voyage-detail.html?id=' + v.id + '&focus=' + x.field : 'P09-data-quality.html'); }).join(''));
+  document.querySelectorAll('[data-go]').forEach((c) => c.onclick = () => { const t = $(c.dataset.go); if (t) t.scrollIntoView({ behavior: 'smooth', block: 'center' }); });
+})();
+</script>
+</body>
+</html>

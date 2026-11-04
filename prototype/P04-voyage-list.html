@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>P04 航次列表 · SSPS 原型</title>
+<link rel="stylesheet" href="assets/app.css">
+<style>
+.btns{display:flex;gap:8px;flex-wrap:wrap}
+.flt{display:flex;flex-wrap:wrap;gap:8px 8px;align-items:center}
+.flt .lab{color:var(--muted);font-size:12px;white-space:nowrap;margin-right:2px}
+.flt .grp{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.dr{display:flex;align-items:center;gap:6px}
+.dr .inp{width:150px}
+.flt .inp{width:auto}
+.fbox{padding:12px 16px;border-bottom:1px solid var(--line-2);display:grid;gap:10px}
+.who{font-weight:600;white-space:nowrap}
+.sub2{display:block;color:var(--muted);font-size:12px;font-weight:400;white-space:nowrap}
+.mk{display:inline-flex;gap:4px;align-items:center;flex-wrap:nowrap}
+.star{color:#faad14;font-size:15px;line-height:1}
+.pager{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 16px;flex-wrap:wrap}
+.pager .pg{display:flex;gap:6px}
+.pager button{border:1px solid var(--line);background:#fff;border-radius:6px;min-width:30px;height:28px;cursor:pointer}
+.pager button.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+.pager button:disabled{color:#c0c8d2;cursor:not-allowed}
+.cards{display:none}
+.vc{padding:12px 14px;border-top:1px solid var(--line-2);display:block;color:inherit;text-decoration:none}
+.vc:first-child{border-top:0}
+.vc .r1{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.vc .r1 b{font-size:15px}
+.vc .r2{color:#3b4a5c;margin-top:2px}
+.vc .r3{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:4px;color:var(--muted);font-size:12.5px}
+@media(max-width:900px){
+  .tbl-wrap{display:none}
+  .cards{display:block}
+  .dr .inp{width:100%}
+  .dr{flex:1}
+}
+</style>
+</head>
+<body>
+<div class="app"><aside id="nav"></aside>
+  <div class="main"><header id="topbar"></header>
+    <main class="page">
+      <div class="ptitle"><div><h1>航次列表</h1><p>全员可看全部航次；金额类字段按部门隔离，列表里不显示。</p></div>
+        <div class="btns"><button class="btn" id="exp">导出 Excel</button><button class="btn primary" id="newv">新建航次</button></div></div>
+      <section class="card">
+        <div class="tabs2" id="tabs"></div>
+        <div class="fbox">
+          <div class="flt"><span class="lab">状态</span><div class="grp" id="stf"></div></div>
+          <div class="flt">
+            <span class="lab">本港日期</span><div class="dr"><input class="inp" type="date" id="d1"><span>至</span><input class="inp" type="date" id="d2"></div>
+            <span class="lab">业务员</span><select class="inp" id="own"></select>
+            <input class="inp" id="kw" placeholder="船名 / 航次号 / 船次号 / 合同号" style="min-width:230px">
+            <div class="grp"><button class="chipf" id="onlyMe">只看我的</button><button class="chipf" id="onlyStar">重点关注</button></div>
+            <button class="btn" id="clr" style="padding:2px 12px">清除筛选</button>
+          </div>
+        </div>
+        <div class="tbl-wrap"><table class="tbl" id="tbl"></table></div>
+        <div class="cards" id="cards"></div>
+        <div class="pager" id="pager"></div>
+      </section>
+    </main>
+  </div>
+</div>
+<script src="mock-data.js"></script><script src="engine.js"></script><script src="assets/shell.js"></script><script src="assets/common.js"></script>
+<script>
+(function () {
+  SHELL.mount({ active: 'P04', title: '航次列表' });
+  const M = window.MOCK, C = window.C, $ = (id) => document.getElementById(id);
+  const TABS = [['大宗', '大宗采购船'], ['成品', '成品销售船'], ['物资', '物资备件船'], ['全部', null]];
+  const dept = C.me.dept;
+  const S = { tab: dept === '大宗采购部' ? '大宗' : dept === '商务海运部' ? '成品' : '全部', st: new Set(), d1: '', d2: '', own: '', kw: '', me: false, star: false, page: 1 };
+  const PAGE = 15;
+  if (C.qs.get('tab')) S.tab = C.qs.get('tab');
+
+  const localD = (v) => { const l = C.localDate(v); return l.act || l.plan; };
+  const rows = () => {
+    const biz = (TABS.find((t) => t[0] === S.tab) || [])[1];
+    return M.voyageList.filter((v) => {
+      const st = C.statusOf(v);
+      if (biz && v.biz !== biz) return false;
+      if (S.st.size && !S.st.has(st)) return false;
+      const ld = localD(v);
+      if (S.d1 && (!ld || ld.slice(0, 10) < S.d1)) return false;
+      if (S.d2 && (!ld || ld.slice(0, 10) > S.d2)) return false;
+      if (S.own && v.owner !== S.own) return false;
+      if (S.me && v.owner !== C.me.name) return false;
+      if (S.star && !v.focus) return false;
+      if (S.kw) { const k = S.kw.toLowerCase(); const cg = C.cargoOf(v).map((c) => c.contract).join(' '); if (![v.vessel || '待宣船', v.id, v.no, cg].join(' ').toLowerCase().includes(k)) return false; }
+      return true;
+    }).sort((a, b) => {
+      const ea = ['已结束', '已结束（取消）'].includes(C.statusOf(a)), eb = ['已结束', '已结束（取消）'].includes(C.statusOf(b));
+      if (ea !== eb) return ea ? 1 : -1;
+      const x = (localD(a) || '9'), y = (localD(b) || '9');
+      return ea ? y.localeCompare(x) : x.localeCompare(y);
+    });
+  };
+  const marks = (v) => '<span class="mk">' + (v.focus ? '<span class="star" title="重点关注">★</span>' : '') + (v.flags || []).filter((f) => f !== '取消').map((f) => '<span class="tag amber">' + f + '</span>').join('') +
+    (v.readonly ? '<span class="tag gray"' + C.tipAttr('历史副本：只读，应用内不可修改') + '>只读</span>' : '') + (C.missingDep(v) ? '<span class="tag red"' + C.tipAttr('已抵卸港但缺实际离装港，待补节点') + '>待补</span>' : '') + (C.etaStale(v) ? '<span class="tag red"' + C.tipAttr('ETA 超过 ' + C.ETA_STALE_DAYS + ' 天未更新') + '>ETA 超期</span>' : '') + '</span>';
+  const bizShort = (b) => b.replace('采购船', '').replace('销售船', '').replace('备件船', '备件');
+  const route = (v) => C.zh(v.load) + ' → ' + C.zh(v.disch) + (v.disch2 ? ' / ' + C.zh(v.disch2) : '');
+  const dateCell = (v) => { const l = C.localDate(v); return '<span class="nw">' + (l.act ? '<b>' + C.mdh(l.act) + '</b> <span class="mut">实际</span>' : C.md(l.plan) + ' <span class="mut">计划</span>') + '</span>' + (C.side(v) === '装' ? '<span class="sub2">装港侧</span>' : '<span class="sub2">卸港侧</span>'); };
+
+  function draw() {
+    const all = rows(), pages = Math.max(1, Math.ceil(all.length / PAGE)); S.page = Math.min(S.page, pages);
+    const cur = all.slice((S.page - 1) * PAGE, S.page * PAGE);
+    // 页签计数（不受页签自身影响）
+    const keep = S.tab; $('tabs').innerHTML = TABS.map((t) => { S.tab = t[0]; const n = rows().length; return '<button data-t="' + t[0] + '" class="' + (t[0] === keep ? 'on' : '') + '">' + t[0] + '<small>' + n + '</small></button>'; }).join(''); S.tab = keep;
+    $('tabs').querySelectorAll('button').forEach((b) => b.onclick = () => { S.tab = b.dataset.t; S.page = 1; draw(); });
+    $('tbl').innerHTML = '<thead><tr><th>航次编号</th><th>业务类型</th><th>船名</th><th>航线</th><th style="text-align:right">总货量（吨）</th><th>本港侧日期' + C.ic('本港侧：装港为本港取装港时间，否则取卸港时间。有实际时间显示实际，否则显示计划。') + '</th><th>预计到达' + C.ic('当前预计卸港到达时间，每次修订都会留痕。') + '</th><th>状态' + C.ic('由时间节点自动推导，不能手工修改。') + '</th><th>业务员</th><th>标记</th></tr></thead><tbody>' +
+      (cur.length ? cur.map((v) => '<tr class="click" data-id="' + v.id + '"><td class="nw"><b>' + v.id + '</b>' + (v.no ? '<span class="sub2">船次号 ' + v.no + '</span>' : '') + '</td><td class="nw">' + bizShort(v.biz) + '</td><td class="nw"><span class="who">' + (v.vessel || '待宣船') + '</span></td><td class="nw">' + route(v) + '</td><td class="nw" style="text-align:right">' + C.fmt(C.total(v)) + (C.cargoOf(v).length >= 2 ? '<span class="sub2">拼船</span>' : '') + '</td><td>' + dateCell(v) + '</td><td class="nw">' + (v.eta && !v.actDischArr ? C.mdh(v.eta) : '<span class="mut">—</span>') + '</td><td>' + C.stTag(C.statusOf(v)) + '</td><td class="nw">' + v.owner + '</td><td>' + marks(v) + '</td></tr>').join('')
+        : '<tr><td colspan="10" class="empty">没有符合条件的航次</td></tr>') + '</tbody>';
+    $('tbl').querySelectorAll('tr.click').forEach((r) => r.onclick = () => { location.href = 'P05-voyage-detail.html?id=' + r.dataset.id; });
+    $('cards').innerHTML = cur.length ? cur.map((v) => '<a class="vc" href="P05-voyage-detail.html?id=' + v.id + '"><div class="r1"><b>' + (v.vessel || '待宣船') + '</b>' + C.stTag(C.statusOf(v)) + '</div><div class="r2">' + route(v) + ' · ' + C.fmt(C.total(v)) + ' 吨</div><div class="r3"><span>' + v.id + '</span><span>' + bizShort(v.biz) + '</span><span>' + (C.localDate(v).act ? '实际 ' + C.mdh(C.localDate(v).act) : '计划 ' + C.md(C.localDate(v).plan)) + '</span><span>' + v.owner + '</span></div><div style="margin-top:4px">' + marks(v) + '</div></a>').join('') : '<div class="empty">没有符合条件的航次</div>';
+    $('pager').innerHTML = '<span class="mut" style="color:var(--muted)">共 ' + all.length + ' 条，第 ' + S.page + ' / ' + pages + ' 页</span><div class="pg"><button id="pp"' + (S.page <= 1 ? ' disabled' : '') + '>‹</button>' +
+      Array.from({ length: pages }, (_, i) => '<button data-p="' + (i + 1) + '" class="' + (i + 1 === S.page ? 'on' : '') + '">' + (i + 1) + '</button>').join('') + '<button id="pn"' + (S.page >= pages ? ' disabled' : '') + '>›</button></div>';
+    $('pager').querySelectorAll('[data-p]').forEach((b) => b.onclick = () => { S.page = +b.dataset.p; draw(); });
+    const pp = $('pp'), pn = $('pn'); pp.onclick = () => { S.page--; draw(); }; pn.onclick = () => { S.page++; draw(); };
+    $('onlyMe').classList.toggle('on', S.me); $('onlyStar').classList.toggle('on', S.star);
+  }
+  // 状态筛选
+  $('stf').innerHTML = C.STATUS.concat(['已结束（取消）']).map((s) => '<button class="chipf" data-s="' + s + '">' + s + '</button>').join('');
+  $('stf').querySelectorAll('button').forEach((b) => b.onclick = () => { const s = b.dataset.s; if (S.st.has(s)) S.st.delete(s); else S.st.add(s); b.classList.toggle('on'); S.page = 1; draw(); });
+  $('own').innerHTML = '<option value="">全部业务员</option>' + [...new Set(M.voyageList.map((v) => v.owner))].map((o) => '<option>' + o + '</option>').join('');
+  $('own').onchange = (e) => { S.own = e.target.value; S.page = 1; draw(); };
+  $('d1').onchange = (e) => { S.d1 = e.target.value; S.page = 1; draw(); }; $('d2').onchange = (e) => { S.d2 = e.target.value; S.page = 1; draw(); };
+  $('kw').oninput = (e) => { S.kw = e.target.value.trim(); S.page = 1; draw(); };
+  $('onlyMe').onclick = () => { S.me = !S.me; S.page = 1; draw(); }; $('onlyStar').onclick = () => { S.star = !S.star; S.page = 1; draw(); };
+  $('clr').onclick = () => { Object.assign(S, { st: new Set(), d1: '', d2: '', own: '', kw: '', me: false, star: false, page: 1 }); ['d1', 'd2', 'kw'].forEach((i) => $(i).value = ''); $('own').value = ''; $('stf').querySelectorAll('button').forEach((b) => b.classList.remove('on')); draw(); };
+  // 导出（原型：CSV，可用 Excel 打开）
+  $('exp').onclick = () => {
+    const head = ['航次编号', '业务类型', '船次号', '船名', '装港', '卸港', '总货量（吨）', '本港侧日期', '预计到达', '状态', '业务员', '所属部门'];
+    const body = rows().map((v) => [v.id, v.biz, v.no, v.vessel || '待宣船', C.zh(v.load), C.zh(v.disch), C.total(v), localD(v) || '', v.eta && !v.actDischArr ? v.eta : '', C.statusOf(v), v.owner, v.dept]);
+    C.download('航次列表_' + M.today.replace(/-/g, '') + '.csv', [head].concat(body).map((r) => r.map((x) => '"' + String(x).replace(/"/g, '""') + '"').join(',')).join('\n'));
+    C.toast('已导出 ' + body.length + ' 条（原型导出为 CSV，Excel 可直接打开）');
+  };
+  // 新建航次（A09：业务员、主管可建；同时可带货物明细——明细在详情页里补）
+  $('newv').onclick = () => {
+    C.modal({ title: '新建航次', ok: '创建并进入详情', width: 520, body:
+      '<div class="field"><div class="f-lab" style="color:var(--muted);font-size:12px;margin-bottom:4px">业务类型</div><div class="seg" id="nb"><button class="on">大宗采购船</button><button>成品销售船</button><button>物资备件船</button></div></div>' +
+      '<div class="row2"><div class="field"><div style="color:var(--muted);font-size:12px;margin-bottom:4px">装港</div><select class="inp" id="nl">' + M.ports.map((p) => '<option value="' + p.en + '">' + C.zh(p.en) + '</option>').join('') + '</select></div>' +
+      '<div class="field"><div style="color:var(--muted);font-size:12px;margin-bottom:4px">卸港</div><select class="inp" id="nd">' + M.ports.map((p) => '<option value="' + p.en + '"' + (p.isLocal ? ' selected' : '') + '>' + C.zh(p.en) + '</option>').join('') + '</select></div></div>' +
+      '<div class="field"><div style="color:var(--muted);font-size:12px;margin-bottom:4px">预计货量（吨）</div><input class="inp" id="nt" type="number" value="50000"></div>' +
+      '<div style="color:var(--muted);font-size:12px">船舶可以先空着，宣船后再关联；创建后在详情页补货物明细和时间节点。负责业务员默认是你。</div>',
+      onOpen: (m) => { m.querySelectorAll('#nb button').forEach((b) => b.onclick = () => { m.querySelectorAll('#nb button').forEach((x) => x.classList.toggle('on', x === b)); const prod = b.textContent === '成品销售船'; m.querySelector('#nl').value = prod ? 'BAHODOPI' : 'SURIGAO'; m.querySelector('#nd').value = prod ? 'HAIPHONG' : 'BAHODOPI'; }); },
+      onOk: (m) => {
+        const biz = m.querySelector('#nb .on').textContent, load = m.querySelector('#nl').value, disch = m.querySelector('#nd').value, tons = +m.querySelector('#nt').value;
+        if (load === disch) { C.toast('装港和卸港不能相同'); return false; }
+        if (!(tons > 0)) { C.toast('请填写预计货量'); return false; }
+        const id = 'VY-2026-' + String(450 + M.voyageList.length - 39).padStart(4, '0');
+        M.voyageList.push({ id, biz, attr: biz === '成品销售船' ? '外贸' : '内贸', no: '', vessel: null, carrier: '', shipVoy: '', disch2: null, finalPort: null, load, disch, tons, flags: [], planBerths: [], actBerths: [], owner: C.me.name, dept: C.me.dept, focus: false, review: '待审核', source: '应用录入', origKey: '', readonly: false, remark: '' });
+        M.cargoLines.push({ voyage: id, no: 'CL-' + String(M.cargoLines.length + 1).padStart(4, '0'), contract: '', ea: '', big: biz === '成品销售船' ? '成品' : '原料', kind: '', name: '', alias: '', unit: '', dept2: '', party: '', tons, loadTons: null, dry: null, over: '', exec: C.me.name });
+        M.changeLog.push({ voyage: id, field: '新建航次', old: '', nw: id, by: C.me.name, at: M.now });
+        C.persist(); location.href = 'P05-voyage-detail.html?id=' + id;
+      } });
+  };
+  draw();
+})();
+</script>
+</body>
+</html>

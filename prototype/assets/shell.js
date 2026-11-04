@@ -22,7 +22,7 @@
     { id: 'P10', name: '系统管理', file: 'P10-admin.html', group: '系统', user: '系统管理员',
       desc: '同步日志、兼容表手动刷新、迁移 dry-run 报告、连通性自检', api: 'A26–A28' },
   ];
-  const BUILT = { P02: '待评审', P03: '待评审' };   // 每做完一页在这里登记；未登记 = 待做
+  const BUILT = { P01: '待评审', P02: '待评审', P03: '待评审', P04: '待评审', P05: '待评审', P06: '待评审', P07: '待评审', P08: '待评审', P09: '待评审', P10: '待评审' };   // 每做完一页在这里登记；未登记 = 待做
 
   function navHtml(active) {
     let h = '<div class="brand"><span class="logo">S</span><div><b>SSPS</b><small>智慧发船预测系统</small></div></div>';
@@ -43,10 +43,16 @@
     const nav = document.getElementById('nav'), top = document.getElementById('topbar');
     if (nav) nav.innerHTML = '<div class="nav-in">' + navHtml(opts.active) + '</div>';
     if (top) top.innerHTML =
-      '<div class="crumb"><a href="index.html">原型导航</a><i>/</i><b>' + (opts.title || '') + '</b></div>' +
+      '<div class="crumb"><button class="burger" id="burger" aria-label="菜单">☰</button><a href="index.html">原型导航</a><i>/</i><b>' + (opts.title || '') + '</b></div>' +
       '<div class="top-right"><span class="proto-flag">原型 · 示例数据，非真实业务</span>' +
       '<span class="top-date">2026-11-04 周三</span>' +
-      '<span class="user"><span class="avatar">林</span><span>林海川<small>业务员 · 大宗采购部</small></span></span></div>';
+      '<span class="user"><span class="avatar">' + (opts.user ? opts.user[0][0] : '林') + '</span><span>' + (opts.user ? opts.user[0] : '林海川') + '<small>' + (opts.user ? opts.user[2] + ' · ' + opts.user[1] : '业务员 · 大宗采购部') + '</small></span></span></div>';
   }
+  document.addEventListener('click', (e) => {
+    const nav = document.getElementById('nav'); if (!nav) return;
+    let m = document.querySelector('.navmask'); if (!m) { m = document.createElement('div'); m.className = 'navmask'; document.body.appendChild(m); }
+    if (e.target.closest('#burger')) { nav.classList.toggle('open'); m.classList.toggle('on', nav.classList.contains('open')); }
+    else if (e.target.classList.contains('navmask')) { nav.classList.remove('open'); m.classList.remove('on'); }
+  });
   window.SHELL = { PAGES, BUILT, mount };
 })();

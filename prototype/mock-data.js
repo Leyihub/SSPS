@@ -167,3 +167,217 @@
   window.MOCK = { today, user, ports, berths, routeRules, batch, berthPlanRows, voyages,
     meta: { berthCapacityIllustrative: true, poolTotal: berths.length } };
 })();
+
+/*
+ * ===== 运营数据扩充（P01、P04–P10 使用）=====
+ * 同样全部虚构。字段名对照 docs/schema：T03 船舶、T04 航次、T05 货物明细、T06 卸船结算、T07 销售扩展、
+ * T08 航程规则、D01 ETA 修订、D02 变更日志、D03 靠船计划批次、D08 数据质量、D09 同步日志。
+ * 航次的「船舶状态」不在这里写死，由 assets/common.js 的 statusOf() 按 status-rules.md 从时间节点推导。
+ */
+(function () {
+  const M = window.MOCK, DAY = 86400000;
+  const dnOf = (iso) => { const [y, m, d] = iso.slice(0, 10).split('-').map(Number); return Math.round(Date.UTC(y, m - 1, d) / DAY); };
+  const isoOf = (n) => new Date(n * DAY).toISOString().slice(0, 10);
+  const TODAY = dnOf(M.today);
+  const at = (off, hm) => isoOf(TODAY + off) + ' ' + (hm || '08:00');       // 相对今天的日期时间
+  const abs = (iso, hm) => (iso.length > 10 ? iso : iso + ' ' + (hm || '08:00'));
+  M.now = M.today + ' 09:42';
+  M.people = {
+    '林海川': { dept: '大宗采购部', role: '业务员' }, '周晓棠': { dept: '大宗采购部', role: '部门主管' }, '陈砚秋': { dept: '大宗采购部', role: '业务员' },
+    '韩墨': { dept: '商务海运部', role: '业务员' }, '苏望舒': { dept: '商务海运部', role: '部门主管' },
+    '顾明远': { dept: '仓储物流部', role: '物流管理员' }, '钟立诚': { dept: '仓储物流部', role: '系统管理员' },
+  };
+
+  // ---------- T01 港口：补充别名与更多港口 ----------
+  const extraPorts = [
+    { code: '061', cn: '青岛', en: 'QINGDAO', country: '中国', nature: '外港', isLocal: false },
+    { code: '062', cn: '天津', en: 'TIANJIN', country: '中国', nature: '外港', isLocal: false },
+    { code: '071', cn: '新加坡', en: 'SINGAPORE', country: '新加坡', nature: '外港', isLocal: false },
+    { code: '039', cn: '肯达里', en: 'KENDARI', country: '印度尼西亚', nature: '内港', isLocal: false },
+  ];
+  extraPorts.forEach((p) => M.ports.push(p));
+  const alias = { BAHODOPI: ['IMIP', 'BAHODOPI(IMIP)', 'BAHODOPI PORT', '巴浩多比港'], SURIGAO: ['SURIGAO PORT', 'Surigao', '苏里高港'], TAGANITO: ['TAGANITO PORT', 'Taganito', '塔加尼托港'],
+    JAKARTA: ['JKT', 'JAKARTA PORT', '雅加达港', 'TANJUNG PRIOK'], SURABAYA: ['SBY', 'SURABAYA PORT', '泗水港'], HAIPHONG: ['HAI PHONG', 'HAIPHONG PORT', '海防港'],
+    QINGDAO: ['QINGDAO PORT', 'Tsingtao'], TIANJIN: ['TIANJIN XINGANG', '天津新港'], SINGAPORE: ['SIN', 'SINGAPORE PORT'], KENDARI: ['KENDARI PORT'] };
+  const region = { BAHODOPI: '中苏拉威西', SURIGAO: '棉兰老', TAGANITO: '棉兰老', JAKARTA: '爪哇', SURABAYA: '爪哇', HAIPHONG: '越南北部', QINGDAO: '山东', TIANJIN: '天津', SINGAPORE: '—', KENDARI: '东南苏拉威西' };
+  M.ports.forEach((p) => { p.alias = alias[p.en] || []; p.region = region[p.en] || ''; p.status = '启用'; });
+
+  // ---------- 航次（T04 子集，丰富版） ----------
+  const base = (o) => Object.assign({ attr: '内贸', no: '', carrier: '', shipVoy: '', disch2: null, finalPort: null, laycanS: null, laycanE: null, planLoadArr: null, actLoadArr: null, loadBerth: null,
+    planLoadDep: null, actLoadDep: null, planDischS: null, planDischE: null, eta: null, actDischArr: null, dischBerth: null, dischDep: null, flags: [], planBerths: [], actBerths: [],
+    focus: false, review: '待审核', source: '应用录入', origKey: '', readonly: false, remark: '', tons: 0 }, o);
+  const list = [];
+  // 1) 预测用的航次（已有）→ 补全时间节点，使状态能由节点推导出来
+  M.voyages.forEach((v) => {
+    const wS = dnOf(v.winStart), wE = dnOf(v.winEnd), prod = v.biz === '成品销售船';
+    const o = base({ id: v.id, biz: v.biz, attr: prod ? '外贸' : (v.biz === '物资备件船' ? '雅加达物资' : '内贸'), vessel: v.vessel, load: v.load, disch: v.disch, tons: v.totalTons,
+      flags: v.flags.slice(), owner: v.owner, dept: v.dept, no: prod ? 'CN' + (700 + list.length) : (v.biz === '物资备件船' ? 'FN' + (700 + list.length) : ''), source: '应用录入' });
+    if (prod) { o.laycanS = at(wS - TODAY, '00:00'); o.laycanE = at(wE - TODAY, '23:59'); } else { o.planDischS = at(wS - TODAY, '00:00'); o.planDischE = at(wE - TODAY, '23:59'); }
+    if (v.status !== '待宣船') { o.planLoadArr = at(wS - TODAY - 6, '08:00'); o.planLoadDep = at(wS - TODAY - 5, '18:00'); }
+    if (v.status === '航行中') { o.actLoadArr = at(-3, '14:00'); o.actLoadDep = at(-1, '16:30'); o.eta = at(wS - TODAY, '10:00'); o.etaUpdated = at(-1, '17:20'); }
+    list.push(o);
+  });
+  const byId = (id) => list.find((v) => v.id === 'VY-2026-' + id);
+  // 让「航行中」的航次里有 1 条 ETA 已超过 3 天没更新（工作台待办用）
+  const ghost = byId('0412'); if (ghost) { ghost.etaUpdated = at(-5, '09:10'); ghost.owner = M.user.name; ghost.dept = M.user.dept; }
+  // 2) 手工补充：已结束、取消、缺节点、历史只读、本周到港等
+  const add = (o) => list.push(base(o));
+  add({ id: 'VY-2026-0301', biz: '大宗采购船', vessel: 'MV OCEAN LARK', load: 'SURIGAO', disch: 'BAHODOPI', tons: 54200, owner: '林海川', dept: '大宗采购部', source: '企微大宗到船表', review: '已审核', origKey: '大宗到船表#0188',
+    planDischS: at(-14, '00:00'), planDischE: at(-12, '23:59'), planLoadArr: at(-21), actLoadArr: at(-20, '09:00'), planLoadDep: at(-19), actLoadDep: at(-19, '15:30'), eta: at(-13, '10:00'), actDischArr: at(-13, '11:20'), dischBerth: at(-12, '06:40'), dischDep: at(-9, '21:10'), actBerths: ['F2'], planBerths: ['F2'] });
+  add({ id: 'VY-2026-0302', biz: '大宗采购船', vessel: 'MV TIRTA MAS', load: 'TAGANITO', disch: 'BAHODOPI', tons: 48800, owner: '周晓棠', dept: '大宗采购部', source: '企微大宗到船表', review: '已审核', focus: true,
+    planDischS: at(-20, '00:00'), planDischE: at(-18, '23:59'), planLoadArr: at(-26), actLoadArr: at(-26, '10:00'), actLoadDep: at(-24, '12:00'), eta: at(-19), actDischArr: at(-19, '08:30'), dischBerth: at(-18, '05:00'), dischDep: at(-15, '19:30'), actBerths: ['L4'], planBerths: ['L4'] });
+  add({ id: 'VY-2026-0303', biz: '成品销售船', attr: '外贸', no: 'CN661', vessel: 'MV SAMUDRA 88', load: 'BAHODOPI', disch: 'HAIPHONG', finalPort: 'HAIPHONG', tons: 26000, owner: '韩墨', dept: '商务海运部', source: '企微商务海运表', review: '已审核',
+    laycanS: at(-16, '00:00'), laycanE: at(-10, '23:59'), planLoadArr: at(-14), actLoadArr: at(-13, '07:30'), loadBerth: at(-12, '10:00'), actLoadDep: at(-9, '14:00'), planLoadDep: at(-9), eta: at(-1), actDischArr: at(-1, '09:00'), dischBerth: at(0, '07:00'), actBerths: ['F9'] });
+  add({ id: 'VY-2026-0304', biz: '大宗采购船', vessel: 'MV KEMBANG LAUT', load: 'JAKARTA', disch: 'BAHODOPI', tons: 31000, owner: '陈砚秋', dept: '大宗采购部', flags: ['取消'], planDischS: at(-6, '00:00'), planDischE: at(-4, '23:59'), planLoadArr: at(-12), remark: '船东违约，货物改装下一艘' });
+  add({ id: 'VY-2026-0305', biz: '大宗采购船', vessel: 'MV BINTANG LAUT', load: 'SURIGAO', disch: 'BAHODOPI', tons: 51500, owner: '林海川', dept: '大宗采购部', focus: true, planBerths: ['F1'],
+    planDischS: at(3, '00:00'), planDischE: at(5, '23:59'), planLoadArr: at(-6), actLoadArr: at(-6, '11:00'), actLoadDep: at(-4, '13:30'), eta: at(4, '08:00'), etaUpdated: at(-5, '10:05') });
+  add({ id: 'VY-2026-0306', biz: '大宗采购船', vessel: 'MV NUSA PERDANA', load: 'TAGANITO', disch: 'BAHODOPI', tons: 47000, owner: '林海川', dept: '大宗采购部', planBerths: ['L6'],
+    planDischS: at(2, '00:00'), planDischE: at(4, '23:59'), planLoadArr: at(-7), actLoadArr: at(-6, '09:30'), actLoadDep: at(-3, '18:00'), eta: at(2, '14:00'), etaUpdated: at(-1, '16:40') });
+  add({ id: 'VY-2026-0307', biz: '大宗采购船', vessel: 'MV SELAT JAYA', load: 'SURIGAO', disch: 'BAHODOPI', tons: 43200, owner: '林海川', dept: '大宗采购部', planBerths: ['F3'], actBerths: [],
+    planDischS: at(-1, '00:00'), planDischE: at(1, '23:59'), planLoadArr: at(-8), actLoadArr: at(-8, '10:00'), eta: at(0, '06:00'), actDischArr: at(0, '05:40'), remark: '实际离装港时间漏填，需补录' });  // 缺实际离装港 → 待补节点
+  add({ id: 'VY-2026-0308', biz: '成品销售船', attr: '外贸', no: 'CN662', vessel: 'MV ANGIN BARAT', load: 'BAHODOPI', disch: 'QINGDAO', finalPort: 'QINGDAO', tons: 22000, owner: '韩墨', dept: '商务海运部',
+    laycanS: at(-2, '00:00'), laycanE: at(4, '23:59'), planLoadArr: at(-3), actLoadArr: at(-2, '13:00'), loadBerth: at(-1, '08:00'), planLoadDep: at(3), planBerths: ['F9'], actBerths: ['F9'] });
+  add({ id: 'VY-2026-0309', biz: '成品销售船', attr: '内贸', no: 'CN663', vessel: 'MV PULAU INDAH', load: 'BAHODOPI', disch: 'TIANJIN', finalPort: 'TIANJIN', tons: 18500, owner: '韩墨', dept: '商务海运部', focus: true,
+    laycanS: at(0, '00:00'), laycanE: at(6, '23:59'), planLoadArr: at(-1), actLoadArr: at(0, '04:50'), planLoadDep: at(4), planBerths: ['F10'] });
+  add({ id: 'VY-2026-0310', biz: '物资备件船', attr: '国内物资', no: 'FN706', vessel: 'MV FAJAR 66', load: 'SURABAYA', disch: 'BAHODOPI', tons: 9000, owner: '陈砚秋', dept: '大宗采购部',
+    planDischS: at(5, '00:00'), planDischE: at(7, '23:59'), planLoadArr: at(0), planLoadDep: at(1) });
+  add({ id: 'VY-2026-0311', biz: '大宗采购船', vessel: 'MV MEGA TRANS 3', load: 'TAGANITO', disch: 'BAHODOPI', tons: 36000, owner: '周晓棠', dept: '大宗采购部', planBerths: ['F5'],
+    planDischS: at(6, '00:00'), planDischE: at(8, '23:59'), planLoadArr: at(-1), actLoadArr: at(0, '03:20'), planLoadDep: at(2) });   // 大宗：有实际抵装港 → 装港装货
+  add({ id: 'VY-2026-0312', biz: '大宗采购船', vessel: 'MV WAWONII STAR', load: 'SURIGAO', disch: 'BAHODOPI', tons: 46500, owner: '陈砚秋', dept: '大宗采购部', source: '历史副本', readonly: true, review: '已审核', origKey: '历史副本#2231',
+    planDischS: '2026-03-12 00:00', planDischE: '2026-03-14 23:59', actLoadArr: '2026-03-05 08:00', actLoadDep: '2026-03-07 10:00', actDischArr: '2026-03-12 09:00', dischBerth: '2026-03-13 04:00', dischDep: '2026-03-16 20:00', eta: '2026-03-12 08:00', actBerths: ['L6'] });
+  add({ id: 'VY-2026-0313', biz: '大宗采购船', vessel: 'MV KARANG EMAS', load: 'JAKARTA', disch: 'BAHODOPI', disch2: 'SURABAYA', tons: 39500, owner: '周晓棠', dept: '大宗采购部', source: '历史副本', readonly: true, review: '已审核', origKey: '历史副本#1904',
+    planDischS: '2026-02-20 00:00', planDischE: '2026-02-22 23:59', actLoadArr: '2026-02-12 11:00', actLoadDep: '2026-02-14 09:30', actDischArr: '2026-02-21 07:10', dischBerth: '2026-02-21 18:00', dischDep: '2026-02-24 22:30', eta: '2026-02-21 08:00', actBerths: ['F7'] });
+  add({ id: 'VY-2026-0314', biz: '物资备件船', attr: '雅加达物资', no: 'FN707', vessel: 'MV TANJUNG MAS', load: 'JAKARTA', disch: 'BAHODOPI', tons: 7200, owner: '陈砚秋', dept: '大宗采购部', review: '已审核',
+    planDischS: at(-3, '00:00'), planDischE: at(-1, '23:59'), planLoadArr: at(-9), actLoadArr: at(-9, '10:00'), loadBerth: at(-9, '14:00'), actLoadDep: at(-7, '09:00'), eta: at(-2), actDischArr: at(-2, '07:00'), dischBerth: at(-1, '09:00'), dischDep: at(0, '02:30'), actBerths: ['LN17'] });
+  // 3) 靠船计划里的德信船：每条都生成对应航次（保证靠船计划与航次表一致）；故意留 3 条不生成，用来演示「未匹配航次」告警
+  const used = new Set(M.voyages.map((v) => v.vessel).concat(list.map((v) => v.vessel)));
+  const dex = M.berthPlanRows.filter((r) => r.inPool && r.isDexin);
+  const skip = new Set(dex.slice(-3));
+  const roman = ['', ' II', ' III', ' IV'];
+  let gen = 320; const owners = ['林海川', '周晓棠', '陈砚秋'];
+  dex.forEach((r) => {
+    let k = 0; while (used.has(r.vessel + roman[k])) k++;
+    r.vessel = r.vessel + roman[k]; used.add(r.vessel);
+    if (skip.has(r)) return;
+    const s = dnOf(r.start), e = dnOf(r.end), eta = dnOf(r.eta), id = 'VY-2026-0' + (gen++), load = ['SURIGAO', 'TAGANITO', 'JAKARTA'][gen % 3], ow = owners[gen % 3];
+    const o = base({ id, biz: '大宗采购船', vessel: r.vessel, load, disch: 'BAHODOPI', tons: r.tons, owner: ow, dept: '大宗采购部', review: '已审核', planBerths: [r.berth],
+      planDischS: r.eta + ' 00:00', planDischE: r.eta + ' 23:59', planLoadArr: isoOf(eta - 9) + ' 08:00', actLoadArr: isoOf(eta - 8) + ' 10:00', actLoadDep: isoOf(Math.min(eta - 6, TODAY - 1)) + ' 15:00', eta: r.eta + ' 08:00' });
+    if (eta > TODAY) { o.actLoadArr = isoOf(Math.min(eta - 8, TODAY - 3)) + ' 10:00'; o.etaUpdated = at(-1, '15:00'); }
+    else { o.actDischArr = r.eta + ' 09:30'; if (s <= TODAY) { o.dischBerth = r.start + ' 07:00'; o.actBerths = [r.berth]; } if (e < TODAY) o.dischDep = r.end + ' 20:00'; }
+    list.push(o); r.matchVoyage = id;
+  });
+  list.forEach((v) => { if (!v.etaUpdated && v.eta && !v.actDischArr) v.etaUpdated = at(-1, '15:00'); });
+  M.voyageList = list;
+
+  // ---------- T05 货物明细 ----------
+  const cargoKinds = { 大宗采购船: [['原料', '红土镍矿', 'DXI'], ['辅料', '石灰石', 'DSI'], ['燃料', '煤炭', 'DCI'], ['辅料', '硫磺', '金瑞']], 成品销售船: [['成品', '线材', ''], ['成品', '热卷', ''], ['成品', '方坯', '']], 物资备件船: [['工程辅料', '设备备件', '金瑞']] };
+  const suppliers = ['东盛矿业', '岛海资源', '远航贸易', '赤道能源', '南洋物产'];
+  M.cargoLines = [];
+  list.forEach((v, i) => {
+    const kinds = cargoKinds[v.biz], two = v.tons >= 45000 && v.biz === '大宗采购船' && i % 3 === 0;
+    const parts = two ? [Math.round(v.tons * 0.6 / 100) * 100, v.tons - Math.round(v.tons * 0.6 / 100) * 100] : [v.tons];
+    parts.forEach((t, k) => {
+      const kd = kinds[(i + k) % kinds.length];
+      M.cargoLines.push({ voyage: v.id, no: 'CL-' + String(M.cargoLines.length + 1).padStart(4, '0'), contract: (v.biz === '成品销售船' ? 'SC-26' : 'HT-26') + '-' + String(100 + i * 3 + k).padStart(4, '0'),
+        ea: v.source === '历史副本' ? 'EA' + (4500 + i) : '', big: kd[0], kind: kd[1], name: kd[1], alias: '', unit: v.biz === '大宗采购船' ? kd[2] || 'DXI' : '', dept2: v.biz === '大宗采购船' ? '原料事业部' : '',
+        party: v.biz === '成品销售船' ? ['华隆钢贸', '北辰物资', '越海工贸'][i % 3] : suppliers[(i + k) % suppliers.length], tons: t, loadTons: v.actLoadDep ? Math.round(t * 1.004) : null, dry: null, over: v.biz === '大宗采购船' ? '±10%' : '', exec: v.owner });
+    });
+  });
+
+  // ---------- T06 大宗卸船结算 / T07 成品销售扩展 ----------
+  M.bulkSettle = {}; M.salesExt = {};
+  list.forEach((v, i) => {
+    if (v.biz === '大宗采购船' && v.actDischArr) M.bulkSettle[v.id] = { terms: '接收 NOR 后 4 天内卸完', rate: 12000, allowDays: 4, turn: 12, demRate: 35000000, demCur: 'IDR', demUsd: v.dischDep ? [-3860, 2140, 0][i % 3] : null,
+      gauge: Math.round(v.tons * 0.998), fee: 8010.11 + i * 37, portFee: 6420 + i * 12, loadFee: 15230 + i * 60, truck: Math.round(v.tons * 0.35), belt: Math.round(v.tons * 0.6), weigh: Math.round(v.tons * 0.999), other: 0,
+      beltOff3: i % 4 === 0 ? 6 : 0, beltOff4: 0, sendDay: isoOf(dnOf(v.actDischArr) + 1), backDay: v.dischDep ? isoOf(dnOf(v.dischDep) + 2) : null, rain: false, issue: i % 5 === 0 ? '管带机 3# 临时检修 6 小时' : '' };
+    if (v.biz === '成品销售船') M.salesExt[v.id] = { way: i % 2 ? 'CFR' : 'FOB', contract: 'SH-26-' + String(300 + i).padStart(4, '0') };
+  });
+
+  // ---------- T03 船舶主档 ----------
+  const names = [...new Set(list.map((v) => v.vessel).filter(Boolean))];
+  ['MV GRAND MERIDIAN', 'MV AURA 7'].forEach((n) => { if (!names.includes(n)) names.push(n); });
+  ['TB. BINTANG 1 / BG. BINTANG 2', 'KM. BENUA 777', 'MV DELTA HARMONY', 'MV SERI BAHARI'].forEach((n) => { if (!names.includes(n)) names.push(n); });
+  const hash = (s) => { let h = 7; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 900000; return h + 100000; };
+  M.vessels = names.map((n, i) => {
+    const noMmsi = n === 'MV AURA 7' || n === 'MV SINAR HARAPAN';
+    return { id: 'VS-' + String(i + 1).padStart(4, '0'), mmsi: noMmsi ? '' : '525' + hash(n), imo: i % 4 === 3 ? '' : '9' + hash(n + 'i'), name: n, alias: i % 5 === 0 ? [n.replace('MV ', 'M.V. ')] : [],
+      type: n.startsWith('TB.') ? '拖驳组合' : (n.startsWith('KM.') ? '杂货船' : (i % 6 === 5 ? '杂货船' : '散货船')), dwt: 8000 + (hash(n) % 60) * 1000, loa: 110 + (hash(n) % 12) * 10, tier: '' };
+  });
+  if (!M.vessels.find((v) => v.name === 'MV SINAR HARAPAN')) M.vessels.push({ id: 'VS-' + String(M.vessels.length + 1).padStart(4, '0'), mmsi: '', imo: '', name: 'MV SINAR HARAPAN', alias: [], type: '散货船', dwt: 52000, loa: 190, tier: '' });
+  list.forEach((v) => { const x = v.vessel && M.vessels.find((q) => q.name === v.vessel); v.mmsi = x ? x.mmsi : ''; });
+
+  // ---------- T08 航程规则：补充 ----------
+  const rr = (id, load, disch, biz, tier, exp, expMax, owner, samples, p50, p80) => ({ id, load, disch, biz, tier, exp, expMax, owner, samples, p50, p80, recomputed: M.today, status: '启用' });
+  [rr('R-005', 'JAKARTA', 'BAHODOPI', ['成品销售船'], null, 5, 7, '韩墨', 0, null, null),
+   rr('R-006', 'BAHODOPI', 'QINGDAO', ['成品销售船'], null, 11, 13, '韩墨', 1, 11.2, 12.0),
+   rr('R-007', 'BAHODOPI', 'TIANJIN', ['成品销售船'], null, 12, 14, '韩墨', 2, 12.4, 13.5),
+   rr('R-008', 'SURABAYA', 'BAHODOPI', ['物资备件船'], null, 3, 4, '陈砚秋', 6, 3.4, 4.2),
+   rr('R-009', 'SINGAPORE', 'BAHODOPI', ['物资备件船'], null, 6, 8, '陈砚秋', 0, null, null)].forEach((r) => {
+    r.basis = r.samples >= 5 ? '统计值' : '经验值'; r.effP50 = r.samples >= 5 ? r.p50 : r.exp; r.effP80 = r.samples >= 5 ? r.p80 : r.expMax; M.routeRules.push(r); });
+  M.routeRules.forEach((r) => { r.status = r.status || '启用'; });
+  // 原有规则 R-003 的「适用业务类型」保持仅大宗（物资备件船借用）
+
+  // ---------- D01 ETA 修订 / D02 变更日志 ----------
+  M.etaRevisions = [
+    { voyage: 'VY-2026-0305', node: '当前 ETA（卸港）', old: at(4, '14:00'), nw: at(4, '08:00'), basis: '船讯网', by: '林海川', at: at(-5, '10:05') },
+    { voyage: 'VY-2026-0305', node: '当前 ETA（卸港）', old: at(5, '08:00'), nw: at(4, '14:00'), basis: '船代', by: '林海川', at: at(-8, '16:20') },
+    { voyage: 'VY-2026-0306', node: '当前 ETA（卸港）', old: at(3, '06:00'), nw: at(2, '14:00'), basis: '电话', by: '林海川', at: at(-1, '16:40') },
+    { voyage: 'VY-2026-0412', node: '当前 ETA（卸港）', old: at(12, '10:00'), nw: at(13, '10:00'), basis: '船讯网', by: '林海川', at: at(-5, '09:10') },
+  ];
+  M.changeLog = [
+    { voyage: 'VY-2026-0305', field: '实际离装港', old: '', nw: at(-4, '13:30'), by: '林海川', at: at(-4, '13:42') },
+    { voyage: 'VY-2026-0305', field: '船舶状态', old: '装港装货', nw: '航行中', by: '系统', at: at(-4, '13:42') },
+    { voyage: 'VY-2026-0305', field: '计划泊位', old: '', nw: 'F1', by: '林海川', at: at(-6, '11:20') },
+    { voyage: 'VY-2026-0307', field: '实际抵卸港', old: '', nw: at(0, '05:40'), by: '陈砚秋', at: at(0, '06:05') },
+    { voyage: 'VY-2026-0306', field: '实际离装港', old: '', nw: at(-3, '18:00'), by: '林海川', at: at(-3, '18:10') },
+  ];
+
+  // ---------- D08 数据质量问题 ----------
+  const iss = [];
+  const issue = (obj, type, owner, status, field, note) => iss.push({ id: 'DQ-' + String(iss.length + 1).padStart(3, '0'), obj, type, owner, status, field, note });
+  issue('VY-2026-0307', '缺离装港时间', '林海川', '待处理', 'actLoadDep', '已有实际抵卸港，实际离装港为空，无法记入航程样本');
+  issue('VY-2026-0305', 'ETA 超期未更新', '林海川', '待处理', 'eta', 'ETA 已 5 天未更新（阈值暂定 3 天）');
+  issue('VY-2026-0412', 'ETA 超期未更新', '林海川', '待处理', 'eta', 'ETA 已 5 天未更新（阈值暂定 3 天）');
+  issue('MV AURA 7', '缺 MMSI', '陈砚秋', '待处理', 'mmsi', 'MMSI 为必填，航次 VY-2026-0435 无法接入船讯网');
+  issue('MV SINAR HARAPAN', '缺 MMSI', '韩墨', '待处理', 'mmsi', '旧表缺 MMSI，按标准船名匹配未成功');
+  issue('VY-2026-0310', '港口未匹配', '陈砚秋', '待处理', 'load', '装港原文「SBY 泗水港」，请指定标准港口并追加别名');
+  issue('VY-2026-0308', '港口未匹配', '韩墨', '处理中', 'disch', '卸港原文「青岛港(山东)」，已指定待管理员追加别名');
+  issue('VY-2026-0314', '节点时序倒置', '陈砚秋', '待处理', 'dischBerth', '卸港靠泊早于实际抵卸港，保存被拦截');
+  issue('VY-2026-0302', '疑似占位时间', '周晓棠', '处理中', 'actDischArr', '实际到达、靠港、离港时间完全一致，疑似批量复制的占位时间，不进统计样本');
+  issue('VY-2026-0301', '缺离装港时间', '周晓棠', '已关闭', 'actLoadDep', '已补录');
+  issue('VY-2026-0309', '缺 MMSI', '韩墨', '已关闭', 'mmsi', '已补录');
+  issue('VY-2026-0311', '缺离装港时间', '周晓棠', '待处理', 'actLoadDep', '已抵装港但计划离装港已过，请确认是否已离港');
+  issue('VY-2026-0313', '港口未匹配', '周晓棠', '待处理', 'disch2', '第二卸港原文「SURABAYA 泗水」，已匹配为泗水，待确认');
+  issue('VY-2026-0306', 'ETA 超期未更新', '林海川', '已关闭', 'eta', '已于昨日更新');
+  M.issues = iss;
+
+  // ---------- D03 靠船计划批次（历史） ----------
+  const bt = (no, date, src, file, rows, check, st) => ({ batchNo: no, planDate: date, source: src, fileName: file, rows, validation: check, status: st });
+  M.batches = [
+    Object.assign({}, M.batch, { validation: M.batch.validation }),
+    bt('BP-20261102-01', '2026-11-02', '飞书云空间', '靠船计划_20261102.xlsx', 54, '通过 · 3 行标「非德信池」· 0 行未匹配泊位', '成功'),
+    bt('BP-20261101-01', '2026-11-01', '飞书云空间', '靠船计划_20261101.xlsx', 52, '通过 · 3 行标「非德信池」· 0 行未匹配泊位', '成功'),
+    bt('BP-20261031-02', '2026-10-31', '手动上传', '靠船计划_1031_补.xlsx', 51, '通过 · 2 行标「非德信池」· 0 行未匹配泊位', '成功'),
+    bt('BP-20261031-01', '2026-10-31', '飞书云空间', '靠船计划_20261031.xlsx', 49, '部分失败 · 2 行泊位无法解析', '部分失败'),
+    bt('BP-20261030-01', '2026-10-30', '飞书云空间', '靠船计划_20261030.xlsx', 0, '失败 · 文件格式不是 IMIP 靠船计划', '失败'),
+    bt('BP-20261029-01', '2026-10-29', '飞书云空间', '靠船计划_20261029.xlsx', 50, '通过 · 3 行标「非德信池」· 0 行未匹配泊位', '成功'),
+    bt('BP-20260803-01', '2026-08-03', '手动上传', '靠船计划表_迁移首批.xlsx', 453, '通过 · 迁移首个批次（来自企微靠船计划表）', '成功'),
+  ];
+  // ---------- D09 同步日志 ----------
+  const sl = (type, off, hm, ms, n, ok, err) => ({ type, start: at(off, hm), end: at(off, hm.replace(/:(\d\d)$/, (m, a) => ':' + String(Math.min(59, +a + ms)).padStart(2, '0'))), n, ok, err: err || '' });
+  M.syncLogs = [
+    sl('拉取云空间靠船计划', 0, '07:30', 1, 55, '成功'), sl('生成兼容表（T09a 商务海运）', 0, '15:50', 2, 336, '成功'), sl('生成兼容表（T09b 大宗到船）', 0, '15:52', 3, 643, '成功'),
+    sl('写入飞书 · 航次主表', 0, '09:12', 0, 1, '成功'), sl('写入飞书 · 航次货物明细', 0, '09:12', 0, 2, '成功'), sl('重算航程规则（每日）', 0, '03:00', 1, 9, '成功'),
+    sl('拉取云空间靠船计划', -1, '07:30', 1, 54, '成功'), sl('写入飞书 · 航次主表', -1, '16:41', 0, 1, '失败', '限流：同一多维表格并发写入，已排队重试 2 次后成功'),
+    sl('拉取云空间靠船计划', -4, '07:30', 0, 0, '失败', '云空间文件夹里没有新文件，或文件格式不是 IMIP 靠船计划'), sl('生成兼容表（T09a 商务海运）', -1, '15:50', 2, 336, '成功'),
+  ];
+  M.syncLogs[7].ok = '成功'; M.syncLogs[7].err = '第 1 次因同一多维表格并发写入被限流，排队重试后成功';
+  // ---------- 迁移 dry-run 摘要（数字来自实施计划书第 7 节的预估，以脚本输出为准） ----------
+  M.migration = { runAt: at(-2, '17:05'), items: [
+    ['商务海运船舶动态表', 336, '航次约 330 个（按船次号归并）'], ['大宗到船计划表（现表）', 636, '约 572 个航次'], ['大宗到船计划表（历史副本）', 3059, '约 2802 个航次，标「历史只读」'], ['现表与历史副本重叠', 120, '按合同号 + 标准船名 + 到港日判重，保留现表'],
+    ['靠船计划表', 453, '作为第一个批次入应用库，不进 T10'], ['港口信息表', 211, '→ 港口主档'] ],
+    todo: [['港口写法未匹配', 295, '共 295 种原始写法，去括号和重复后仍未匹配的由物流管理员指定并追加别名'], ['缺 MMSI（大宗现表）', 287, '先按标准船名匹配，匹配不上进清单'], ['商务海运表里的大宗船', 8, '12 条只有 4 条能对上大宗航次，其余 8 条待确认'],
+      ['疑似占位时间（合同 GYYL25080）', 54, '62 行里 54 行到达、靠港、离港时间完全相同，迁移但不进统计样本'], ['泊位写法', 81, '「排靠泊位」有 81 种写法，匹配泊位主档，表外泊位只留在备注'], ['人员姓名待映射', 42, '大宗约 33 人、商务海运约 9 人，需一份姓名 → 飞书账号映射表']] };
+  // ---------- 连通性自检 ----------
+  M.health = [['飞书应用凭证（租户令牌）', '正常', '剩余有效期 1 小时 48 分'], ['航运主数据多维表格', '正常', '11 张表可读写，权限已开通'], ['云空间靠船计划文件夹', '正常', '最近文件 靠船计划_20261103.xlsx'], ['应用数据库', '正常', '镜像表同步延迟 < 1 分钟'], ['综合物流平台兼容表', '提醒', 'T09b 最近一次刷新 15:52，距今 17 小时']];
+})();

@@ -47,7 +47,7 @@
 .plan:before{content:"";position:absolute;left:0;right:0;top:0;height:4px;background:var(--primary)}
 .plan.B:before{background:#08979c}
 .plan.low{border:1.5px dashed #ff9c6e}
-.plan.empty{border:1.5px dashed #c4cad3;background:repeating-linear-gradient(135deg,#fbfbfc 0,#fbfbfc 8px,#f2f3f5 8px,#f2f3f5 9px)}
+.plan.noplan{border:1.5px dashed #c4cad3;background:repeating-linear-gradient(135deg,#fbfbfc 0,#fbfbfc 8px,#f2f3f5 8px,#f2f3f5 9px)}
 .plan-h{display:flex;align-items:center;gap:8px;padding:16px 16px 4px;white-space:nowrap}
 .plan-h h3{margin:0;font-size:17px}
 .plan-h .sp{flex:1}
@@ -320,7 +320,7 @@
   }
   function planCard(p, res, idx) {
     const P = res.pool, i = res.input, prod = i.biz === '成品销售船';
-    if (!p) return '<div class="card plan empty B"><div class="plan-h"><h3 style="color:#8a94a3">备选方案</h3><span class="tag gray">暂无</span></div>' +
+    if (!p) return '<div class="card plan noplan B"><div class="plan-h"><h3 style="color:#8a94a3">备选方案</h3><span class="tag gray">暂无</span></div>' +
       '<div class="emptymsg"><b>没有可用的备选方案</b>窗口内找不到与推荐方案错开、且符合条件的时间。</div></div>';
     const low = p.trust === '低可信';
     const cls = 'card plan ' + p.label + (low ? ' low' : '');

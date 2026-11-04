@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1920">
+<title>P08 主数据 · SSPS 原型</title>
+<link rel="stylesheet" href="assets/app.css">
+<style>
+.btns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.viewer{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:12px;white-space:nowrap}
+.viewer select{height:28px;padding:0 6px;border:1px solid #d3d9e1;border-radius:6px;background:#fff}
+.fbar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line-2)}
+.fbar .inp{width:auto}
+.tbl td,.tbl th{white-space:nowrap}
+.tbl td.wrap{white-space:normal;min-width:180px}
+.note{margin:12px 16px 0;border-radius:8px;padding:8px 12px;font-size:13px;background:#fffbe6;border:1px solid #ffe58f;color:#ad6800}
+.alias{display:flex;flex-wrap:wrap;gap:4px}
+.alias span{background:#f2f4f7;border-radius:4px;padding:0 6px;font-size:12px;color:#4a596b;white-space:nowrap}
+.prog{display:inline-flex;align-items:center;gap:6px}
+.prog i{display:inline-block;width:56px;height:6px;border-radius:3px;background:#e8ebef;overflow:hidden;vertical-align:middle}
+.prog i b{display:block;height:100%;background:var(--primary)}
+.prog i b.ok{background:#52c41a}
+.f-lab2{color:var(--muted);font-size:12px;margin-bottom:4px}
+textarea.inp{height:auto;min-height:80px;padding:6px 9px}
+.mut{color:var(--faint)}
+.denied{color:#98a4b3;font-size:12px}
+</style>
+</head>
+<body>
+<div class="app"><aside id="nav"></aside>
+  <div class="main"><header id="topbar"></header>
+    <main class="page">
+      <div class="ptitle"><div><h1>主数据</h1><p>港口、泊位、船舶、航程规则。预测和导入匹配都以这里为准。</p></div>
+        <div class="btns"><label class="viewer">模拟身份<select id="viewer"></select></label></div></div>
+      <section class="card">
+        <div class="tabs2" id="tabs"></div>
+        <div id="body"></div>
+      </section>
+    </main>
+  </div>
+</div>
+<script src="mock-data.js"></script><script src="engine.js"></script><script src="assets/shell.js"></script><script src="assets/common.js"></script>
+<script>
+(function () {
+  const M = window.MOCK, C = window.C, $ = (id) => document.getElementById(id);
+  const VIEWERS = [['顾明远', '仓储物流部', '物流管理员'], ['周晓棠', '大宗采购部', '部门主管'], ['钟立诚', '仓储物流部', '系统管理员'], ['林海川', '大宗采购部', '业务员']];
+  let who = VIEWERS[0], tab = C.qs.get('tab') || 'port';
+  const S = { kw: '', noMmsi: false };
+  const role = () => who[2];
+  const can = { master: () => ['物流管理员', '系统管理员'].includes(role()), vessel: () => ['物流管理员', '系统管理员', '业务员', '部门主管'].includes(role()), route: () => ['部门主管', '系统管理员'].includes(role()) };
+  const deny = (t) => ' disabled' + C.tipAttr(t);
+  const f = (id) => document.getElementById(id);
+  function head() { SHELL.mount({ active: 'P08', title: '主数据', user: who }); }
+  const TABS = [['port', '港口'], ['berth', '泊位'], ['vessel', '船舶'], ['route', '航程规则']];
+  const save = () => C.persist();
+
+  // ---------- 港口 ----------
+  function portTab() {
+    const L = M.ports.filter((p) => !S.kw || (p.cn + p.en + p.alias.join('')).toLowerCase().includes(S.kw.toLowerCase()));
+    return '<div class="fbar"><input class="inp" id="kw" placeholder="港口名 / 别名" value="' + C.esc(S.kw) + '" style="width:220px"><span class="muted nw" style="font-size:12px">别名用来匹配导入和旧表里的各种写法，一行一个。</span><span style="flex:1"></span><button class="btn primary" id="addPort"' + (can.master() ? '' : deny('只有物流管理员和系统管理员能维护港口')) + '>新增港口</button></div>' +
+      '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>港口编码</th><th>中文名称</th><th>英文标准名</th><th>别名</th><th>国家</th><th>地区</th><th>性质</th><th>本港</th><th>状态</th><th></th></tr></thead><tbody>' +
+      L.map((p) => '<tr><td>' + p.code + '</td><td><b>' + p.cn + '</b></td><td>' + p.en + '</td><td class="wrap"><div class="alias">' + (p.alias.length ? p.alias.map((a) => '<span>' + a + '</span>').join('') : '<span class="mut">—</span>') + '</div></td><td>' + p.country + '</td><td>' + (p.region || '—') + '</td><td>' + p.nature + '</td><td>' + (p.isLocal ? '<span class="tag blue">本港</span>' : '') + '</td><td><span class="tag ' + (p.status === '启用' ? 'green' : 'gray') + '">' + p.status + '</span></td><td><button class="btn ghost" data-ep="' + p.code + '"' + (can.master() ? '' : deny('没有修改权限')) + '>编辑</button></td></tr>').join('') + '</tbody></table></div>' +
+      '<div class="note" style="background:#f5f6f8;border-color:#d9dee5;color:#5b6878;margin-bottom:14px">原「物料信息」「标准航行周期」「船型」三列整列为空，已删除；航程是航线属性，放在「航程规则」页签。</div>';
+  }
+  function portModal(code) {
+    const p = code ? M.ports.find((x) => x.code === code) : null;
+    C.modal({ title: p ? '编辑港口 · ' + p.cn : '新增港口', ok: '保存', width: 560, body:
+      '<div class="row2"><div class="field"><div class="f-lab2">港口编码</div><input class="inp" id="m1" value="' + C.esc(p ? p.code : '') + '"' + (p ? ' disabled' : '') + '></div><div class="field"><div class="f-lab2">状态</div><select class="inp" id="m2"><option' + (p && p.status === '停用' ? '' : ' selected') + '>启用</option><option' + (p && p.status === '停用' ? ' selected' : '') + '>停用</option></select></div></div>' +
+      '<div class="row2"><div class="field"><div class="f-lab2">中文名称</div><input class="inp" id="m3" value="' + C.esc(p ? p.cn : '') + '"></div><div class="field"><div class="f-lab2">英文标准名</div><input class="inp" id="m4" value="' + C.esc(p ? p.en : '') + '"' + (p ? ' disabled' : '') + '></div></div>' +
+      '<div class="field"><div class="f-lab2">别名（一行一个旧写法）</div><textarea class="inp" id="m5">' + C.esc(p ? p.alias.join('\n') : '') + '</textarea></div><div class="row2"><div class="field"><div class="f-lab2">国家</div><input class="inp" id="m6" value="' + C.esc(p ? p.country : '') + '"></div><div class="field"><div class="f-lab2">性质</div><select class="inp" id="m7"><option>内港</option><option' + (p && p.nature === '外港' ? ' selected' : '') + '>外港</option></select></div></div>',
+      onOk: (m) => { const q = (i) => m.querySelector('#' + i).value.trim(); if (!q('m1') || !q('m3') || !q('m4')) { C.toast('编码、中文名称、英文标准名必填'); return false; }
+        const o = { code: q('m1'), cn: q('m3'), en: q('m4').toUpperCase(), alias: q('m5').split('\n').map((x) => x.trim()).filter(Boolean), country: q('m6'), nature: q('m7'), status: q('m2') };
+        if (p) Object.assign(p, o); else { if (M.ports.find((x) => x.code === o.code)) { C.toast('港口编码已存在'); return false; } M.ports.push(Object.assign({ region: '', isLocal: false }, o)); }
+        save(); draw(); C.toast('已保存'); } });
+  }
+
+  // ---------- 泊位 ----------
+  function berthTab() {
+    return '<div class="note">泊位池以《泊位容量表》（2026-10-08）为唯一依据：共 23 个德信可用泊位。表外泊位（L1、L2、L3、L5、L9、L10 等）不建行；容量不按历史靠泊记录调整。<b>下面的容量吨级是原型示例值</b>，只有 LN16 = 1 万吨来自已锁定规则。</div>' +
+      '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>泊位编码</th><th>码头</th><th style="text-align:right">容量吨级（吨）</th><th>泊位类别</th><th>状态' + C.ic('停用的泊位退出泊位余量的基数。') + '</th><th>依据版本</th><th>生效日期</th><th>备注</th><th></th></tr></thead><tbody>' +
+      M.berths.map((b) => '<tr><td><b>' + b.code + '</b></td><td>' + b.terminal + '</td><td style="text-align:right">' + C.fmt(b.capacity) + '</td><td>' + b.category + '</td><td><span class="tag ' + (b.status === '启用' ? 'green' : 'gray') + '">' + b.status + '</span></td><td>' + b.basis + '</td><td>' + b.effective + '</td><td>' + (b.note || '<span class="mut">—</span>') + '</td><td><button class="btn ghost" data-tb="' + b.code + '"' + (can.master() ? '' : deny('只有物流管理员和系统管理员能维护泊位')) + '>' + (b.status === '启用' ? '停用' : '启用') + '</button></td></tr>').join('') + '</tbody></table></div>';
+  }
+
+  // ---------- 船舶 ----------
+  function vesselTab() {
+    const L = M.vessels.filter((v) => (!S.kw || (v.name + v.mmsi + v.alias.join('')).toLowerCase().includes(S.kw.toLowerCase())) && (!S.noMmsi || !v.mmsi));
+    const miss = M.vessels.filter((v) => !v.mmsi).length;
+    return '<div class="fbar"><input class="inp" id="kw" placeholder="船名 / MMSI" value="' + C.esc(S.kw) + '" style="width:220px"><button class="chipf' + (S.noMmsi ? ' on' : '') + '" id="nm">只看缺 MMSI（' + miss + '）</button><span style="flex:1"></span><button class="btn primary" id="addVessel"' + (can.vessel() ? '' : deny('没有权限')) + '>新增船舶</button></div>' +
+      '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>船舶编号</th><th>MMSI' + C.ic('MMSI 必填且唯一；拖驳组合取拖轮的 MMSI。') + '</th><th>IMO</th><th>标准船名</th><th>船名别名</th><th>船型</th><th style="text-align:right">载重吨 DWT</th><th style="text-align:right">船长（米）</th><th>吨级档' + C.ic('吨级档的划分还没有确认，暂不填写。') + '</th><th></th></tr></thead><tbody>' +
+      L.map((v) => '<tr><td>' + v.id + '</td><td>' + (v.mmsi ? v.mmsi : '<span class="tag red">缺 MMSI</span>') + '</td><td>' + (v.imo || '<span class="mut">—</span>') + '</td><td><b>' + v.name + '</b></td><td>' + (v.alias.join('、') || '<span class="mut">—</span>') + '</td><td>' + v.type + '</td><td style="text-align:right">' + C.fmt(v.dwt) + '</td><td style="text-align:right">' + v.loa + '</td><td><span class="mut">待确认</span></td><td><button class="btn ghost" data-ev="' + v.id + '"' + (can.vessel() ? '' : deny('没有权限')) + '>编辑</button></td></tr>').join('') + '</tbody></table></div><div class="note" style="background:#f5f6f8;border-color:#d9dee5;color:#5b6878;margin-bottom:14px">共 ' + L.length + ' / ' + M.vessels.length + ' 条。航次里引用的是这里的标准船名，旧表的各种写法收在别名里。</div>';
+  }
+  function vesselModal(vid) {
+    const v = vid ? M.vessels.find((x) => x.id === vid) : null;
+    C.modal({ title: v ? '编辑船舶 · ' + v.name : '新增船舶', ok: '保存', width: 540, body:
+      '<div class="row2"><div class="field"><div class="f-lab2">标准船名</div><input class="inp" id="v1" value="' + C.esc(v ? v.name : '') + '" placeholder="如 MV BENUA 777（不含承运方、航次号）"></div><div class="field"><div class="f-lab2">MMSI（必填）</div><input class="inp" id="v2" value="' + C.esc(v ? v.mmsi : '') + '"></div></div>' +
+      '<div class="row2"><div class="field"><div class="f-lab2">IMO</div><input class="inp" id="v3" value="' + C.esc(v ? v.imo : '') + '"></div><div class="field"><div class="f-lab2">船型</div><select class="inp" id="v4">' + ['散货船', '拖驳组合', '集装箱船', '杂货船', '其他'].map((t) => '<option' + (v && v.type === t ? ' selected' : '') + '>' + t + '</option>').join('') + '</select></div></div>' +
+      '<div class="row2"><div class="field"><div class="f-lab2">载重吨 DWT</div><input class="inp" id="v5" type="number" value="' + (v ? v.dwt : '') + '"></div><div class="field"><div class="f-lab2">船长（米）</div><input class="inp" id="v6" type="number" value="' + (v ? v.loa : '') + '"></div></div><div class="field"><div class="f-lab2">船名别名（顿号分隔）</div><input class="inp" id="v7" value="' + C.esc(v ? v.alias.join('、') : '') + '"></div>',
+      onOk: (m) => { const q = (i) => m.querySelector('#' + i).value.trim(); if (!q('v1')) { C.toast('标准船名必填'); return false; } if (!q('v2')) { C.toast('MMSI 必填（一期手工更新 ETA 需要它定位船位）'); return false; }
+        if (M.vessels.find((x) => x.mmsi === q('v2') && x !== v)) { C.toast('这个 MMSI 已经属于另一条船'); return false; }
+        const o = { name: q('v1'), mmsi: q('v2'), imo: q('v3'), type: q('v4'), dwt: +q('v5') || 0, loa: +q('v6') || 0, alias: q('v7').split(/[、,，]/).map((x) => x.trim()).filter(Boolean) };
+        if (v) { Object.assign(v, o); M.issues.forEach((x) => { if (x.type === '缺 MMSI' && x.obj === v.name && x.status !== '已关闭') x.status = '已关闭'; }); } else M.vessels.push(Object.assign({ id: 'VS-' + String(M.vessels.length + 1).padStart(4, '0'), tier: '' }, o));
+        save(); draw(); C.toast('已保存'); } });
+  }
+
+  // ---------- 航程规则 ----------
+  function routeTab() {
+    const L = M.routeRules;
+    return '<div class="fbar"><span class="muted" style="font-size:12.5px">同航线实际样本 ≥ 5 条后，自动从「经验估算」切换为「历史统计」；每日自动重算一次。</span><span style="flex:1"></span><button class="btn primary" id="addRule"' + (can.route() ? '' : deny('只有部门主管和系统管理员能维护经验航程')) + '>新增规则</button></div>' +
+      '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>规则编号</th><th>装港 → 卸港</th><th>适用业务类型' + C.ic('物资备件船借用大宗采购船同一航线的样本。') + '</th><th>吨级档</th><th>经验航程 / 上限（天）</th><th>维护人</th><th>样本数</th><th>统计 P50 / P80（天）</th><th>采用口径</th><th>生效航程（天）</th><th>最近重算</th><th>状态</th><th></th></tr></thead><tbody>' +
+      L.map((r) => { const hist = r.samples >= 5, w = Math.min(100, r.samples / 5 * 100); return '<tr><td class="mono"><b>' + r.id + '</b></td><td><b>' + C.zh(r.load) + ' → ' + C.zh(r.disch) + '</b></td><td>' + r.biz.join('、') + '</td><td>' + (r.tier || '<span class="mut">未分档</span>') + '</td><td>' + r.exp + ' / ' + r.expMax + '</td><td>' + r.owner + '</td><td><span class="prog">' + r.samples + '<i><b class="' + (hist ? 'ok' : '') + '" style="width:' + w + '%"></b></i><span class="mut">/ 5</span></span></td><td>' + (r.p50 != null ? r.p50 + ' / ' + r.p80 : '<span class="mut">—</span>') + '</td><td>' + (hist ? '<span class="tag blue">历史统计</span>' : '<span class="tag amber">经验估算</span>') + '</td><td><b>' + r.effP50 + ' ～ ' + r.effP80 + '</b></td><td>' + r.recomputed + '</td><td><span class="tag ' + (r.status === '启用' ? 'green' : 'gray') + '">' + r.status + '</span></td><td><button class="btn ghost" data-er="' + r.id + '"' + (can.route() ? '' : deny('只有部门主管和系统管理员能修改经验航程')) + '>编辑</button></td></tr>'; }).join('') + '</tbody></table></div>' +
+      '<div class="note" style="background:#f5f6f8;border-color:#d9dee5;color:#5b6878;margin-bottom:14px">经验值冷启动：业务员先填常用航线的经验航程和上限，对应统计里的 P50（一半的船不超过）和 P80（八成的船不超过）。「吨级档」的枚举还没有确认，先不强制。</div>';
+  }
+  function ruleModal(rid) {
+    const r = rid ? M.routeRules.find((x) => x.id === rid) : null, ports = M.ports.map((p) => '<option value="' + p.en + '">' + p.cn.replace(/（.*?）/g, '') + '</option>').join('');
+    C.modal({ title: r ? '编辑航程规则 · ' + r.id : '新增航程规则', ok: '保存', width: 540, body:
+      '<div class="row2"><div class="field"><div class="f-lab2">装港</div><select class="inp" id="r1"' + (r ? ' disabled' : '') + '>' + ports + '</select></div><div class="field"><div class="f-lab2">卸港</div><select class="inp" id="r2"' + (r ? ' disabled' : '') + '>' + ports + '</select></div></div>' +
+      '<div class="row2"><div class="field"><div class="f-lab2">经验航程（天）</div><input class="inp" id="r3" type="number" step="0.5" value="' + (r ? r.exp : '') + '"></div><div class="field"><div class="f-lab2">经验航程上限（天）</div><input class="inp" id="r4" type="number" step="0.5" value="' + (r ? r.expMax : '') + '"></div></div>' +
+      '<div class="field"><div class="f-lab2">适用业务类型</div><div style="display:flex;gap:14px;flex-wrap:wrap">' + ['大宗采购船', '成品销售船', '物资备件船'].map((b) => '<label><input type="checkbox" value="' + b + '"' + (!r || r.biz.includes(b) ? (r || b === '大宗采购船' ? ' checked' : '') : '') + '> ' + b + '</label>').join('') + '</div></div><div class="errtxt" id="re" style="color:#cf1322;font-size:12.5px"></div>' +
+      (r ? '<div style="color:var(--muted);font-size:12px">样本 ' + r.samples + ' 条' + (r.samples >= 5 ? '，已使用历史统计，经验值仅作参考' : '，不足 5 条，仍使用这里填的经验值') + '。</div>' : ''),
+      onOpen: (m) => { if (r) { m.querySelector('#r1').value = r.load; m.querySelector('#r2').value = r.disch; } else { m.querySelector('#r2').value = 'BAHODOPI'; } },
+      onOk: (m) => { const q = (i) => m.querySelector('#' + i).value, a = +q('r3'), b = +q('r4'), biz = [...m.querySelectorAll('input[type=checkbox]:checked')].map((x) => x.value);
+        if (!(a > 0) || !(b >= a)) { m.querySelector('#re').textContent = '经验航程必须大于 0，且上限不能小于经验航程'; return false; } if (!biz.length) { m.querySelector('#re').textContent = '至少选一个业务类型'; return false; }
+        if (r) { r.exp = a; r.expMax = b; r.biz = biz; r.owner = who[0]; } else { const ld = q('r1'), dc = q('r2'); if (ld === dc) { m.querySelector('#re').textContent = '装港和卸港不能相同'; return false; } if (M.routeRules.find((x) => x.load === ld && x.disch === dc)) { m.querySelector('#re').textContent = '这条航线已经有规则了，请直接编辑'; return false; }
+          M.routeRules.push({ id: 'R-' + String(M.routeRules.length + 1).padStart(3, '0'), load: ld, disch: dc, biz, tier: null, exp: a, expMax: b, owner: who[0], samples: 0, p50: null, p80: null, recomputed: M.today, status: '启用' }); }
+        M.routeRules.forEach((x) => { x.basis = x.samples >= 5 ? '统计值' : '经验值'; x.effP50 = x.samples >= 5 ? x.p50 : x.exp; x.effP80 = x.samples >= 5 ? x.p80 : x.expMax; });
+        save(); draw(); C.toast('已保存'); } });
+  }
+
+  function draw() {
+    $('tabs').innerHTML = TABS.map((t) => '<button data-t="' + t[0] + '" class="' + (t[0] === tab ? 'on' : '') + '">' + t[1] + '<small>' + ({ port: M.ports.length, berth: M.berths.length, vessel: M.vessels.length, route: M.routeRules.length }[t[0]]) + '</small></button>').join('');
+    $('tabs').querySelectorAll('button').forEach((b) => b.onclick = () => { tab = b.dataset.t; S.kw = ''; S.noMmsi = false; draw(); });
+    $('body').innerHTML = { port: portTab, berth: berthTab, vessel: vesselTab, route: routeTab }[tab]();
+    const kw = f('kw'); if (kw) kw.oninput = (e) => { S.kw = e.target.value.trim(); const pos = e.target.selectionStart; draw(); const k2 = f('kw'); k2.focus(); k2.setSelectionRange(pos, pos); };
+    const nm = f('nm'); if (nm) nm.onclick = () => { S.noMmsi = !S.noMmsi; draw(); };
+    const ap = f('addPort'); if (ap && !ap.disabled) ap.onclick = () => portModal(null);
+    $('body').querySelectorAll('[data-ep]').forEach((b) => { if (!b.disabled) b.onclick = () => portModal(b.dataset.ep); });
+    $('body').querySelectorAll('[data-tb]').forEach((b) => { if (!b.disabled) b.onclick = () => { const x = M.berths.find((q) => q.code === b.dataset.tb); x.status = x.status === '启用' ? '停用' : '启用'; save(); draw(); C.toast(x.code + ' 已' + x.status + (x.status === '停用' ? '，退出泊位余量的基数' : '，重新计入泊位余量的基数')); }; });
+    const av = f('addVessel'); if (av && !av.disabled) av.onclick = () => vesselModal(null);
+    $('body').querySelectorAll('[data-ev]').forEach((b) => { if (!b.disabled) b.onclick = () => vesselModal(b.dataset.ev); });
+    const ar = f('addRule'); if (ar && !ar.disabled) ar.onclick = () => ruleModal(null);
+    $('body').querySelectorAll('[data-er]').forEach((b) => { if (!b.disabled) b.onclick = () => ruleModal(b.dataset.er); });
+  }
+  $('viewer').innerHTML = VIEWERS.map((x, i) => '<option value="' + i + '">' + x[0] + ' · ' + x[2] + '</option>').join('');
+  $('viewer').onchange = (e) => { who = VIEWERS[+e.target.value]; head(); draw(); C.toast('已切换为 ' + who[0] + '（' + who[2] + '）'); };
+  head(); draw();
+})();
+</script>
+</body>
+</html>

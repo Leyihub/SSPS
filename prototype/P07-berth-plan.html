@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1920">
+<title>P07 靠船计划 · SSPS 原型</title>
+<link rel="stylesheet" href="assets/app.css">
+<style>
+.btns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.auto{display:flex;flex-wrap:wrap;gap:6px 22px;padding:10px 16px;font-size:13px;color:#3b4a5c;border-bottom:1px solid var(--line-2)}
+.auto span{white-space:nowrap}.auto em{font-style:normal;color:var(--muted);margin-right:4px}
+.alerts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
+.al{padding:12px 16px;border-left:4px solid #d9dee5;cursor:pointer}
+.al b{font-size:24px;line-height:1.2;display:block}
+.al span{color:var(--muted);font-size:13px;display:flex;align-items:center}
+.al.warn{border-left-color:#faad14}.al.err{border-left-color:#ff4d4f}.al.ok{border-left-color:#52c41a}
+.al:hover{box-shadow:0 2px 8px rgba(16,24,40,.12)}
+.tbl tr.off td{color:#98a4b3;background:#fafbfc}
+.tbl tr.focus td{background:#fffbe6}
+.tbl td,.tbl th{white-space:nowrap}
+.vname a{color:var(--primary);text-decoration:none}.vname a:hover{text-decoration:underline}
+.raw{color:var(--muted);font-size:12px;display:block}
+.fbar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line-2)}
+.fbar .inp{width:auto}
+.bt2 tr.sel td{background:#f0f7ff}
+.viewer{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:12px;white-space:nowrap}
+.viewer select{height:28px;padding:0 6px;border:1px solid #d3d9e1;border-radius:6px;background:#fff}
+.rep{display:grid;gap:8px;margin-top:8px}
+.rep div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--line-2);padding:5px 0}
+.rep div span:first-child{color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="app"><aside id="nav"></aside>
+  <div class="main"><header id="topbar"></header>
+    <main class="page">
+      <div class="ptitle"><div><h1>靠船计划</h1><p>IMIP 靠船计划按批次入库、保留历史快照；预测用的泊位占用来自最新一期。</p></div>
+        <div class="btns"><label class="viewer">模拟身份<select id="viewer"></select></label><button class="btn" id="pull">立即拉取云空间</button><button class="btn primary" id="upload">手动上传</button></div></div>
+
+      <div class="alerts" id="alerts"></div>
+
+      <section class="card" style="margin-bottom:14px">
+        <div class="card-h"><h2>导入批次<span class="i" data-tip="每次导入整份保存为一个批次，保留历史快照。自动拉取失败时可以手动上传兜底；按云空间文件标识去重，不会重复入库。">i</span></h2><span class="muted nw" style="font-size:12px">来自飞书云空间的批次由系统每日自动拉取</span></div>
+        <div class="auto"><span><em>自动拉取</em>每日 07:30</span><span><em>上次成功</em>11/04 07:30 · 55 行</span><span><em>下次</em>11/05 07:30</span><span><em>云空间文件夹</em>靠船计划（已连通）</span></div>
+        <div class="tbl-wrap"><table class="tbl bt2" id="batches"></table></div>
+      </section>
+
+      <section class="card">
+        <div class="card-h"><h2 id="dh"></h2><span class="muted nw" style="font-size:12px" id="dsub"></span></div>
+        <div class="fbar">
+          <select class="inp" id="tm"><option value="">全部码头</option><option>北区码头</option><option>拉博塔码头</option></select>
+          <input class="inp" id="kw" placeholder="船名 / 泊位" style="width:200px">
+          <button class="chipf" id="f1">只看非德信池</button><button class="chipf" id="f2">只看德信船未匹配航次</button><button class="chipf" id="f3">只看德信船</button>
+          <span class="muted nw" id="cnt" style="margin-left:auto;font-size:12px"></span>
+        </div>
+        <div class="tbl-wrap"><table class="tbl" id="rows"></table></div>
+      </section>
+    </main>
+  </div>
+</div>
+<script src="mock-data.js"></script><script src="engine.js"></script><script src="assets/shell.js"></script><script src="assets/common.js"></script>
+<script>
+(function () {
+  const M = window.MOCK, C = window.C, $ = (id) => document.getElementById(id);
+  const VIEWERS = [['顾明远', '仓储物流部', '物流管理员'], ['钟立诚', '仓储物流部', '系统管理员'], ['林海川', '大宗采购部', '业务员']];
+  let who = VIEWERS[0];
+  SHELL.mount({ active: 'P07', title: '靠船计划', user: who });
+  const S = { tm: '', kw: '', off: false, unm: false, dx: false, batch: M.batches[0].batchNo };
+  const canUp = () => ['物流管理员', '系统管理员'].includes(who[2]);
+  const rows = M.berthPlanRows;
+  const latest = M.batches[0];
+
+  function alerts() {
+    const off = rows.filter((r) => !r.inPool).length, unm = rows.filter((r) => r.inPool && r.isDexin && !r.matchVoyage).length, parse = M.batches.filter((b) => b.status !== '成功').length;
+    const card = (cls, n, t, tip, fn) => '<div class="card al ' + cls + '" data-fn="' + fn + '"><b>' + n + '</b><span>' + t + (tip ? C.ic(tip) : '') + '</span></div>';
+    $('alerts').innerHTML = card('', off, '非德信池泊位记录', '靠船计划里出现、但不在 23 个德信泊位内的记录（如 L5、L9、L10）。保留原文并标「非德信池」，不计入泊位余量。', 'f1') +
+      card(unm ? 'warn' : 'ok', unm, '德信船未匹配航次', '是德信的船，但航次表里找不到对应航次。请业务员补录航次，否则这条船在航次相关的统计里是缺失的。', 'f2') +
+      card('ok', rows.filter((r) => r.inPool).length - 0, '已匹配德信泊位', '预计靠泊的泊位能对上 23 个德信泊位的记录。', '') +
+      card(parse ? 'err' : 'ok', parse, '部分失败 / 失败批次', '最近的批次里有解析失败的，请查看批次列表里的校验结果，必要时重新上传。', '');
+    $('alerts').querySelectorAll('[data-fn]').forEach((c) => c.onclick = () => { if (c.dataset.fn === 'f1') { S.off = !S.off; S.unm = false; } else if (c.dataset.fn === 'f2') { S.unm = !S.unm; S.off = false; S.dx = true; } draw(); $('rows').scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+  }
+  function drawBatches() {
+    $('batches').innerHTML = '<thead><tr><th>批次号</th><th>计划日期</th><th>来源</th><th>文件名</th><th style="text-align:right">行数</th><th>校验结果</th><th>状态</th></tr></thead><tbody>' + M.batches.map((b) =>
+      '<tr class="click' + (b.batchNo === S.batch ? ' sel' : '') + '" data-b="' + b.batchNo + '"><td><b>' + b.batchNo + '</b>' + (b === latest ? ' <span class="tag blue">最新一期</span>' : '') + '</td><td>' + b.planDate + '</td><td>' + (b.source === '手动上传' ? '<span class="tag amber">手动上传</span>' : '<span class="tag gray">飞书云空间</span>') + '</td><td>' + b.fileName + '</td><td style="text-align:right">' + b.rows + '</td><td style="white-space:normal;min-width:260px">' + b.validation + '</td><td><span class="tag ' + (b.status === '成功' ? 'green' : b.status === '部分失败' ? 'amber' : 'red') + '">' + b.status + '</span></td></tr>').join('') + '</tbody>';
+    $('batches').querySelectorAll('tr.click').forEach((r) => r.onclick = () => { S.batch = r.dataset.b; draw(); });
+  }
+  function draw() {
+    drawBatches();
+    const isLatest = S.batch === latest.batchNo, b = M.batches.find((x) => x.batchNo === S.batch);
+    $('dh').innerHTML = (isLatest ? '最新一期明细' : '批次明细') + ' · ' + b.batchNo + C.ic('只保留预测用到的列。表内泊位会映射到泊位主档；表外泊位保留原文，标「非德信池」。');
+    $('dsub').textContent = '计划日期 ' + b.planDate + ' · ' + b.rows + ' 行';
+    if (!isLatest) { $('rows').innerHTML = '<tbody><tr><td class="empty">原型只保留最新一期的明细；历史批次的明细存在应用库里，真实系统可按批次查看。<br><button class="btn" id="back" style="margin-top:10px">回到最新一期</button></td></tr></tbody>'; $('back').onclick = () => { S.batch = latest.batchNo; draw(); }; $('cnt').textContent = ''; return; }
+    const list = rows.filter((r) => (!S.tm || r.terminal === S.tm) && (!S.kw || (r.vessel + r.berthRaw + (r.berth || '')).toLowerCase().includes(S.kw.toLowerCase())) && (!S.off || !r.inPool) && (!S.dx || r.isDexin) && (!S.unm || (r.inPool && r.isDexin && !r.matchVoyage)));
+    $('rows').innerHTML = '<thead><tr><th>码头</th><th>泊位（原文）</th><th>泊位（德信池）</th><th>船名</th><th style="text-align:right">船长（米）</th><th>船舶类型</th><th>物资</th><th style="text-align:right">吨位</th><th>预计到港</th><th>预计靠泊</th><th>预计卸完</th><th>从属单位</th><th>是否德信</th><th>匹配航次</th></tr></thead><tbody>' +
+      (list.length ? list.map((r) => '<tr class="' + (r.inPool ? '' : 'off') + '"><td>' + r.terminal + '</td><td>' + r.berthRaw + '</td><td>' + (r.inPool ? '<b>' + r.berth + '</b>' : '<span class="tag gray"' + C.tipAttr('不在 23 个德信泊位内，保留原文，不计入泊位余量') + '>非德信池</span>') + '</td><td class="vname">' + r.vessel + '</td><td style="text-align:right">' + r.loa + '</td><td>' + r.shipType + '</td><td>' + r.cargo + '</td><td style="text-align:right">' + C.fmt(r.tons) + '</td><td>' + C.md(r.eta) + '</td><td>' + C.md(r.start) + '</td><td>' + C.md(r.end) + '</td><td>' + r.owner + '</td><td>' + (r.isDexin ? '是' : '否') + '</td><td class="vname">' + (r.matchVoyage ? '<a href="P05-voyage-detail.html?id=' + r.matchVoyage + '">' + r.matchVoyage + '</a>' : (r.isDexin && r.inPool ? '<span class="tag red">未匹配</span>' : '<span class="mut" style="color:var(--faint)">—</span>')) + '</td></tr>').join('') : '<tr><td colspan="14" class="empty">没有符合条件的记录</td></tr>') + '</tbody>';
+    $('cnt').textContent = '显示 ' + list.length + ' / ' + rows.length + ' 行';
+    $('f1').classList.toggle('on', S.off); $('f2').classList.toggle('on', S.unm); $('f3').classList.toggle('on', S.dx);
+  }
+  $('tm').onchange = (e) => { S.tm = e.target.value; draw(); }; $('kw').oninput = (e) => { S.kw = e.target.value.trim(); draw(); };
+  $('f1').onclick = () => { S.off = !S.off; draw(); }; $('f2').onclick = () => { S.unm = !S.unm; if (S.unm) S.dx = true; draw(); }; $('f3').onclick = () => { S.dx = !S.dx; draw(); };
+
+  // 身份
+  $('viewer').innerHTML = VIEWERS.map((x, i) => '<option value="' + i + '">' + x[0] + ' · ' + x[2] + '</option>').join('');
+  $('viewer').onchange = (e) => { who = VIEWERS[+e.target.value]; SHELL.mount({ active: 'P07', title: '靠船计划', user: who }); upd(); C.toast('已切换为 ' + who[0] + '（' + who[2] + '）'); };
+  const upd = () => { ['upload', 'pull'].forEach((i) => { $(i).disabled = !canUp(); if (!canUp()) $(i).setAttribute('data-tip', '只有物流管理员和系统管理员能上传或拉取靠船计划'); else $(i).removeAttribute('data-tip'); }); };
+  // 手动上传（原型：不真正解析文件，用示例校验报告演示流程）
+  $('upload').onclick = () => {
+    C.modal({ title: '手动上传靠船计划', ok: '确认导入', width: 600, body:
+      '<div class="field"><div style="color:var(--muted);font-size:12px;margin-bottom:4px">选择 IMIP 靠船计划 Excel</div><input type="file" id="fl" accept=".xlsx,.xls" class="inp" style="height:auto;padding:6px"></div>' +
+      '<div style="color:var(--muted);font-size:12px;margin-bottom:8px">原型不会真的解析文件，选好文件（或不选，用示例文件演示）后点「校验」看校验报告，再确认导入。</div><button class="btn" id="chk">校验</button><div class="rep" id="rep"></div>',
+      onOpen: (m) => { m.querySelector('#chk').onclick = () => { const f = m.querySelector('#fl').files[0]; m.dataset.name = f ? f.name : '靠船计划_20261104.xlsx'; m.querySelector('#rep').innerHTML =
+        '<div><span>文件</span><b>' + m.dataset.name + '</b></div><div><span>总行数</span><b>56</b></div><div><span>通过</span><b style="color:#237804">53</b></div><div><span>标「非德信池」</span><b>3</b></div><div><span>泊位无法解析</span><b>0</b></div><div><span>解析告警</span><b style="color:#ad4e00">1（第 31 行船长为空，已按空值导入）</b></div><div><span>与最新一期的差异</span><b>新增 3 条 · 取消 2 条 · 时间变更 7 条</b></div>'; m.dataset.checked = '1'; }; },
+      onOk: (m) => { if (!m.dataset.checked) { C.toast('请先点「校验」'); return false; }
+        M.batches.unshift({ batchNo: 'BP-20261104-02', planDate: M.today, source: '手动上传', fileName: m.dataset.name, rows: 56, validation: '通过 · 3 行标「非德信池」· 1 条解析告警', status: '成功' });
+        M.syncLogs.unshift({ type: '手动上传靠船计划', start: M.now, end: M.now, n: 56, ok: '成功', err: '' }); C.persist(); S.batch = latest.batchNo; draw(); C.toast('已导入批次 BP-20261104-02（原型：明细仍显示上一期）'); } });
+  };
+  $('pull').onclick = () => { M.syncLogs.unshift({ type: '拉取云空间靠船计划', start: M.now, end: M.now, n: 0, ok: '成功', err: '云空间没有新文件（按文件标识去重）' }); C.persist(); C.toast('已触发拉取：云空间没有新文件，未重复入库'); };
+  upd(); alerts(); draw();
+})();
+</script>
+</body>
+</html>

@@ -92,3 +92,60 @@ button,input,select{font:inherit;color:inherit}
 .toast{position:fixed;left:50%;top:70px;transform:translateX(-50%);background:#26394f;color:#fff;border-radius:8px;padding:9px 18px;z-index:200;display:none;box-shadow:0 6px 20px rgba(16,24,40,.3)}
 .toast.on{display:block}
 .tip{position:fixed;z-index:300;background:#1f2d3d;color:#fff;border-radius:8px;padding:8px 11px;font-size:12px;line-height:1.6;pointer-events:none;display:none;max-width:320px;box-shadow:0 6px 20px rgba(16,24,40,.3)}
+
+/* ===== 通用补充（P01、P04–P10 使用） ===== */
+.i{display:inline-grid;place-items:center;width:15px;height:15px;border-radius:50%;background:#c9d0d9;color:#fff;font:600 10px/1 Georgia,serif;font-style:italic;cursor:help;vertical-align:1px;margin-left:5px;flex:none;user-select:none}
+.i:hover{background:#8a97a8}
+#tipbox{position:fixed;z-index:400;background:#1f2d3d;color:#fff;border-radius:8px;padding:9px 12px;font-size:12.5px;line-height:1.7;max-width:340px;box-shadow:0 8px 24px rgba(16,24,40,.3);display:none;pointer-events:none}
+.nw{white-space:nowrap}
+.st{display:inline-flex;align-items:center;border-radius:4px;padding:0 8px;line-height:20px;font-size:12px;border:1px solid;white-space:nowrap}
+.s0{background:#f5f6f8;color:#5b6878;border-color:#d9dee5}
+.s1{background:#eef2ff;color:#3730a3;border-color:#c7d2fe}
+.s2{background:#fff7e6;color:#ad4e00;border-color:#ffd591}
+.s3{background:#e6fffb;color:#08777c;border-color:#87e8de}
+.s4{background:#e6f4ff;color:#0958d9;border-color:#91caff}
+.s5{background:#fff2e8;color:#c4320a;border-color:#ffbb96}
+.s6{background:#f6ffed;color:#237804;border-color:#b7eb8f}
+.s7{background:#f0f0f0;color:#595959;border-color:#d9d9d9}
+.sx{background:#fafafa;color:#8c8c8c;border-color:#e0e0e0;text-decoration:line-through}
+.ptitle{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.ptitle h1{margin:0;font-size:20px;white-space:nowrap}.ptitle p{margin:2px 0 0;color:var(--muted)}
+.tabs2{display:flex;gap:2px;border-bottom:1px solid var(--line);overflow-x:auto}
+.tabs2 button{border:0;background:none;padding:9px 16px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap;font-size:14px}
+.tabs2 button:hover{color:var(--primary)}
+.tabs2 button.on{color:var(--primary);border-bottom-color:var(--primary);font-weight:600}
+.tabs2 button small{margin-left:5px;color:var(--faint);font-weight:400}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th,.tbl td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line-2);vertical-align:middle}
+.tbl th{background:#f7f9fb;color:var(--muted);font-weight:500;font-size:12px;white-space:nowrap;position:sticky;top:0}
+.tbl tbody tr:hover{background:#f8fbff}
+.tbl tr.click{cursor:pointer}
+.tbl td.nw{white-space:nowrap}
+.tbl .mut{color:var(--muted)}
+.tbl-wrap{overflow-x:auto}
+.filters{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line-2)}
+.filters .inp{width:auto;min-width:130px}
+.chipf{border:1px solid var(--line);background:#fff;border-radius:14px;padding:1px 11px;cursor:pointer;font-size:12.5px;color:#3b4a5c;white-space:nowrap}
+.chipf.on{border-color:var(--primary);background:var(--primary-bg);color:#0958d9}
+.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.kvg{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px 20px}
+.kvg .k{font-size:12px;color:var(--muted);margin-bottom:2px;white-space:nowrap}
+.kvg .v{font-weight:500;min-height:22px}
+.empty{padding:28px 16px;color:var(--muted);text-align:center}
+.burger{display:none;border:0;background:none;font-size:22px;line-height:1;cursor:pointer;margin-right:8px;color:var(--text)}
+.navmask{display:none}
+@media(max-width:900px){
+  body{min-width:0}
+  .app{grid-template-columns:1fr}
+  #nav{position:fixed;left:0;top:0;bottom:0;width:240px;z-index:300;transform:translateX(-100%);transition:transform .2s}
+  #nav.open{transform:none}
+  #nav .nav-in{max-height:100vh}
+  .navmask.on{display:block;position:fixed;inset:0;background:rgba(16,24,40,.45);z-index:250}
+  .burger{display:block}
+  #topbar{padding:0 12px}
+  .proto-flag,.top-date,.user span span small{display:none}
+  .page{padding:12px}
+  .row3{grid-template-columns:1fr}
+  .filters .inp{flex:1;min-width:110px}
+  .kvg{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+}
