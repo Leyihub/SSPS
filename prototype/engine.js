@@ -125,8 +125,8 @@
 
     function mkPlan(label, c, fallback) {
       const reasons = [];
-      if (!c.complete) reasons.push('窗口内 ' + c.missing.length + ' 天无' + (mode === 'cmr' ? '靠船计划' : '航次表') + '数据（' + c.missing.map(md).join('、') + '），指标仅按可得 ' + c.okDays + ' 天计算');
-      if (fallback && c.complete === false) reasons.push('无满足 CMR 余量 ≥30% 的完整数据候选，已从稀疏候选中选取');
+      if (!c.complete) reasons.push('窗口内有 ' + c.missing.length + ' 天没有' + (mode === 'cmr' ? '靠船计划' : '航次计划') + '数据（' + c.missing.map(md).join('、') + '），只按有数据的 ' + c.okDays + ' 天计算');
+      if (fallback && c.complete === false) reasons.push('没有数据完整且余量不低于 30% 的时间，已从数据不全的时间里选取');
       const low = reasons.length > 0;
       const p = { label, c, mode, trust: low ? '低可信' : '正常', reasons, qualifies: c.metric !== null && qualify(mode, c.metric, P.n) };
       if (biz !== '成品销售船') {
@@ -177,19 +177,21 @@
   // 返回片段数组：v=true 的片段是引擎数值（页面高亮、只读）；其余是固定模板措辞。
   function announce(res, plan) {
     const i = res.input, P = res.pool, r = res.run, rule = r.rule, v = (t) => ({ t: String(t), v: true }), s = (t) => ({ t });
+    const zh = (en) => { const x = M.ports.find((q) => q.en === en); return x ? x.cn.replace(/（.*?）/g, '') : (en || '未说明'); };
     const pct = (x) => Math.round(x * 1000) / 10 + '%';
-    const out = [s('【宣船】' + i.biz + ' · '), v(Number(i.tons).toLocaleString() + ' 吨'), s(' · ' + i.load + ' → ' + i.disch + '。Plan ' + plan.label + '：')];
+    const out = [s('【宣船】' + i.biz + ' · '), v(Number(i.tons).toLocaleString() + ' 吨'), s(' · ' + zh(i.load) + ' → ' + zh(i.disch) + '。方案' + plan.label + '：')];
     if (i.biz !== '成品销售船') {
-      out.push(s('推荐发船日 '), v(iso(plan.depart)), s('（离装港），计划抵 ' + i.disch + ' 窗口 '), v(md(plan.c.s) + ' ~ ' + md(plan.c.e)), s('；'));
+      if (plan.depart != null) out.push(s('建议发船日 '), v(iso(plan.depart)), s('（离开装港），'));
+      out.push(s('计划到' + zh(i.disch) + '的窗口 '), v(md(plan.c.s) + ' ~ ' + md(plan.c.e)), s('；'));
     } else {
-      out.push(s('推荐抵装港窗口 '), v(md(plan.c.s) + ' ~ ' + md(plan.c.e)), s('，截止日（最晚装船日）'), v(iso(plan.deadline)), s('；'));
+      out.push(s('建议装船窗口 '), v(md(plan.c.s) + ' ~ ' + md(plan.c.e)), s('，最晚装船日 '), v(iso(plan.deadline)), s('；'));
     }
-    if (plan.mode === 'cmr') out.push(s('窗口内 CMR_min '), v(pct(plan.c.metric)), s('（吨级匹配泊位 '), v(P.n + ' 个'), s('）；'));
-    else out.push(s('窗口内同吨级重叠船数峰值 '), v(plan.c.metric + ' 艘'), s('（吨级匹配泊位 '), v(P.n + ' 个'), s('）；'));
-    if (rule) out.push(s('航程按' + rule.basis + ' '), v(rule.effP50 + ' ~ ' + rule.effP80 + ' 天'), s('；'));
-    if (plan.trust === '低可信') out.push(s('本方案标「低可信」，数据不完整，请谨慎采用。'));
-    if (i.biz === '成品销售船' && plan.custEta) out.push(s('客户港 ETA（反向近似，仅供参考）'), v(md(plan.custEta[0]) + ' ~ ' + md(plan.custEta[1])), s('。'));
-    out.push(s('以上数值来自规则引擎（' + r.id + '），文案未改写。'));
+    if (plan.mode === 'cmr') out.push(s('窗口内最低泊位余量 '), v(pct(plan.c.metric)), s('（能装下的泊位 '), v(P.n + ' 个'), s('）；'));
+    else out.push(s('窗口内同期最多 '), v(plan.c.metric + ' 艘'), s(' 船（能装下的泊位 '), v(P.n + ' 个'), s('）；'));
+    if (rule && i.biz !== '成品销售船') out.push(s('航程按' + (rule.basis === '经验值' ? '业务员估算' : '历史统计') + ' '), v(Math.ceil(rule.effP50) + '～' + Math.ceil(rule.effP80) + ' 天'), s('；'));
+    if (plan.trust === '低可信') out.push(s('本方案数据不完整，请谨慎采用；'));
+    if (i.biz === '成品销售船' && plan.custEta) out.push(s('到客户港预计 '), v(md(plan.custEta[0]) + ' ~ ' + md(plan.custEta[1])), s('（仅供参考）；'));
+    out.push(s('以上数值由规则计算得出，文案未改写。'));
     return out;
   }
 
