@@ -381,3 +381,12 @@
   // ---------- 连通性自检 ----------
   M.health = [['飞书应用凭证（租户令牌）', '正常', '剩余有效期 1 小时 48 分'], ['航运主数据多维表格', '正常', '11 张表可读写，权限已开通'], ['云空间靠船计划文件夹', '正常', '最近文件 靠船计划_20261103.xlsx'], ['应用数据库', '正常', '镜像表同步延迟 < 1 分钟'], ['综合物流平台兼容表', '提醒', 'T09b 最近一次刷新 15:52，距今 17 小时']];
 })();
+
+/* 卸船结算示例数据补全：T06 里的水尺、其他部门运量、倒运车数等字段 */
+(function () {
+  const M = window.MOCK; let i = 0;
+  Object.keys(M.bulkSettle).forEach((id) => {
+    const x = M.bulkSettle[id], g = x.gauge || 50000; i++;
+    Object.assign(x, { g1: Math.round(g * 0.3333), g2: Math.round(g * 0.3333), g3: g - 2 * Math.round(g * 0.3333), other: 0, carTurn: 150 + i * 6, x1Cars: 40 + i * 2, crossTruck: 0, crossBelt: 0, noHandover: false, fx: 15820 + i * 3, portUnit: 0.26 });
+  });
+})();

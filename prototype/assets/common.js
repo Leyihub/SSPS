@@ -103,7 +103,7 @@
   };
   C.download = (name, text) => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + text], { type: 'text/csv;charset=utf-8' })); a.download = name; a.click(); };
   // ---------- 会话内持久化（原型：只存在于本浏览器标签页，刷新不丢，关闭即清） ----------
-  const KEY = 'ssps-proto-v1', KEYS = ['voyageList', 'etaRevisions', 'changeLog', 'issues', 'cargoLines', 'batches', 'syncLogs', 'routeRules', 'vessels', 'ports'];
+  const KEY = 'ssps-proto-v1', KEYS = ['voyageList', 'etaRevisions', 'changeLog', 'issues', 'cargoLines', 'batches', 'syncLogs', 'routeRules', 'vessels', 'ports', 'bulkSettle', 'salesExt'];
   try { const raw = sessionStorage.getItem(KEY); if (raw) { const d = JSON.parse(raw); KEYS.forEach((k) => { if (d[k]) M[k] = d[k]; }); } } catch (e) { /* 无存储时忽略 */ }
   C.persist = () => { try { const o = {}; KEYS.forEach((k) => { o[k] = M[k]; }); sessionStorage.setItem(KEY, JSON.stringify(o)); } catch (e) { /* ignore */ } };
   C.resetData = () => { try { sessionStorage.removeItem(KEY); } catch (e) { /* ignore */ } };
