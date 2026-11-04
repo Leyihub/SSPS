@@ -385,7 +385,10 @@
     } else h += '<div class="plans">' + planCard(res.plans[0], res) + planCard(res.plans[1] || null, res) + '</div>';
     el.innerHTML = h;
     const tg = $('togCand'); if (tg) tg.onclick = () => { showCands = !showCands; renderResult(last); };
-    el.querySelectorAll('[data-detail]').forEach((a) => a.onclick = () => toast('P03 预测详情页（数据依据）将在评审 P02 后制作'));
+    el.querySelectorAll('[data-detail]').forEach((a) => a.onclick = () => {
+      const i = last.input, pl = a.closest('.plan').dataset.plan;
+      location.href = 'P03-prediction-detail.html?' + new URLSearchParams({ biz: i.biz, tons: i.tons, load: i.load, disch: i.disch, ws: i.winStart, we: i.winEnd, plan: pl });
+    });
     el.querySelectorAll('[data-adopt]').forEach((b) => b.onclick = () => openAdopt(b.dataset.adopt));
     el.querySelectorAll('[data-annc]').forEach((b) => b.onclick = () => openAnnc(b.dataset.annc));
   }
@@ -497,7 +500,9 @@
   $('go').onclick = run;
   $('reset').onclick = () => { cur = 0; drawPresets(); writeForm(PRESETS[0].v); run(); };
   ['tons', 'ws', 'we'].forEach((id) => $(id).addEventListener('input', updateHints));
-  drawPresets(); writeForm(PRESETS[0].v); run();
+  const q0 = new URLSearchParams(location.search);
+  if (q0.get('biz')) { cur = -1; drawPresets(); writeForm({ biz: q0.get('biz'), tons: +q0.get('tons'), load: q0.get('load'), disch: q0.get('disch'), ws: q0.get('ws'), we: q0.get('we') }); run(); }
+  else { drawPresets(); writeForm(PRESETS[0].v); run(); }
   window.__P02 = { PRESETS, pick(i) { cur = i; drawPresets(); writeForm(PRESETS[i].v); run(); }, toggleCands(v) { showCands = v; renderResult(last); } };
 })();
 </script>

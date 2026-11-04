@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1920">
+<title>P03 预测详情 · SSPS 原型</title>
+<link rel="stylesheet" href="assets/app.css">
+<style>
+.nw{white-space:nowrap}
+.back{display:inline-flex;align-items:center;gap:4px;color:var(--muted);text-decoration:none;font-size:13px;margin-bottom:6px;white-space:nowrap}
+.back:hover{color:var(--primary)}
+.hd{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:12px;flex-wrap:wrap}
+.hd h1{margin:0;font-size:20px;white-space:nowrap}
+.hd .ctx{display:flex;flex-wrap:wrap;gap:6px 8px;margin-top:6px}
+.tabs{display:flex;border:1px solid #d3d9e1;border-radius:8px;overflow:hidden;background:#fff}
+.tabs button{border:0;background:#fff;padding:7px 18px;cursor:pointer;border-right:1px solid #d3d9e1;color:var(--muted);white-space:nowrap}
+.tabs button:last-child{border-right:0}
+.tabs button.on{background:var(--primary);color:#fff}
+.tabs button:disabled{color:#c0c8d2;cursor:not-allowed;background:#fafbfc}
+.work{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:16px;align-items:start}
+.side{position:sticky;top:64px}
+.stack > section{margin-bottom:16px}
+/* 灰色提示 */
+.i{display:inline-grid;place-items:center;width:15px;height:15px;border-radius:50%;background:#c9d0d9;color:#fff;font:600 10px/1 Georgia,serif;font-style:italic;cursor:help;vertical-align:1px;margin-left:5px;flex:none;user-select:none}
+.i:hover{background:#8a97a8}
+#tipbox{position:fixed;z-index:400;background:#1f2d3d;color:#fff;border-radius:8px;padding:9px 12px;font-size:12.5px;line-height:1.7;max-width:340px;box-shadow:0 8px 24px rgba(16,24,40,.3);display:none;pointer-events:none}
+.card-h h2{display:flex;align-items:center;white-space:nowrap}
+.card-h .muted{white-space:nowrap;font-size:12px}
+/* 结论 */
+.concl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;padding:14px 16px 6px}
+.m .lb{font-size:12px;color:var(--muted);display:flex;align-items:center;white-space:nowrap}
+.m .v{font-size:22px;font-weight:700;margin:2px 0;white-space:nowrap}
+.m .sub{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.big{display:inline-flex;align-items:baseline;gap:6px;border:1px solid;border-radius:8px;padding:1px 12px;margin:2px 0;white-space:nowrap}
+.big b{font-size:22px;line-height:1.35}.big span{font-size:12px}
+.lowbox{margin:4px 16px 0;background:#fff2e8;border:1px solid #ffbb96;border-radius:8px;padding:8px 12px;color:#ad2102;font-size:13px}
+/* 时间轴 */
+.tl{display:grid;gap:3px;padding:12px 16px 16px;align-items:center}
+.tl .lab{font-size:12px;color:var(--muted);text-align:right;padding-right:8px;white-space:nowrap}
+.tl .dt{text-align:center;font-size:11.5px;line-height:1.25;white-space:nowrap;color:var(--muted)}
+.tl .dt b{display:block;font-size:12px;color:var(--text)}
+.tl .dt.we b{color:#cf1322}
+.tl .gl{border-left:1px dashed #e1e5eb;height:100%}
+.bar{height:24px;border-radius:5px;font-size:12px;display:flex;align-items:center;padding:0 8px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar.go{background:#597ef7}.bar.go2{background:#adc6ff;color:#1d39c4}
+.bar.win{background:var(--primary)}.bar.win.B{background:#08979c}
+.bar.sub{background:#d0d7e2;color:#44546a}
+.bar.eta{background:#9254de}
+.bar.dead{background:#cf1322}
+.bar.low{background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.28) 0,rgba(255,255,255,.28) 4px,transparent 4px,transparent 8px)}
+/* 数据依据 */
+.step{display:flex;gap:12px;padding:14px 16px;border-top:1px solid var(--line-2)}
+.step:first-of-type{border-top:0}
+.step .no{flex:none;width:24px;height:24px;border-radius:50%;background:#26394f;color:#fff;font-size:12px;display:grid;place-items:center;margin-top:1px}
+.step .bd{flex:1;min-width:0}
+.step h3{margin:0 0 6px;font-size:14px;display:flex;align-items:center}
+.step .lead{margin:0 0 8px;color:var(--muted);font-size:12.5px}
+table.kv{width:100%;border-collapse:collapse;font-size:13px}
+table.kv th,table.kv td{padding:6px 10px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line-2);line-height:1.6}
+table.kv th{background:#f7f9fb;color:var(--muted);font-weight:500;font-size:12px;white-space:nowrap}
+table.kv td:first-child{color:var(--muted);white-space:nowrap;width:130px}
+table.kv td:nth-child(2){font-weight:600;white-space:nowrap}
+table.kv td:last-child{color:#4a596b}
+table.kv tr.hl td{background:#fffbe6}
+table.kv .src{color:#4a596b}
+.mono{font-family:ui-monospace,Menlo,Consolas,"WenQuanYi Zen Hei",monospace;font-size:12px}
+.day{border:1px solid;border-radius:5px;padding:0 7px;font-size:12px;line-height:20px;white-space:nowrap}
+.cands{display:flex;flex-wrap:wrap;gap:6px;font-size:12px;margin-top:8px}
+.cand{display:inline-flex;gap:5px;align-items:center;border:1px solid;border-radius:6px;padding:1px 8px;line-height:20px;white-space:nowrap}
+.cand i{font-style:normal;font-weight:600;color:#fff;background:var(--primary);border-radius:3px;padding:0 5px;font-size:11px}
+.cand i.b{background:#08979c}
+.cand.sp{border-style:dashed}
+.ct{width:100%;color:var(--muted);font-size:12.5px;white-space:nowrap}
+.tech{margin:0 16px 14px;border:1px dashed var(--line);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 22px}
+.tech span{white-space:nowrap}
+/* 泊位 */
+.dtabs{display:flex;flex-wrap:wrap;gap:8px;padding:12px 16px 0}
+.dtab{border:1px solid var(--line);background:#fff;border-radius:8px;padding:4px 12px;cursor:pointer;white-space:nowrap;display:flex;gap:8px;align-items:center}
+.dtab.on{border-color:var(--primary);background:var(--primary-bg)}
+.dtab small{color:var(--muted)}
+.bm{padding:12px 16px 4px}
+.bm-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.bm-h b{font-size:14px;white-space:nowrap}
+.bm-g{display:flex;flex-wrap:wrap;gap:14px 28px}
+.bm-t{font-size:12px;color:var(--muted);margin-bottom:5px;white-space:nowrap}
+.bm-r{display:flex;gap:6px}
+.bt{width:54px;height:46px;border:1px solid;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.25;cursor:help;flex:none;white-space:nowrap}
+.bt b{font-size:13px}.bt small{font-size:11px;opacity:.85}
+.bt.free{background:var(--c1-bg);color:var(--c1-fg);border-color:var(--c1-bd)}
+.bt.occ{background:var(--c3-bg);color:var(--c3-fg);border-color:var(--c3-bd)}
+.bt.cap{background:#e6f4ff;color:#0958d9;border-color:#91caff}
+.bt.nd{background:var(--stripe);color:#5b6878;border-color:#c4cad3}
+.bt.off{background:#eef0f3;color:#a7b0bc;border-color:#dfe3e8}
+.bt:hover{outline:2px solid var(--primary);z-index:2}
+.bm-l{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:12px;font-size:12px;color:var(--muted)}
+.bm-l .g{display:flex;align-items:center;gap:5px;white-space:nowrap}
+.sw{display:inline-block;min-width:26px;padding:0 5px;text-align:center;border:1px solid;border-radius:4px;font-size:10.5px;line-height:16px;white-space:nowrap}
+.ships{padding:6px 16px 16px}
+table.tb{width:100%;border-collapse:collapse;font-size:13px}
+table.tb th,table.tb td{padding:7px 10px;text-align:left;border-bottom:1px solid var(--line-2);white-space:nowrap}
+table.tb th{background:#f7f9fb;color:var(--muted);font-weight:500;font-size:12px}
+.empty{padding:18px 4px;color:var(--muted)}
+/* 侧栏 */
+.annc{background:#f7f9fb;border:1px solid var(--line);border-radius:8px;padding:12px 14px;line-height:2;font-size:13.5px}
+.annc .v{background:#e6f4ff;color:#0958d9;border-radius:3px;padding:0 3px;font-weight:600}
+.side .tabs{margin-bottom:12px}
+.side .tabs button{flex:1}
+.fnote{font-size:12px;color:var(--muted);margin-top:8px}
+.msg{padding:28px;color:#3b4a5c}
+@media(max-width:1700px){.bt{width:50px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside id="nav"></aside>
+  <div class="main">
+    <header id="topbar"></header>
+    <main class="page" id="page"></main>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<div id="tipbox"></div>
+
+<script src="mock-data.js"></script>
+<script src="engine.js"></script>
+<script src="assets/shell.js"></script>
+<script>
+(function () {
+  SHELL.mount({ active: 'P03', title: '预测详情' });
+  const M = window.MOCK, E = window.ENGINE, $ = (id) => document.getElementById(id);
+  const fmt = (n) => Number(n).toLocaleString('en-US');
+  const pct = (x) => Math.round(x * 1000) / 10 + '%';
+  const zh = (en) => { const p = M.ports.find((q) => q.en === en); return p ? p.cn.replace(/（.*?）/g, '') : (en || '未说明'); };
+  const mdCn = (n) => { const [, m, d] = E.iso(n).split('-'); return Number(m) + '月' + Number(d) + '日'; };
+  const md = E.md, wk = (n) => '周' + E.wk(n);
+  const cmrCls = (v) => (v >= .5 ? 'c1' : v >= .3 ? 'c2' : v >= .1 ? 'c3' : 'c4');
+  const cmrLab = (v) => (v >= .5 ? '充裕' : v >= .3 ? '适中' : v >= .1 ? '偏紧' : '紧张');
+  const denCls = (c, n) => { const r = c / n; return r <= .5 ? 'c1' : r <= .7 ? 'c2' : r <= .9 ? 'c3' : 'c4'; };
+  const denLab = (c, n) => { const r = c / n; return r <= .5 ? '宽松' : r <= .7 ? '适中' : r <= .9 ? '偏密' : '拥挤'; };
+  const esc = (t) => String(t).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+  const toast = (t) => { const el = $('toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('on'), 2400); };
+  const TIPS = []; const ic = (text) => '<span class="i" data-k="' + (TIPS.push(text) - 1) + '">i</span>';
+
+  // ---------- 浮窗 ----------
+  const tb = $('tipbox');
+  function showTip(el) {
+    const t = el.dataset.k !== undefined ? TIPS[+el.dataset.k] : el.dataset.tip; if (!t) return;
+    tb.innerHTML = String(t).replace(/\\n|\n/g, '<br>'); tb.style.display = 'block';
+    const r = el.getBoundingClientRect(), w = tb.offsetWidth, h = tb.offsetHeight;
+    let x = Math.min(Math.max(8, r.left + r.width / 2 - w / 2), innerWidth - w - 8), y = r.bottom + 8;
+    if (y + h > innerHeight - 8) y = r.top - h - 8;
+    tb.style.left = x + 'px'; tb.style.top = y + 'px';
+  }
+  document.addEventListener('mouseover', (e) => { const el = e.target.closest('.i,[data-tip]'); if (el) showTip(el); });
+  document.addEventListener('mouseout', (e) => { if (e.target.closest('.i,[data-tip]')) tb.style.display = 'none'; });
+  document.addEventListener('click', (e) => { const el = e.target.closest('.i'); if (el) showTip(el); else tb.style.display = 'none'; });
+
+  // ---------- 取参数并重算（A22：按预测取详情；原型里用同一套规则重算） ----------
+  const q = new URLSearchParams(location.search);
+  const input = q.get('biz')
+    ? { biz: q.get('biz'), tons: +q.get('tons'), load: q.get('load'), disch: q.get('disch'), winStart: q.get('ws'), winEnd: q.get('we') }
+    : { biz: '大宗采购船', tons: 50000, load: 'SURIGAO', disch: 'BAHODOPI', winStart: '2026-11-08', winEnd: '2026-11-18' };
+  const res = E.predict(input);
+  let which = q.get('plan') === 'B' ? 1 : 0, selDay = null;
+  const backUrl = 'P02-prediction.html?' + new URLSearchParams({ biz: input.biz, tons: input.tons, load: input.load, disch: input.disch, ws: input.winStart, we: input.winEnd });
+
+  // ---------- 小组件 ----------
+  const kvTable = (rows) => '<table class="kv"><tbody>' + rows.map((r) => '<tr' + (r[3] ? ' class="hl"' : '') + '><td>' + r[0] + '</td><td>' + r[1] + '</td><td class="src">' + r[2] + '</td></tr>').join('') + '</tbody></table>';
+  const step = (no, title, tip, lead, body) => '<div class="step"><span class="no">' + no + '</span><div class="bd"><h3>' + title + (tip ? ic(tip) : '') + '</h3>' + (lead ? '<p class="lead">' + lead + '</p>' : '') + body + '</div></div>';
+  const periodTxt = (r) => (r.basis === '经验值' ? '经验估算' : '历史统计');
+
+  // ---------- 时间轴 ----------
+  function timeline(p) {
+    const i = res.input, prod = i.biz === '成品销售船', c = p.c, we = E.dn(i.winEnd), ws = E.dn(i.winStart);
+    let from, to;
+    if (!prod) { from = Math.min(p.depart != null ? p.depart : c.s, c.s) - 1; to = Math.max(c.e, p.etaTo != null ? p.etaTo : c.e) + 1; }
+    else { from = ws - 0; to = Math.max(we, p.custEta ? p.custEta[1] : we) + 1; }
+    const n = to - from + 1, col = (d) => d - from + 2;
+    const bar = (cls, text, a, b, row, tip) => '<div class="bar ' + cls + '" style="grid-row:' + row + ';grid-column:' + col(a) + ' / ' + (col(b) + 1) + '"' + (tip ? ' data-tip="' + esc(tip) + '"' : '') + '>' + text + '</div>';
+    let h = '<div class="tl" style="grid-template-columns:96px repeat(' + n + ',minmax(0,1fr))"><div></div>';
+    for (let d = from; d <= to; d++) { const dow = new Date(d * 86400000).getUTCDay(); h += '<div class="dt' + (dow === 0 || dow === 6 ? ' we' : '') + '"><b>' + md(d).slice(3) + '</b>' + wk(d) + '</div>'; }
+    const low = p.trust === '低可信' ? ' low' : '';
+    if (!prod) {
+      h += '<div class="lab" style="grid-row:2">航行</div><div class="lab" style="grid-row:3">到港窗口</div>';
+      if (p.depart != null) {
+        h += bar('go', '发船 ' + md(p.depart), p.depart, p.etaFrom, 2, '从装港出发：' + mdCn(p.depart) + '；按较短航程最快 ' + md(p.etaFrom) + ' 抵港。');
+        if (p.etaTo > p.etaFrom) h += bar('go2', p.etaTo - p.etaFrom >= 2 ? '最晚 ' + md(p.etaTo) : '最晚', p.etaFrom + 1, p.etaTo, 2, '按较长航程（P80）最晚 ' + md(p.etaTo) + ' 抵港，仍在窗口内。');
+      } else h += '<div class="muted" style="grid-row:2;grid-column:2 / -1;font-size:12px">缺少这条航线的航程，无法画出航行段</div>';
+      h += bar('win ' + p.label + low, '到港窗口 ' + md(c.s) + ' – ' + md(c.e).slice(3), c.s, c.e, 3);
+    } else {
+      h += '<div class="lab" style="grid-row:2">受载期</div><div class="lab" style="grid-row:3">建议装船窗口</div><div class="lab" style="grid-row:4">到客户港</div>';
+      h += bar('sub', '受载期 ' + md(ws) + ' – ' + md(we), ws, we, 2) + bar('win ' + p.label + low, md(c.s) + ' – ' + md(c.e).slice(3), c.s, c.e, 3);
+      h += p.custEta ? bar('eta', '预计 ' + md(p.custEta[0]) + ' – ' + md(p.custEta[1]) + '（仅供参考）', p.custEta[0], p.custEta[1], 4) : '<div class="muted" style="grid-row:4;grid-column:2 / -1;font-size:12px">暂无这条航线的航程</div>';
+      h += bar('dead', '截止', we, we, 5, '最晚装船日：' + mdCn(we)) ; h = h.replace('<div class="lab" style="grid-row:4">到客户港</div>', '<div class="lab" style="grid-row:4">到客户港</div><div class="lab" style="grid-row:5">截止日</div>');
+    }
+    return h + '</div>';
+  }
+
+  // ---------- 数据依据 ----------
+  function evidence(p) {
+    const i = res.input, R = res.run, P = res.pool, rule = R.rule, le = R.mode === 'cmr', prod = i.biz === '成品销售船', c = p.c, B = M.batch, x = res.excluded;
+    let h = '';
+    if (p.trust === '低可信') h += '<div class="lowbox" style="margin:14px 16px 0"><b>为什么标「低可信」：</b>' + p.reasons.join('；') + '。</div>';
+    // 1 输入与泊位池
+    h += step(1, '输入与可用泊位', '只统计容量不小于货量的启用泊位，它们是泊位余量率的基数。容量以《泊位容量表》为准，不按历史靠泊记录调整。', '',
+      kvTable([
+        ['货量', fmt(i.tons) + ' 吨', '本次预测输入'],
+        ['航线', zh(i.load) + ' → ' + zh(i.disch), '本次预测输入；本港侧 = ' + (prod ? '装港' : '卸港') + '（巴浩多比）'],
+        [prod ? '受载期' : '期望到港窗口', md(E.dn(i.winStart)) + ' – ' + md(E.dn(i.winEnd)), '本次预测输入' + (prod ? '；最晚装船日 = 受载期最后一天' : '')],
+        ['能装下的泊位', P.n + ' / ' + M.berths.length + ' 个', '泊位主档 · ' + M.berths[0].basis + '（容量 ≥ ' + fmt(i.tons) + ' 吨）：' + P.list.map((b) => b.code).join('、')],
+      ]));
+    // 2 路径与数据来源
+    const srcRows = [['计算路径', le ? '近 15 天' : '15 天后', '目标到港日 ' + mdCn(R.target) + '，距今 ' + R.dist + ' 天。只按日期区分，不看有没有数据']];
+    if (le) {
+      srcRows.push(['数据来源', '靠船计划', '批次 <span class="mono">' + B.batchNo + '</span> · 计划日 ' + mdCn(E.dn(B.planDate)) + ' · 来源 ' + B.source + ' · 文件 ' + B.fileName]);
+      srcRows.push(['批次情况', B.rows + ' 行 · 校验' + B.status, B.validation + '；覆盖到 ' + mdCn(E.planCoverTo)]);
+      srcRows.push(['占用口径', '按泊位逐个算', '预计靠泊 ≤ 当天 ≤ 预计卸完，只比较日期、不比较时刻；非德信泊位（' + x.offPool + ' 条）不计入']);
+    } else {
+      srcRows.push(['数据来源', '航次计划', '航次主表 · 计划覆盖到 ' + mdCn(E.voyHorizon)]);
+      srcRows.push(['占用口径', '看同期船数', (prod ? '受载期' : '计划抵卸港窗口') + '起止之间都算在场；只计与该吨级泊位竞争的船（所需最小泊位吨级不低于本次货量）']);
+      srcRows.push(['不计入', '已取消航次 ' + x.cancelled + ' 条', '已取消的航次不进同期船数；原型数据里有 ' + E.cancelledVoy.map((v) => v.id + ' ' + (v.vessel || '')).join('、') ]);
+    }
+    h += step(2, '计算路径与数据来源', '目标到港日距今不超过 15 天，用靠船计划逐个泊位算占用；超过 15 天没有逐泊位数据，改用航次计划统计同期船数。', '', kvTable(srcRows));
+    // 3 逐日计算
+    let t = '<table class="kv"><thead><tr><th>日期</th><th>' + (le ? '占用泊位' : '同期船数') + '</th><th>' + (le ? '泊位余量' : '占能装下泊位') + '</th><th>' + (le ? '占用的泊位' : '同期的船') + '</th></tr></thead><tbody>';
+    const metricDay = (d) => (le ? d.cmr : d.count);
+    const best = p.c.days.filter((d) => d.state === 'ok'); const extreme = le ? Math.min(...best.map((d) => d.cmr)) : Math.max(...best.map((d) => d.count));
+    const pick = best.find((d) => metricDay(d) === extreme);
+    p.c.days.forEach((d) => {
+      if (d.state !== 'ok') { t += '<tr><td>' + md(d.d) + ' ' + wk(d.d) + '</td><td colspan="3"><span class="day nd">无数据</span> <span class="muted">灰色斜线，不是 0；不参与计算</span></td></tr>'; return; }
+      const hl = d === pick;
+      t += '<tr' + (hl ? ' class="hl"' : '') + '><td>' + md(d.d) + ' ' + wk(d.d) + (hl ? ' <span class="tag amber nw">取这一天</span>' : '') + '</td>' +
+        (le ? '<td>' + d.occ + ' / ' + d.n + ' 个</td><td><span class="day ' + cmrCls(d.cmr) + '">' + pct(d.cmr) + ' ' + cmrLab(d.cmr) + '</span></td><td>' + (d.occBerths.join('、') || '无') + '</td>'
+            : '<td>' + d.count + ' 艘</td><td><span class="day ' + denCls(d.count, d.n) + '">' + Math.round(d.count / d.n * 100) + '% ' + denLab(d.count, d.n) + '</span></td><td>' + (d.ships.map((s) => (s.vessel || '待宣船')).join('、') || '无') + '</td>') + '</tr>';
+    });
+    t += '</tbody></table>';
+    const res3 = le ? '窗口内逐日算一次，取最低的一天：<b>' + pct(c.metric) + '</b>（空闲泊位 ÷ 能装下的泊位 ' + P.n + ' 个）' : '窗口内逐日统计，取最多的一天：<b>' + c.metric + ' 艘</b>（能装下的泊位 ' + P.n + ' 个）';
+    h += step(3, le ? '逐日算出最低泊位余量' : '逐日统计同期船数', le ? '泊位余量率 = 空闲泊位 ÷ 能装下该货量的泊位总数。只要窗口里有一天紧张，船就要排队，所以取最低的一天。' : '15 天后只能数同期船数，不算泊位余量率。取窗口内最多的一天，越少越宽松。', res3, t);
+    // 4 航程与发船日
+    let rrows = [];
+    if (prod) {
+      rrows = rule ? [['航程规则', '<span class="mono">' + rule.id + '</span> · ' + zh(rule.load) + ' → ' + zh(rule.disch), '航程规则表（装港 × 卸港）；成品船只用来反向推算到客户港的时间'],
+        ['口径', periodTxt(rule), (rule.basis === '经验值' ? '经验航程 ' + rule.exp + ' / 上限 ' + rule.expMax + ' 天 · 样本 ' + rule.samples + ' 条（<5，未切统计值）' : 'P50 ' + rule.p50 + ' / P80 ' + rule.p80 + ' 天 · 样本 ' + rule.samples + ' 条') + '；维护人 ' + rule.owner],
+        ['到客户港预计', p.custEta ? md(p.custEta[0]) + ' – ' + md(p.custEta[1]) : '—', '建议窗口起点 + 较短航程 ～ 窗口终点 + 较长航程（' + Math.ceil(rule.effP50) + ' ～ ' + Math.ceil(rule.effP80) + ' 天）；反向近似，仅供参考'],
+        ['最晚装船日', mdCn(p.deadline), '受载期最后一天；建议窗口末日距截止还剩 ' + p.slack + ' 天']] : [['航程规则', '暂无', '没有「' + zh(i.load) + ' → ' + zh(i.disch) + '」的航程规则，不给客户港预计时间']];
+    } else if (rule) {
+      const emp = rule.basis === '经验值', e50 = Math.ceil(rule.effP50), e80 = Math.ceil(rule.effP80);
+      rrows = [['航程规则', '<span class="mono">' + rule.id + '</span> · ' + zh(rule.load) + ' → ' + zh(rule.disch), '航程规则表（装港 × 卸港）' + (rule.tier ? ' · ' + rule.tier : '') + (R.borrowed ? '；物资备件船借用大宗采购船同一航线的样本' : '')],
+        ['口径', periodTxt(rule), emp ? '实际样本 ' + rule.samples + ' 条，不足 5 条，暂用经验估算（累计到 5 条后自动改用历史统计）' : '样本 ' + rule.samples + ' 条，已达 5 条，使用历史统计'],
+        [emp ? '经验航程 / 上限' : '统计 P50 / P80', emp ? rule.exp + ' / ' + rule.expMax + ' 天' : rule.p50 + ' / ' + rule.p80 + ' 天', (emp ? '业务员填写，维护人 ' + rule.owner + '；统计参考 P50 ' + rule.p50 + ' / P80 ' + rule.p80 + '（样本不足，不采用）' : '由航次主表「实际航程」自动重算，最近重算 ' + rule.recomputed)],
+        ['生效航程', e50 + ' ～ ' + e80 + ' 天', '按整天向上取整：较短（P50）' + e50 + ' 天，较长（P80）' + e80 + ' 天'],
+        ['推荐发船日', p.depart != null ? mdCn(p.depart) : '—', '到港窗口最后一天 ' + md(c.e) + ' − ' + e80 + ' 天 = ' + (p.depart != null ? md(p.depart) : '—') + '（不早于今天）'],
+        ['预计抵港', p.etaFrom != null ? md(p.etaFrom) + ' ～ ' + md(p.etaTo) : '—', '发船日 ' + (p.depart != null ? md(p.depart) : '') + ' + ' + e50 + ' ～ ' + e80 + ' 天，落在到港窗口 ' + md(c.s) + ' – ' + md(c.e) + ' 内']];
+    } else rrows = [['航程规则', '暂无', '没有「' + zh(i.load) + ' → ' + zh(i.disch) + '」的航程规则，只给到港日期，不推算发船日']];
+    h += step(4, prod ? '航程与截止日' : '航程与发船日', '发船日 = 到港窗口最后一天 − 较长航程（P80：八成的船不超过的天数），这样大概率不晚于窗口到港。', '', kvTable(rrows));
+    // 5 取舍
+    const cands = (res.candidates || []).map((cd) => {
+      const mark = res.plans.map((pl) => (pl && pl.c === cd ? pl.label : '')).join('');
+      const k = cd.none ? 'nd' : (le ? cmrCls(cd.metric) : denCls(cd.metric, P.n));
+      return '<span class="cand ' + k + (cd.complete ? '' : ' sp') + '">' + (mark ? '<i class="' + (mark === 'B' ? 'b' : '') + '">' + (mark === 'A' ? '推荐' : '备选') + '</i>' : '') + md(cd.s) + '–' + md(cd.e).slice(3) + ' ' + (cd.none ? '无数据' : (le ? pct(cd.metric) : cd.metric + ' 艘')) + (cd.complete || cd.none ? '' : '*') + '</span>';
+    }).join('');
+    h += step(5, '为什么是这个方案', '把期望窗口切成每 3 天一档、每次挪一天，逐档计算。带星号的候选窗口里有没数据的日子，只按有数据的天数算。',
+      '推荐方案：' + (le ? '最低泊位余量最高' : '同期最多船数最少') + '的一档，同分取更早；备选方案：要求' + (le ? '余量不低于 30%' : '等效余量不低于 30%') + '，且与推荐方案的时间不重叠。不使用综合评分。',
+      '<div class="cands"><div class="ct">候选窗口（3 天一档，按' + (le ? '最低泊位余量从高到低' : '同期最多船数从少到多') + '，不使用综合评分）：</div>' + cands + '</div>' +
+      '<div class="fnote" style="margin-top:8px">已排除：无数据的候选 ' + x.noData + ' 个' + (x.pastDepart ? '；发船日早于今天的候选 ' + x.pastDepart + ' 个' : '') + '。</div>');
+    return h;
+  }
+
+  // ---------- 泊位视图 ----------
+  function berthView(p) {
+    const i = res.input, P = res.pool, le = res.run.mode === 'cmr', tons = i.tons;
+    const days = p.c.days.filter((d) => d.state === 'ok' || true);
+    if (selDay == null || !days.find((d) => d.d === selDay)) {
+      const ok = days.filter((d) => d.state === 'ok');
+      selDay = ok.length ? (le ? ok.reduce((a, b) => (b.cmr < a.cmr ? b : a)) : ok.reduce((a, b) => (b.count > a.count ? b : a))).d : days[0].d;
+    }
+    const tabs = days.map((d) => '<button class="dtab' + (d.d === selDay ? ' on' : '') + '" data-d="' + d.d + '"><b>' + md(d.d) + ' ' + wk(d.d) + '</b><small>' +
+      (d.state !== 'ok' ? '无数据' : le ? '余量 ' + pct(d.cmr) : d.count + ' 艘') + '</small></button>').join('');
+    const d = selDay, nodata = le && d > E.planCoverTo, mode = le ? 'cmr' : 'density';
+    const items = M.berths.map((b) => {
+      const capable = b.status === '启用' && tons > 0 && b.capacity >= tons;
+      const row = le && !nodata ? E.rows.find((r) => r.inPool && r.berth === b.code && r.s <= d && d <= r.e) : null;
+      const state = !capable ? 'off' : !le ? 'cap' : nodata ? 'nd' : row ? 'occ' : 'free';
+      const L = ['<b>' + b.code + ' · ' + b.terminal + '</b>', '容量 ' + (b.capacity / 10000) + ' 万吨 · ' + b.category + ' · ' + b.status, '依据：' + b.basis + (b.note ? '（' + b.note + '）' : ''),
+        '本次货量 ' + fmt(tons) + ' 吨：' + (capable ? '能装下，计入余量基数' : '装不下，不计入余量基数')];
+      if (!le) L.push(mdCn(d) + '：15 天后没有逐泊位数据，只能判断能否装下');
+      else if (nodata) L.push(mdCn(d) + '：靠船计划暂无数据，无法判断占用');
+      else if (row) L.push(mdCn(d) + ' 占用：' + row.vessel, row.cargo + ' ' + fmt(row.tons) + ' 吨', '预计靠泊 ' + md(row.s) + ' · 在港至 ' + md(row.e));
+      else L.push(mdCn(d) + '：空闲');
+      return { b, state, tip: L.join('\n'), row };
+    });
+    const cnt = (s) => items.filter((x) => x.state === s).length, n = items.filter((x) => x.state !== 'off').length;
+    const chips = !le ? '<span class="tag blue">能装下 ' + n + ' 个</span><span class="tag gray">15 天后无逐泊位数据</span>' : nodata ? '<span class="tag blue">能装下 ' + n + ' 个</span><span class="tag nodata">暂无数据</span>'
+      : '<span class="tag blue">能装下 ' + n + ' 个</span><span class="tag green">空闲 ' + cnt('free') + '</span><span class="tag amber">占用 ' + cnt('occ') + '</span>';
+    const grp = (name) => { const g = items.filter((x) => x.b.terminal === name);
+      return '<div><div class="bm-t">' + name + ' · ' + g.length + ' 个</div><div class="bm-r">' + g.map((x) => '<div class="bt ' + x.state + '" data-tip="' + esc(x.tip) + '"><b>' + x.b.code + '</b><small>' + (x.b.capacity / 10000) + '万</small></div>').join('') + '</div></div>'; };
+    let h = '<div class="dtabs">' + tabs + '</div><div class="bm"><div class="bm-h"><b>' + M.berths.length + ' 个泊位 · ' + mdCn(d) + ' ' + wk(d) + '</b>' + chips + '</div><div class="bm-g">' + grp('北区码头') + grp('拉博塔码头') + '</div>' +
+      '<div class="bm-l"><span class="g"><span class="sw c1">空闲</span>能装下且当天空着</span><span class="g"><span class="sw c3">占用</span>能装下但当天有船</span>' +
+      '<span class="g"><span class="sw" style="background:#eef0f3;color:#a7b0bc;border-color:#dfe3e8">灰色</span>装不下本次货量</span><span class="g"><span class="sw nd">&nbsp;&nbsp;</span>无数据</span>' +
+      '<span class="g"><span class="sw" style="background:#e6f4ff;color:#0958d9;border-color:#91caff">能装下</span>15 天后只判断能否装下</span></div></div>';
+    // 当天船只明细
+    const det = E.dayDetail(d, tons);
+    h += '<div class="ships">';
+    if (det.state === 'nodata') h += '<div class="empty">这一天暂无数据（灰色斜线，不是 0 艘）。</div>';
+    else if (!det.list.length) h += '<div class="empty">这一天没有占用同吨级泊位的船，泊位全部空闲。</div>';
+    else if (le) h += '<table class="tb"><thead><tr><th>船名</th><th>泊位</th><th>货种</th><th>货量</th><th>预计到港</th><th>靠泊</th><th>在港至</th><th>当天</th></tr></thead><tbody>' +
+      det.list.map((s) => '<tr><td><b>' + s.vessel + '</b></td><td>' + s.berth + '</td><td>' + s.cargo + '</td><td>' + fmt(s.tons) + ' 吨</td><td>' + md(s.eta) + '</td><td>' + md(s.start) + '</td><td>' + md(s.end) + '</td><td>' + (s.arriving ? '<span class="tag blue">预抵</span>' : s.berthing ? '<span class="tag blue">靠泊</span>' : '<span class="tag gray">在泊</span>') + '</td></tr>').join('') + '</tbody></table>';
+    else h += '<table class="tb"><thead><tr><th>船名</th><th>航线</th><th>货量</th><th>' + (det.list[0] && det.list[0].side === '装' ? '受载期' : '计划到港窗口') + '</th><th>状态</th><th>当天</th></tr></thead><tbody>' +
+      det.list.map((s) => '<tr><td><b>' + (s.vessel || '待宣船') + '</b></td><td>' + zh(s.load) + ' → ' + zh(s.disch) + '</td><td>' + fmt(s.tons) + ' 吨</td><td>' + md(s.start) + ' – ' + md(s.end) + '</td><td>' + s.status + '</td><td>' + (s.arriving ? '<span class="tag blue">计划到达</span>' : '<span class="tag gray">窗口内</span>') + '</td></tr>').join('') + '</tbody></table>';
+    return h + '</div>';
+  }
+
+  // ---------- 页面 ----------
+  function render() {
+    const page = $('page'), i = res.input;
+    const ctx = '<span class="tag blue">' + i.biz + '</span><span class="tag blue">' + fmt(i.tons) + ' 吨</span><span class="tag blue">' + zh(i.load) + ' → ' + zh(i.disch) + '</span><span class="tag blue">' + (i.biz === '成品销售船' ? '受载期 ' : '期望到港 ') + md(E.dn(i.winStart)) + ' – ' + md(E.dn(i.winEnd)) + '</span>';
+    let h = '<a class="back" href="' + backUrl + '">← 返回智能发船预测</a><div class="hd"><div><h1>预测详情</h1><div class="ctx">' + ctx + '</div></div>' +
+      '<div class="tabs" id="ptabs"><button data-p="0"' + (which === 0 ? ' class="on"' : '') + '>推荐方案</button><button data-p="1"' + (which === 1 ? ' class="on"' : '') + (res.plans && res.plans[1] ? '' : ' disabled') + '>备选方案</button></div></div>';
+    if (res.errors.length || res.noRule || res.noCandidate || !res.plans || !res.plans[which]) {
+      const why = res.errors.join('；') || (res.noRule ? '没有找到「' + zh(i.load) + ' → ' + zh(i.disch) + '」的航程，没有航程就推不出发船日。' : '这个时间窗口内没有可以推荐的方案。');
+      page.innerHTML = h + '<div class="card msg"><b>没有可展示的方案</b><br>' + why + ' 请返回预测页调整后再看。</div>'; return;
+    }
+    const p = res.plans[which], P = res.pool, prod = i.biz === '成品销售船', le = p.mode === 'cmr', R = res.run;
+    // 结论
+    let m1, m2, m3;
+    if (!prod) {
+      m1 = '<div class="m"><div class="lb">推荐发船日（离装港）' + ic('发船日就是船从装港出发的日期。系统用 P80（八成的船不超过的航程天数）从到港窗口的最后一天往前推。') + '</div><div class="v">' + (p.depart != null ? mdCn(p.depart) : '—') + '</div><div class="sub">' + (p.depart != null ? wk(p.depart) + ' · 按 P80 反推最晚到港日' : '缺少航程，无法推算') + '</div></div>';
+      m2 = '<div class="m"><div class="lb">到港窗口（卸港 · 本港侧）</div><div class="v">' + mdCn(p.c.s) + ' – ' + Number(E.iso(p.c.e).slice(8)) + '日</div><div class="sub">' + (p.etaFrom != null ? '预计 ' + md(p.etaFrom) + ' ~ ' + md(p.etaTo) + ' 抵港' : '共 ' + p.c.len + ' 天') + '</div></div>';
+    } else {
+      m1 = '<div class="m"><div class="lb">建议装船窗口（装港 · 本港侧）</div><div class="v">' + mdCn(p.c.s) + ' – ' + Number(E.iso(p.c.e).slice(8)) + '日</div><div class="sub">' + wk(p.c.s) + ' 起 · 共 ' + p.c.len + ' 天</div></div>';
+      m2 = '<div class="m"><div class="lb">最晚装船日</div><div class="v">' + mdCn(p.deadline) + '</div><div class="sub">窗口后还剩 ' + p.slack + ' 天余量</div></div>';
+    }
+    m3 = le ? '<div class="m"><div class="lb">最低泊位余量' + ic('窗口里每天算一次泊位余量率，取最低的一天。') + '</div><div class="big ' + cmrCls(p.c.metric) + '"><b>' + pct(p.c.metric) + '</b><span>' + cmrLab(p.c.metric) + '</span></div><div class="sub">' + (p.qualifies ? '<span style="color:#237804">✓ 不低于 30%</span>' : '<span style="color:#ad2102">✗ 低于 30%</span>') + '</div></div>'
+      : '<div class="m"><div class="lb">同期最多船数' + ic('窗口内每天与你的货量竞争同吨级泊位的船数，取最多的一天。') + '</div><div class="big ' + denCls(p.c.metric, P.n) + '"><b>' + p.c.metric + ' 艘</b><span>' + denLab(p.c.metric, P.n) + '</span></div><div class="sub">' + (p.qualifies ? '<span style="color:#237804">✓ 余量不低于 30%</span>' : '<span style="color:#ad2102">✗ 余量低于 30%</span>') + '</div></div>';
+    const trust = p.trust === '低可信' ? '<span class="tag lowtrust">⚠ 低可信</span>' : '<span class="tag green">可信度 正常</span>';
+    const concl = '<section class="card"><div class="card-h"><h2>' + (p.label === 'A' ? '推荐方案' : '备选方案') + '</h2><span style="display:flex;gap:8px;align-items:center">' + trust + '<span class="tag ' + (le ? 'blue' : '') + '"' + (le ? '' : ' style="background:#f9f0ff;color:#531dab;border-color:#d3adf7"') + '>' + (le ? '近 15 天 · 靠船计划' : '15 天后 · 航次计划') + '</span></span></div>' +
+      '<div class="concl">' + m1 + m2 + m3 + '</div>' + timeline(p) + '</section>';
+    // 数据依据
+    const ev = '<section class="card"><div class="card-h"><h2>数据依据（参数匹配溯源）' + ic('每个数字来自哪张表、哪个批次、哪条航程规则。数值全部由规则计算得出，不经过任何生成式模型改写；德龙版称为 S1 溯源。') + '</h2><span class="muted">每个数字都能对出来</span></div>' + evidence(p) +
+      '<div class="tech"><span>运行编号 <span class="mono">' + R.id + '</span></span><span>运行人 ' + R.runBy + '</span><span>运行时间 ' + R.at + '</span>' + (R.batchNo ? '<span>靠船计划批次 <span class="mono">' + R.batchNo + '</span></span>' : '<span>本次未使用靠船计划</span>') + (R.rule ? '<span>航程规则 <span class="mono">' + R.rule.id + '</span></span>' : '') + '</div></section>';
+    // 泊位视图
+    const bv = '<section class="card"><div class="card-h"><h2>可用泊位视图' + ic('选一天看 23 个泊位的状态。默认选窗口里最紧的一天，也就是决定「最低泊位余量」的那一天。') + '</h2><span class="muted">点击上方日期切换</span></div><div id="bv">' + berthView(p) + '</div></section>';
+    // 侧栏：宣船文案
+    const parts = E.announce(res, p);
+    const side = '<aside class="side"><section class="card"><div class="card-h"><h2>宣船文案</h2><span class="muted">' + (p.label === 'A' ? '推荐方案' : '备选方案') + '</span></div><div class="card-b">' +
+      '<div class="annc">' + parts.map((x) => x.v ? '<span class="v">' + x.t + '</span>' : x.t).join('') + '</div><div class="fnote">蓝色底的数字由规则计算得出，只读、不会被改写；其余为固定模板措辞，模板文字待业务确认。</div>' +
+      '<button class="btn primary lg" id="copy" style="width:100%;margin-top:12px">一键复制</button></div></section></aside>';
+    page.innerHTML = h + '<div class="work"><div class="stack">' + concl + ev + bv + '</div>' + side + '</div>';
+    $('ptabs').querySelectorAll('button').forEach((b) => b.onclick = () => { if (b.disabled) return; which = +b.dataset.p; selDay = null; history.replaceState(null, '', '?' + new URLSearchParams(Object.assign(Object.fromEntries(q), { plan: which ? 'B' : 'A' }))); render(); });
+    $('bv').addEventListener('click', (e) => { const t = e.target.closest('.dtab'); if (t) { selDay = +t.dataset.d; $('bv').innerHTML = berthView(res.plans[which]); } });
+    $('copy').onclick = () => { const txt = parts.map((x) => x.t).join(''); (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(() => toast('已复制到剪贴板'), () => toast('已生成（原型环境无法写剪贴板）')); };
+  }
+  render();
+  window.__P03 = { setPlan(n) { which = n; selDay = null; render(); } };
+})();
+</script>
+</body>
+</html>
