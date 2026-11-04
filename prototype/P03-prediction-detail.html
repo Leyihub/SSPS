@@ -123,6 +123,7 @@ table.tb th{background:#f7f9fb;color:var(--muted);font-weight:500;font-size:12px
 
 <script src="mock-data.js"></script>
 <script src="engine.js"></script>
+<script src="assets/stock-chart.js"></script>
 <script src="assets/shell.js"></script>
 <script>
 (function () {
@@ -160,9 +161,10 @@ table.tb th{background:#f7f9fb;color:var(--muted);font-weight:500;font-size:12px
   const input = q.get('biz')
     ? { biz: q.get('biz'), tons: +q.get('tons'), load: q.get('load'), disch: q.get('disch'), winStart: q.get('ws'), winEnd: q.get('we') }
     : { biz: '大宗采购船', tons: 50000, load: 'SURIGAO', disch: 'BAHODOPI', winStart: '2026-11-08', winEnd: '2026-11-18' };
+  if (q.get('item')) { const it = M.inventory.items.find((x) => x.name === q.get('item')); if (it) { input.item = it; input.buffer = +(q.get('buf') || 3); input.pathBy = 'end'; } }
   const res = E.predict(input);
   let which = q.get('plan') === 'B' ? 1 : 0, selDay = null;
-  const backUrl = 'P02-prediction.html?' + new URLSearchParams({ biz: input.biz, tons: input.tons, load: input.load, disch: input.disch, ws: input.winStart, we: input.winEnd });
+  const backUrl = 'P02-prediction.html?' + new URLSearchParams({ biz: input.biz, tons: input.tons, load: input.load, disch: input.disch, ws: input.winStart, we: input.winEnd, item: input.item ? input.item.name : '', buf: input.buffer || 3 });
 
   // ---------- 小组件 ----------
   const kvTable = (rows) => '<table class="kv"><tbody>' + rows.map((r) => '<tr' + (r[3] ? ' class="hl"' : '') + '><td>' + r[0] + '</td><td>' + r[1] + '</td><td class="src">' + r[2] + '</td></tr>').join('') + '</tbody></table>';
@@ -198,11 +200,26 @@ table.tb th{background:#f7f9fb;color:var(--muted);font-weight:500;font-size:12px
 
   // ---------- 数据依据 ----------
   function evidence(p) {
-    const i = res.input, R = res.run, P = res.pool, rule = R.rule, le = R.mode === 'cmr', prod = i.biz === '成品销售船', c = p.c, B = M.batch, x = res.excluded;
-    let h = '';
+    const i = res.input, R = res.run, P = res.pool, rule = R.rule, le = p.mode === 'cmr', prod = i.biz === '成品销售船', c = p.c, B = M.batch, x = res.excluded;
+    let h = '', no = 0; const nx = () => ++no;
     if (p.trust === '低可信') h += '<div class="lowbox" style="margin:14px 16px 0"><b>为什么标「低可信」：</b>' + p.reasons.join('；') + '。</div>';
+    // 库存与断料（选了物料库存时）
+    if (res.stock) {
+      const st = res.stock, it = st.item, ps = p.stock, lv = it.days >= 25 ? '充裕' : it.days >= 15 ? '偏紧' : '危险';
+      const rows = [
+        ['物料', it.name + ' · ' + it.type, '库存消耗模拟表（' + M.inventory.source + '），更新于 ' + M.inventory.updated.slice(0, 10)],
+        ['当前库存 / 日耗', fmt(it.stock) + ' 吨 / ' + fmt(it.daily) + ' 吨每天', '同表：库存日期 ' + M.today],
+        ['可用天数', it.days + ' 天（' + lv + '）', '当前库存 ÷ 日耗；沿用德龙版分档：25 天以上充裕、15–25 天偏紧、15 天以内危险'],
+        ['断料日', st.so != null ? mdCn(st.so) + '（距今 ' + (st.so - E.TODAY) + ' 天）' : '模拟期内不断料', '模拟库存首次降到 0 的那一天；模拟已经包含已排定的到货，所以这就是断料计划'],
+        ['缓冲天数', st.buffer + ' 天', '船到港后还要靠泊、卸货、入库，所以要提前留几天；原型默认 3 天，待确认'],
+        ['最晚到港日', st.latest != null ? mdCn(st.latest) : '—', '断料日 − 缓冲天数。到港窗口的最后一天必须不晚于它，这是硬约束，不参与评分'],
+      ];
+      if (ps) rows.push(['本方案到港时', ps.state === 'safe' ? '不断料' : ps.state === 'tight' ? '缓冲不足' : '断料 ' + ps.gap + ' 天', '到港窗口最后一天 ' + md(c.e) + '：到港前库存 ' + fmt(ps.before) + ' 吨（可用 ' + ps.daysBefore + ' 天）＋ 本船 ' + fmt(i.tons) + ' 吨 ＝ 到港后 ' + fmt(ps.after) + ' 吨，可用 ' + ps.daysAfter + ' 天', ps.state !== 'safe']);
+      if (res.urgent) rows.push(['说明', '最快到港', '按最快航程也赶不上断料日：已改为「最快到港」优先，不再比较港口余量；请同时联系供应商或调拨', true]);
+      h += step(nx(), '库存与断料', '预测先排除会断料的时间，再在剩下的时间里按港口容量选最宽松的。这是硬约束，不是评分。', '', kvTable(rows) + '<div style="margin-top:10px">' + window.StockChart.html(it, { latest: st.latest, marks: [{ d: c.e, tons: i.tons, label: p.label, color: p.label === 'A' ? '#1677ff' : '#08979c' }], warnDays: 15, width: Math.max(560, (document.getElementById('page').clientWidth || 1400) - 380 - 16 - 90) }) + '</div>');
+    }
     // 1 输入与泊位池
-    h += step(1, '输入与可用泊位', '只统计容量不小于货量的启用泊位，它们是泊位余量率的基数。容量以《泊位容量表》为准，不按历史靠泊记录调整。', '',
+    h += step(nx(), '输入与可用泊位', '只统计容量不小于货量的启用泊位，它们是泊位余量率的基数。容量以《泊位容量表》为准，不按历史靠泊记录调整。', '',
       kvTable([
         ['货量', fmt(i.tons) + ' 吨', '本次预测输入'],
         ['航线', zh(i.load) + ' → ' + zh(i.disch), '本次预测输入；本港侧 = ' + (prod ? '装港' : '卸港') + '（巴浩多比）'],
@@ -220,7 +237,7 @@ table.tb th{background:#f7f9fb;color:var(--muted);font-weight:500;font-size:12px
       srcRows.push(['占用口径', '看同期船数', (prod ? '受载期' : '计划抵卸港窗口') + '起止之间都算在场；只计与该吨级泊位竞争的船（所需最小泊位吨级不低于本次货量）']);
       srcRows.push(['不计入', '已取消航次 ' + x.cancelled + ' 条', '已取消的航次不进同期船数；原型数据里有 ' + E.cancelledVoy.map((v) => v.id + ' ' + (v.vessel || '')).join('、') ]);
     }
-    h += step(2, '计算路径与数据来源', '目标到港日距今不超过 15 天，用靠船计划逐个泊位算占用；超过 15 天没有逐泊位数据，改用航次计划统计同期船数。', '', kvTable(srcRows));
+    h += step(nx(), '计算路径与数据来源', '目标到港日距今不超过 15 天，用靠船计划逐个泊位算占用；超过 15 天没有逐泊位数据，改用航次计划统计同期船数。', '', kvTable(srcRows));
     // 3 逐日计算
     let t = '<table class="kv"><thead><tr><th>日期</th><th>' + (le ? '占用泊位' : '同期船数') + '</th><th>' + (le ? '泊位余量' : '占能装下泊位') + '</th><th>' + (le ? '占用的泊位' : '同期的船') + '</th></tr></thead><tbody>';
     const metricDay = (d) => (le ? d.cmr : d.count);
@@ -235,7 +252,7 @@ table.tb th{background:#f7f9fb;color:var(--muted);font-weight:500;font-size:12px
     });
     t += '</tbody></table>';
     const res3 = le ? '窗口内逐日算一次，取最低的一天：<b>' + pct(c.metric) + '</b>（空闲泊位 ÷ 能装下的泊位 ' + P.n + ' 个）' : '窗口内逐日统计，取最多的一天：<b>' + c.metric + ' 艘</b>（能装下的泊位 ' + P.n + ' 个）';
-    h += step(3, le ? '逐日算出最低泊位余量' : '逐日统计同期船数', le ? '泊位余量率 = 空闲泊位 ÷ 能装下该货量的泊位总数。只要窗口里有一天紧张，船就要排队，所以取最低的一天。' : '15 天后只能数同期船数，不算泊位余量率。取窗口内最多的一天，越少越宽松。', res3, t);
+    h += step(nx(), le ? '逐日算出最低泊位余量' : '逐日统计同期船数', le ? '泊位余量率 = 空闲泊位 ÷ 能装下该货量的泊位总数。只要窗口里有一天紧张，船就要排队，所以取最低的一天。' : '15 天后只能数同期船数，不算泊位余量率。取窗口内最多的一天，越少越宽松。', res3, t);
     // 4 航程与发船日
     let rrows = [];
     if (prod) {
@@ -252,16 +269,16 @@ table.tb th{background:#f7f9fb;color:var(--muted);font-weight:500;font-size:12px
         ['推荐发船日', p.depart != null ? mdCn(p.depart) : '—', '到港窗口最后一天 ' + md(c.e) + ' − ' + e80 + ' 天 = ' + (p.depart != null ? md(p.depart) : '—') + '（不早于今天）'],
         ['预计抵港', p.etaFrom != null ? md(p.etaFrom) + ' ～ ' + md(p.etaTo) : '—', '发船日 ' + (p.depart != null ? md(p.depart) : '') + ' + ' + e50 + ' ～ ' + e80 + ' 天，落在到港窗口 ' + md(c.s) + ' – ' + md(c.e) + ' 内']];
     } else rrows = [['航程规则', '暂无', '没有「' + zh(i.load) + ' → ' + zh(i.disch) + '」的航程规则，只给到港日期，不推算发船日']];
-    h += step(4, prod ? '航程与截止日' : '航程与发船日', '发船日 = 到港窗口最后一天 − 较长航程（P80：八成的船不超过的天数），这样大概率不晚于窗口到港。', '', kvTable(rrows));
+    h += step(nx(), prod ? '航程与截止日' : '航程与发船日', '发船日 = 到港窗口最后一天 − 较长航程（P80：八成的船不超过的天数），这样大概率不晚于窗口到港。', '', kvTable(rrows));
     // 5 取舍
     const cands = (res.candidates || []).map((cd) => {
       const mark = res.plans.map((pl) => (pl && pl.c === cd ? pl.label : '')).join('');
-      const k = cd.none ? 'nd' : (le ? cmrCls(cd.metric) : denCls(cd.metric, P.n));
-      return '<span class="cand ' + k + (cd.complete ? '' : ' sp') + '">' + (mark ? '<i class="' + (mark === 'B' ? 'b' : '') + '">' + (mark === 'A' ? '推荐' : '备选') + '</i>' : '') + md(cd.s) + '–' + md(cd.e).slice(3) + ' ' + (cd.none ? '无数据' : (le ? pct(cd.metric) : cd.metric + ' 艘')) + (cd.complete || cd.none ? '' : '*') + '</span>';
+      const lc = cd.mode ? cd.mode === 'cmr' : le, k = cd.none ? 'nd' : (lc ? cmrCls(cd.metric) : denCls(cd.metric, P.n));
+      return '<span class="cand ' + k + (cd.complete ? '' : ' sp') + '">' + (mark ? '<i class="' + (mark === 'B' ? 'b' : '') + '">' + (mark === 'A' ? '推荐' : '备选') + '</i>' : '') + md(cd.s) + '–' + md(cd.e).slice(3) + ' ' + (cd.none ? '无数据' : (lc ? pct(cd.metric) : cd.metric + ' 艘')) + (cd.complete || cd.none ? '' : '*') + '</span>';
     }).join('');
-    h += step(5, '为什么是这个方案', '把期望窗口切成每 3 天一档、每次挪一天，逐档计算。带星号的候选窗口里有没数据的日子，只按有数据的天数算。',
-      '推荐方案：' + (le ? '最低泊位余量最高' : '同期最多船数最少') + '的一档，同分取更早；备选方案：要求' + (le ? '余量不低于 30%' : '等效余量不低于 30%') + '，且与推荐方案的时间不重叠。不使用综合评分。',
-      '<div class="cands"><div class="ct">候选窗口（3 天一档，按' + (le ? '最低泊位余量从高到低' : '同期最多船数从少到多') + '，不使用综合评分）：</div>' + cands + '</div>' +
+    h += step(nx(), '为什么是这个方案', '把期望窗口切成每 3 天一档、每次挪一天，逐档计算。带星号的候选窗口里有没数据的日子，只按有数据的天数算。',
+      (res.urgent ? '库存告急：不比拥挤程度，推荐方案是最早能到的一档，备选方案是与它错开的下一档。' : (res.stock ? '先排除到港晚于最晚到港日的候选，再按港口容量排序。' : '') + (res.run.mode === 'mixed' ? '近 15 天与 15 天后各自按自己的指标排序，不跨路径比数值；' : '') + '推荐方案：' + (le ? '最低泊位余量最高' : '同期最多船数最少') + '的一档，同分取更早；') + '备选方案：要求' + (le ? '余量不低于 30%' : '等效余量不低于 30%') + '，且与推荐方案的时间不重叠。不使用综合评分。',
+      '<div class="cands"><div class="ct">候选窗口（3 天一档，' + (res.run.mode === 'mixed' ? '近 15 天按最低泊位余量、15 天后按同期最多船数' : '按' + (le ? '最低泊位余量从高到低' : '同期最多船数从少到多')) + '，不使用综合评分）：</div>' + cands + '</div>' +
       '<div class="fnote" style="margin-top:8px">已排除：无数据的候选 ' + x.noData + ' 个' + (x.pastDepart ? '；发船日早于今天的候选 ' + x.pastDepart + ' 个' : '') + '。</div>');
     return h;
   }
@@ -313,7 +330,7 @@ table.tb th{background:#f7f9fb;color:var(--muted);font-weight:500;font-size:12px
   // ---------- 页面 ----------
   function render() {
     const page = $('page'), i = res.input;
-    const ctx = '<span class="tag blue">' + i.biz + '</span><span class="tag blue">' + fmt(i.tons) + ' 吨</span><span class="tag blue">' + zh(i.load) + ' → ' + zh(i.disch) + '</span><span class="tag blue">' + (i.biz === '成品销售船' ? '受载期 ' : '期望到港 ') + md(E.dn(i.winStart)) + ' – ' + md(E.dn(i.winEnd)) + '</span>';
+    const ctx = '<span class="tag blue">' + i.biz + '</span>' + (i.item ? '<span class="tag blue">' + i.item.name + '</span>' : '') + '<span class="tag blue">' + fmt(i.tons) + ' 吨</span><span class="tag blue">' + zh(i.load) + ' → ' + zh(i.disch) + '</span><span class="tag blue">' + (i.biz === '成品销售船' ? '受载期 ' : '期望到港 ') + md(E.dn(i.winStart)) + ' – ' + md(E.dn(i.winEnd)) + '</span>';
     let h = '<a class="back" href="' + backUrl + '">← 返回智能发船预测</a><div class="hd"><div><h1>预测详情</h1><div class="ctx">' + ctx + '</div></div>' +
       '<div class="tabs" id="ptabs"><button data-p="0"' + (which === 0 ? ' class="on"' : '') + '>推荐方案</button><button data-p="1"' + (which === 1 ? ' class="on"' : '') + (res.plans && res.plans[1] ? '' : ' disabled') + '>备选方案</button></div></div>';
     if (res.errors.length || res.noRule || res.noCandidate || !res.plans || !res.plans[which]) {

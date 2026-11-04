@@ -35,7 +35,7 @@ a.card:active{background:#f5faff}
 <header class="top"><span class="logo">S</span>SSPS 产品原型</header>
 <main class="wrap">
   <h1>智慧发船预测系统 · 产品原型</h1>
-  <p>P01–P10 共 10 个页面的可点击原型已全部做完，等待评审。不连飞书，示例数据均为虚构，<b>没有任何功能已上线</b>。页面里的新建、修改只保存在当前浏览器标签页里，在「系统管理」页可以一键重置。P01、P04、P05 支持手机浏览。</p>
+  <p>P01–P11 共 11 个页面的可点击原型已做完（P11 智能提问是预测入口），等待评审。不连飞书，示例数据均为虚构，<b>没有任何功能已上线</b>。页面里的新建、修改只保存在当前浏览器标签页里，在「系统管理」页可以一键重置。P01、P04、P05 支持手机浏览。</p>
 
   <a class="card" href="P02-prediction.html">
     <div class="row"><b>P02 智能发船预测（第一版 · 已优化）</b><span class="tag">待评审</span></div>
@@ -52,7 +52,7 @@ a.card:active{background:#f5faff}
 <script src="assets/shell.js"></script>
 <script>
 (function(){
-  const B = SHELL.BUILT, order = ['P01','P02','P03','P04','P05','P06','P07','P08','P09','P10'];
+  const B = SHELL.BUILT, order = ['P01','P11','P02','P03','P04','P05','P06','P07','P08','P09','P10'];
   const by = Object.fromEntries(SHELL.PAGES.map(p => [p.id, p]));
   document.getElementById('list').innerHTML = order.map(id => {
     const p = by[id], built = !!B[id];

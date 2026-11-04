@@ -121,6 +121,19 @@
 .bm-l{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:12px;font-size:12px;color:var(--muted)}
 .bm-l .g{display:flex;align-items:center;gap:5px;white-space:nowrap}
 .bm-l .sw{min-width:26px}
+/* 库存保障 */
+.stk{margin-top:16px}
+.stk .facts{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px 16px;padding:10px 16px 2px}
+.stk .facts .k{font-size:12px;color:var(--muted);white-space:nowrap}
+.stk .facts .v{font-size:18px;font-weight:700;white-space:nowrap}
+.stk .facts .v small{font-size:12px;font-weight:500;color:var(--muted);margin-left:3px}
+.lvl{display:inline-block;border-radius:4px;padding:0 8px;font-size:12px;line-height:20px;font-weight:600;margin-left:8px}
+.lvl.ok{background:#f6ffed;color:#237804;border:1px solid #b7eb8f}.lvl.mid{background:#fff7e6;color:#ad4e00;border:1px solid #ffd591}.lvl.bad{background:#fff1f0;color:#a8071a;border:1px solid #ffa39e}
+.stk .bn{margin:8px 16px 0;border-radius:8px;padding:8px 12px;font-size:13px;line-height:1.7}
+.stk .bn.red{background:#fff1f0;border:1px solid #ffa39e;color:#a8071a}
+.stk .bn.blu{background:#f0f7ff;border:1px solid #b7d8ff;color:#0958d9}
+.stk svg{padding:0 8px 8px}
+.mk.lt{background:#fa8c16}.mk.so{background:#cf1322}
 /* 弹窗 */
 .annc{background:#f7f9fc;border:1px solid var(--line);border-radius:8px;padding:12px 14px;line-height:2;font-size:13.5px}
 .annc .v{background:#e6f4ff;color:#0958d9;border-radius:3px;padding:0 3px;font-weight:600}
@@ -154,6 +167,8 @@
             <div class="field"><div class="f-lab">货量（吨）</div>
               <input class="inp" id="tons" type="number" min="1000" step="1000">
               <div class="mini" id="poolHint"></div></div>
+            <div class="field"><div class="f-lab">物料库存<span class="i" data-tip="选一个物料，预测会按库存消耗模拟表保证不断料：到港窗口必须早于「断料日 − 缓冲天数」。\n只对大宗采购船有效；选「不关联库存」就只按港口容量预测。">i</span></div>
+              <select class="inp" id="item"></select><div class="mini" id="itemHint"></div></div>
             <div class="row2">
               <div class="field"><div class="f-lab">装港</div><div id="loadBox"></div></div>
               <div class="field"><div class="f-lab">卸港</div><div id="dischBox"></div></div>
@@ -196,6 +211,7 @@
 
 <script src="mock-data.js"></script>
 <script src="engine.js"></script>
+<script src="assets/stock-chart.js"></script>
 <script src="assets/shell.js"></script>
 <script>
 (function () {
@@ -205,9 +221,9 @@
   const PRESETS = [
     { label: '大宗 · 近 15 天 · 数据完整', tip: '5 万吨，航程为经验估算，推荐和备选都数据完整。',
       v: { biz: '大宗采购船', tons: 50000, load: 'SURIGAO', disch: LOCAL, ws: '2026-11-08', we: '2026-11-18' } },
-    { label: '大宗 · 15 天后 · 看同期船数', tip: '5 万吨，历史统计航程，只按同期船数判断，不算泊位余量。',
+    { label: '大宗 · 15 天后 · 同期船数', tip: '5 万吨，历史统计航程，只按同期船数判断，不算泊位余量。',
       v: { biz: '大宗采购船', tons: 50000, load: 'TAGANITO', disch: LOCAL, ws: '2026-11-24', we: '2026-12-02' } },
-    { label: '备选方案数据不全（低可信）', tip: '窗口越过靠船计划覆盖期，备选方案只能从数据不全的时间里选。',
+    { label: '备选数据不全（低可信）', tip: '窗口越过靠船计划覆盖期，备选方案只能从数据不全的时间里选。',
       v: { biz: '大宗采购船', tons: 50000, load: 'SURIGAO', disch: LOCAL, ws: '2026-11-12', we: '2026-11-23' } },
     { label: '成品销售船 · 按装港侧推算', tip: '2.8 万吨，受载期，到客户港的时间仅供参考。',
       v: { biz: '成品销售船', tons: 28000, load: LOCAL, disch: 'HAIPHONG', ws: '2026-11-08', we: '2026-11-20' } },
@@ -215,10 +231,14 @@
       v: { biz: '物资备件船', tons: 8000, load: 'JAKARTA', disch: LOCAL, ws: '2026-11-08', we: '2026-11-18' } },
     { label: '窗口内完全没有数据', tip: '灰色斜线，不是 0%，也不会改用另一条计算路径。',
       v: { biz: '大宗采购船', tons: 50000, load: 'SURIGAO', disch: LOCAL, ws: '2026-11-17', we: '2026-11-19' } },
+    { label: '库存充裕 · 保证不断料', tip: '烧结石灰石（可用 26 天），秦皇岛 → 德信：到港窗口必须早于断料日前 3 天，在安全范围内选港口最宽松的时间。',
+      v: { biz: '大宗采购船', tons: 50000, load: 'QINHUANGDAO', disch: LOCAL, ws: '2026-11-04', we: '2026-12-10', item: '烧结石灰石' } },
+    { label: '库存告急 · 最快到港', tip: '高硅块（可用 6 天），唐山 → 德信：按最快航程也赶不上，改为最快到港并提示断料天数。',
+      v: { biz: '大宗采购船', tons: 30000, load: 'TANGSHAN', disch: LOCAL, ws: '2026-11-04', we: '2026-11-30', item: '高硅块' } },
     { label: '缺少这条航线的航程', tip: '泗水 → 巴浩多比 还没有维护航程。',
       v: { biz: '大宗采购船', tons: 30000, load: 'SURABAYA', disch: LOCAL, ws: '2026-11-10', we: '2026-11-18' } },
   ];
-  let cur = 0, last = null, showCands = false, selDay = null, curTons = 50000;
+  let cur = 0, last = null, showCands = false, selDay = null, curTons = 50000, bufDays = 3;
 
   // ---------- 小工具 ----------
   const fmt = (n) => Number(n).toLocaleString('en-US');
@@ -266,13 +286,22 @@
       '<span class="i" data-tip="' + (prod ? '成品船从本港装货。受载期的最晚一天就是最晚装船日，推荐方案不会超过它。' : '船到巴浩多比卸货的期望日期范围。') + '">i</span>';
     ['load', 'disch'].forEach((id) => { const el = $(id); if (el) el.onchange = updateHints; });
     document.body.dataset.biz = b;
+    const it = $('item'); if (it) { it.disabled = b !== '大宗采购船'; if (it.disabled) it.value = ''; }
   }
+  const LV = (d) => (d >= 25 ? ['ok', '充裕'] : d >= 15 ? ['mid', '偏紧'] : ['bad', '危险']);
+  (function fillItems() {
+    const I = M.inventory; let h = '<option value="">不关联库存（只按港口容量）</option>';
+    ['铁矿', '焦煤', '辅料'].forEach((t) => { h += '<optgroup label="' + t + '">' + I.items.filter((x) => x.type === t).map((x) => '<option value="' + x.name + '">' + x.name + '（' + x.days + ' 天）</option>').join('') + '</optgroup>'; });
+    $('item').innerHTML = h;
+  })();
+  const C0 = (n) => E.md(n);
+  const toInput = (f) => { const it = f.item ? M.inventory.items.find((x) => x.name === f.item) : null; return Object.assign({}, f, it ? { item: it, buffer: bufDays, pathBy: 'end' } : { item: undefined }); };
   function readForm() {
     const biz = document.body.dataset.biz, prod = biz === '成品销售船';
-    return { biz, tons: Number($('tons').value), load: prod ? LOCAL : $('load').value, disch: prod ? $('disch').value : LOCAL, winStart: $('ws').value, winEnd: $('we').value };
+    return { biz, tons: Number($('tons').value), load: prod ? LOCAL : $('load').value, disch: prod ? $('disch').value : LOCAL, winStart: $('ws').value, winEnd: $('we').value, item: $('item').value };
   }
   function writeForm(v) {
-    setBiz(v.biz, v); $('tons').value = v.tons; $('ws').value = v.ws; $('we').value = v.we;
+    setBiz(v.biz, v); $('tons').value = v.tons; $('ws').value = v.ws; $('we').value = v.we; $('item').value = v.biz === '大宗采购船' ? (v.item || '') : '';
     if (v.biz === '成品销售船') $('disch').value = v.disch; else $('load').value = v.load;
     updateHints();
   }
@@ -281,9 +310,12 @@
     $('poolHint').innerHTML = f.tons > 0
       ? (P.n ? '能装下的泊位 <b style="color:var(--text);margin:0 3px">' + P.n + '</b> 个（共 ' + M.berths.length + ' 个）<span class="i" data-tip="只统计容量不小于货量的启用泊位，它们是计算泊位余量率的基数。">i</span>'
              : '<span class="err" style="margin:0">超过最大泊位 ' + fmt(mx) + ' 吨，没有能装下的泊位</span>') : '';
+    const it = f.item ? M.inventory.items.find((x) => x.name === f.item) : null, so = it ? E.stockout(it) : null;
+    $('itemHint').innerHTML = it ? '可用 ' + it.days + ' 天<span class="lvl ' + LV(it.days)[0] + '" style="margin-left:6px">' + LV(it.days)[1] + '</span> · ' + (so != null ? '断料日 ' + C0(so) : '模拟期内不断料') : '';
     const pb = $('pathbox');
     if (!f.winStart) { pb.className = 'pathbox le'; pb.innerHTML = '请选择时间窗口'; return; }
     const dist = E.dn(f.winStart) - E.TODAY, le = dist <= E.PATH_LIMIT;
+    if (it) { pb.className = 'pathbox le'; pb.innerHTML = '各候选日期分别按距今天数分流<span class="i" data-tip="选了库存物料后，窗口里每个候选日期各按自己距今的天数分流：不超过 15 天用靠船计划（泊位余量），超过 15 天用航次计划（同期船数）。\\n两条路径各自排序，不跨路径比较数值。">i</span>'; return; }
     pb.className = 'pathbox ' + (le ? 'le' : 'gt');
     pb.innerHTML = '距今 ' + dist + ' 天 · ' + (le ? '按近 15 天靠船计划' : '按 15 天后航次计划') +
       '<span class="i" data-tip="' + (le ? '目标到港日距今不超过 15 天：用靠船计划逐个泊位算占用，得到泊位余量率。' : '目标到港日距今超过 15 天：没有逐泊位的靠船计划，改用航次计划统计同期的船数。') + '\\n只按日期区分，不看有没有数据。">i</span>';
@@ -310,12 +342,13 @@
                        : 'P50：一半的船不超过这个天数；P80：八成的船不超过这个天数。统计自这条航线的 ' + r.samples + ' 条历史航次。';
     return '<div class="r"><span class="k">航程口径</span>' + tag + (res.run.borrowed ? '<span class="tag gray">借用大宗航线</span>' : '') + '<span>' + detail + '</span>' + ic(tipTxt) + '</div>';
   }
-  function basisTip(res) {
-    const r = res.run, P = res.pool, x = res.excluded, rule = r.rule, L = [];
-    L.push(r.mode === 'cmr' ? '靠船计划：' + mdCn(E.dn(M.batch.planDate)) + '更新，覆盖到 ' + mdCn(E.planCoverTo) : '航次计划：覆盖到 ' + mdCn(E.voyHorizon));
+  function basisTip(res, p) {
+    const r = res.run, P = res.pool, x = res.excluded, rule = r.rule, L = [], pm = p ? p.mode : r.mode;
+    L.push(pm === 'cmr' ? '靠船计划：' + mdCn(E.dn(M.batch.planDate)) + '更新，覆盖到 ' + mdCn(E.planCoverTo) : '航次计划：覆盖到 ' + mdCn(E.voyHorizon));
     L.push('能装下 ' + fmt(res.input.tons) + ' 吨的泊位：' + P.n + ' / ' + M.berths.length + ' 个');
     if (rule) L.push(res.input.biz === '成品销售船' ? '航程：经验估算（仅用于推算到客户港时间）' : '航程：' + (rule.basis === '经验值' ? '经验估算' : '历史统计 ' + rule.samples + ' 个航次'));
-    L.push('不计入：' + (r.mode === 'cmr' ? '非德信泊位的 ' + x.offPool + ' 条靠船记录' : '已取消航次 ' + x.cancelled + ' 条'));
+    if (res.stock) L.push('库存：' + res.stock.item.name + '，断料日 ' + (res.stock.so != null ? mdCn(res.stock.so) : '模拟期内不断料') + '（库存消耗模拟表，已含排定到货）');
+    L.push('不计入：' + (pm === 'cmr' ? '非德信泊位的 ' + x.offPool + ' 条靠船记录' : '已取消航次 ' + x.cancelled + ' 条'));
     return L.join('\\n');
   }
   function planCard(p, res, idx) {
@@ -327,6 +360,7 @@
     const name = p.label === 'A' ? '推荐方案' : '备选方案';
     const trust = low ? '<span class="tag lowtrust">⚠ 低可信</span>' + ic(p.reasons.join('；') + '。')
                       : '<span class="tag green">可信度 正常</span>';
+    const stockTag = p.stock && p.stock.state === 'out' ? '<span class="tag red">⚠ 断料 ' + p.stock.gap + ' 天</span>' : (p.stock && p.stock.state === 'tight' ? '<span class="tag amber">缓冲不足</span>' : '');
     const pathTag = p.mode === 'cmr' ? '<span class="tag blue">近 15 天</span>' : '<span class="tag" style="background:#f9f0ff;color:#531dab;border-color:#d3adf7">15 天后</span>';
     let m1, m2, m3;
     if (!prod) {
@@ -348,17 +382,37 @@
            '<div class="sub">' + (p.qualifies ? '<span style="color:#237804">✓ 余量不低于 30%</span>' : '<span style="color:#ad2102">✗ 余量低于 30%</span>') + '</div></div>';
     }
     let kv = routeRows(res);
+    if (p.stock) {
+      const st = p.stock, tag = st.state === 'safe' ? '<span class="tag green">不断料</span>' : st.state === 'tight' ? '<span class="tag amber">缓冲不足</span>' : '<span class="tag red">断料 ' + st.gap + ' 天</span>';
+      const desc = st.state === 'out' ? '到港前库存已用完，到港后补 ' + fmt(i.tons) + ' 吨，可用 <b>' + st.daysAfter + '</b> 天' : '到港前库存 <b>' + fmt(st.before) + '</b> 吨（可用 ' + st.daysBefore + ' 天），到港后可用 <b>' + st.daysAfter + '</b> 天';
+      kv = '<div class="r"><span class="k">到港时库存</span>' + tag + '<span>' + desc + '</span>' + ic('按库存消耗模拟表：到港窗口最后一天的库存，加上本船货量，再按当天日耗折算可用天数。「不断料」指到港日不晚于「断料日 − ' + (res.stock.buffer) + ' 天缓冲」；「缓冲不足」指虽然没断料，但留的缓冲天数不够。') + '</div>' + kv;
+    }
     if (prod) {
       const r = res.run.rule;
       kv = '<div class="r"><span class="k">到客户港</span>' + (p.custEta ? '<b>' + E.md(p.custEta[0]) + ' – ' + E.md(p.custEta[1]) + '</b><span class="tag gray">仅供参考</span>' + ic('按经验估算的航程（约 ' + Math.ceil(r.effP50) + '～' + Math.ceil(r.effP80) + ' 天）从装港反向推算。') : '<span class="muted">暂无这条航线的航程</span>') + '</div>';
     }
     return '<div class="' + cls + '" data-plan="' + p.label + '">' +
-      '<div class="plan-h"><h3>' + name + '</h3>' + trust + pathTag + '<span class="sp"></span><span class="muted">' + (p.label === 'A' ? '排序依据' : '备选条件') + ic(p.label === 'A' ? (p.mode === 'cmr' ? '按最低泊位余量从高到低排序，同分取更早的时间，不使用综合评分。' : '按同期最多船数从少到多排序，同分取更早的时间，不使用综合评分。') : '备选方案要求余量不低于 30%，并且与推荐方案的时间不重叠；没有完整数据的时间可选时，才会从数据不全的时间里补位。') + '</span></div>' +
+      '<div class="plan-h"><h3>' + name + '</h3>' + trust + stockTag + pathTag + '<span class="sp"></span><span class="muted">' + (p.label === 'A' ? '排序依据' : '备选条件') + ic(p.label === 'A' ? (p.mode === 'cmr' ? '按最低泊位余量从高到低排序，同分取更早的时间，不使用综合评分。' : '按同期最多船数从少到多排序，同分取更早的时间，不使用综合评分。') : '备选方案要求余量不低于 30%，并且与推荐方案的时间不重叠；没有完整数据的时间可选时，才会从数据不全的时间里补位。') + '</span></div>' +
       '<div class="mgrid">' + m1 + m2 + m3 + '</div>' +
       '<div class="days">' + dayChips(p) + '</div>' +
       '<div class="kvs">' + kv + '</div>' +
       '<div class="plan-f"><button class="btn primary" data-adopt="' + p.label + '">采纳此方案</button><button class="btn" data-annc="' + p.label + '">生成宣船文案</button><span class="sp"></span>' +
-      '<span class="grey">数据依据' + ic(basisTip(res)) + '</span><button class="link" data-detail>查看详情 →</button></div></div>';
+      '<span class="grey">数据依据' + ic(basisTip(res, p)) + '</span><button class="link" data-detail>查看详情 →</button></div></div>';
+  }
+  function stockCard(res) {
+    const st = res.stock; if (!st) return '';
+    const it = st.item, so = st.so, l = LV(it.days), A = res.plans && res.plans[0], B = res.plans && res.plans[1];
+    const marks = [A && { d: A.c.e, tons: res.input.tons, label: 'A', color: '#1677ff' }, B && { d: B.c.e, tons: res.input.tons, label: 'B', color: '#08979c' }].filter(Boolean);
+    let note = '';
+    if (st.urgent) {
+      const e = A ? A.c.e : null, gap = A && A.stock ? A.stock.gap : 0;
+      note = '<div class="bn red"><b>按最快航程也赶不上断料日。</b>' + (e ? '最早 ' + mdCn(e) + ' 到港' + (so != null ? '，比断料日（' + mdCn(so) + '）晚 ' + (e - so) + ' 天，预计断料约 ' + gap + ' 天' : '') + '。' : '') + '已改为「最快到港」优先，不再要求港口余量；请同时联系供应商或调拨，别只等这一船。</div>';
+    } else if (so == null) note = '<div class="bn blu">模拟期内这个物料不会断料，预测只按港口容量安排。</div>';
+    else note = '<div class="bn blu">所有候选都已排除到港晚于 <b>' + mdCn(st.latest) + '</b>（断料日 ' + mdCn(so) + ' 前 ' + st.buffer + ' 天）的时间；在剩下的时间里，按港口容量选最宽松的。这是硬约束，不参与任何评分。</div>';
+    return '<div class="card stk"><div class="card-h"><h2>库存保障 · ' + it.name + '<span class="lvl ' + l[0] + '">' + l[1] + '</span>' + ic('断料日来自库存消耗模拟表（已包含已排定的到货）。预测要求到港窗口的最后一天不晚于「断料日 − 缓冲天数」，否则判为断料。方案到港后库存按虚线回升。') + '</h2><span class="muted nw">' + M.inventory.source + ' · 更新于 ' + M.inventory.updated.slice(0, 10) + '</span></div>' +
+      '<div class="facts"><div><div class="k">当前库存</div><div class="v">' + fmt(it.stock) + '<small>吨</small></div></div><div><div class="k">日耗</div><div class="v">' + fmt(it.daily) + '<small>吨/天</small></div></div><div><div class="k">可用天数</div><div class="v">' + it.days + '<small>天</small></div></div>' +
+      '<div><div class="k">断料日</div><div class="v">' + (so != null ? mdCn(so) : '不断料') + '<small>' + (so != null ? (so <= E.TODAY ? '已断料' : '距今 ' + (so - E.TODAY) + ' 天') : '') + '</small></div></div><div><div class="k">最晚到港日（缓冲 ' + st.buffer + ' 天）</div><div class="v">' + (st.latest != null ? mdCn(st.latest) : '—') + '<small>' + (st.latest != null && st.latest < E.TODAY ? '已错过' : '') + '</small></div></div></div>' +
+      note + '<div>' + window.StockChart.html(it, { latest: st.latest, marks, warnDays: 15, width: Math.max(560, ($('result').clientWidth || 1000) - 30) }) + '</div></div>';
   }
   function renderResult(res) {
     const el = $('result');
@@ -366,20 +420,22 @@
     if (res.noRule) {
       el.innerHTML = '<div class="card banner err"><div class="ico">!</div><div><h3>没有找到「' + zh(res.input.load) + ' → ' + zh(res.input.disch) + '」的航程</h3><p>没有航程就推不出发船日。请先在主数据里补一条这条航线的估算航程；同航线实际航次累计到 5 个后，系统会改用历史统计。</p></div></div>'; return;
     }
-    const r = res.run, P = res.pool, le = r.mode === 'cmr';
+    const r = res.run, P = res.pool, le = r.mode === 'cmr', mixed = r.mode === 'mixed';
     const cands = (res.candidates || []).map((c) => {
       const mark = res.plans.map((p) => (p && p.c === c ? p.label : '')).join('');
-      const txt = c.none ? '无数据' : (le ? pct(c.metric) : c.metric + ' 艘');
-      const k = c.none ? 'nd' : (le ? cmrCls(c.metric) : denCls(c.metric, P.n));
+      const lc = c.mode ? c.mode === 'cmr' : le;
+      const txt = c.none ? '无数据' : (lc ? pct(c.metric) : c.metric + ' 艘');
+      const k = c.none ? 'nd' : (lc ? cmrCls(c.metric) : denCls(c.metric, P.n));
       return '<span class="cand ' + k + (c.complete ? '' : ' sp') + '">' + (mark ? '<i class="' + (mark === 'B' ? 'b' : '') + '">' + (mark === 'A' ? '推荐' : '备选') + '</i>' : '') +
         E.md(c.s) + '–' + E.md(c.e).slice(3) + ' ' + txt + (c.complete || c.none ? '' : '*') + '</span>';
     }).join('');
     let h = '<div class="card sum"><div class="sum-t"><h2>预测结果</h2><span>' + res.input.biz + ' · ' + fmt(res.input.tons) + ' 吨 · ' + zh(res.input.load) + ' → ' + zh(res.input.disch) + '</span></div>' +
       '<div class="sum-m"><span class="nw">目标到港日 ' + mdCn(r.target) + '（距今 ' + r.dist + ' 天）</span>' +
-      '<span class="tag ' + (le ? 'blue' : '') + ' nw"' + (le ? '' : ' style="background:#f9f0ff;color:#531dab;border-color:#d3adf7"') + '>' + (le ? '按近 15 天靠船计划' : '按 15 天后航次计划') + '</span>' +
+      '<span class="tag ' + (le || mixed ? 'blue' : '') + ' nw"' + (le || mixed ? '' : ' style="background:#f9f0ff;color:#531dab;border-color:#d3adf7"') + '>' + (mixed ? '各候选日期分别计算' : le ? '按近 15 天靠船计划' : '按 15 天后航次计划') + '</span>' +
       '<span class="sp"></span><button class="link" id="togCand">系统比对过的 ' + (res.candidates || []).length + ' 个时间 ' + (showCands ? '▴' : '▾') + '</button>' +
-      ic('把期望窗口切成每 3 天一档、每次挪一天，逐档计算后挑出推荐和备选。\\n框里是该档的' + (le ? '最低泊位余量' : '同期最多船数') + '；带星号表示窗口里有没数据的日子，只按有数据的天数算。') + '</div>' +
-      (showCands ? '<div class="cands"><div class="ct">候选窗口（3 天一档，按' + (le ? '最低泊位余量从高到低' : '同期最多船数从少到多') + '，不使用综合评分）：</div>' + cands + (res.excluded.pastDepart ? '<span class="muted nw">另有 ' + res.excluded.pastDepart + ' 个时间的发船日已早于今天，已排除</span>' : '') + '</div>' : '') + '</div>';
+      ic('把期望窗口切成每 3 天一档、每次挪一天，逐档计算后挑出推荐和备选。\\n框里是该档的' + (mixed ? '最低泊位余量（近 15 天）或同期最多船数（15 天后）' : le ? '最低泊位余量' : '同期最多船数') + '；带星号表示窗口里有没数据的日子，只按有数据的天数算。') + '</div>' +
+      (showCands ? '<div class="cands"><div class="ct">候选窗口（3 天一档，' + (mixed ? '近 15 天按最低泊位余量、15 天后按同期最多船数，各自排序' : '按' + (le ? '最低泊位余量从高到低' : '同期最多船数从少到多')) + '，不使用综合评分）：</div>' + cands + (res.excluded.pastDepart ? '<span class="muted nw">另有 ' + res.excluded.pastDepart + ' 个时间的发船日已早于今天，已排除</span>' : '') + '</div>' : '') + '</div>';
+    h += stockCard(res);
     if (res.noCandidate) {
       h += '<div class="card banner"><div class="ico"></div><div><h3>窗口内没有可以推荐的时间</h3><p>' + (le ? '靠船计划只到 ' + mdCn(E.planCoverTo) : '航次计划只到 ' + mdCn(E.voyHorizon)) + '，这个窗口全部没有数据（灰色斜线，不是 0%）。系统不会因为没有数据而改用另一条计算路径，建议把窗口提前，或等下一期靠船计划。</p></div></div>';
     } else h += '<div class="plans">' + planCard(res.plans[0], res) + planCard(res.plans[1] || null, res) + '</div>';
@@ -387,7 +443,7 @@
     const tg = $('togCand'); if (tg) tg.onclick = () => { showCands = !showCands; renderResult(last); };
     el.querySelectorAll('[data-detail]').forEach((a) => a.onclick = () => {
       const i = last.input, pl = a.closest('.plan').dataset.plan;
-      location.href = 'P03-prediction-detail.html?' + new URLSearchParams({ biz: i.biz, tons: i.tons, load: i.load, disch: i.disch, ws: i.winStart, we: i.winEnd, plan: pl });
+      if (!i.item) location.href = 'P03-prediction-detail.html?' + new URLSearchParams({ biz: i.biz, tons: i.tons, load: i.load, disch: i.disch, ws: i.winStart, we: i.winEnd, plan: pl }); if (i.item) { const q = new URLSearchParams({ biz: i.biz, tons: i.tons, load: i.load, disch: i.disch, ws: i.winStart, we: i.winEnd, plan: pl, item: i.item.name, buf: bufDays, pb: 'end' }); location.href = 'P03-prediction-detail.html?' + q; return; }
     });
     el.querySelectorAll('[data-adopt]').forEach((b) => b.onclick = () => openAdopt(b.dataset.adopt));
     el.querySelectorAll('[data-annc]').forEach((b) => b.onclick = () => openAnnc(b.dataset.annc));
@@ -415,6 +471,7 @@
       const p = res && res.plans && res.plans[k];
       if (p) h += place(L === 'A' ? 'a' : 'b', (L === 'A' ? '推荐 ' : '备选 ') + E.md(p.c.s) + '–' + E.md(p.c.e).slice(3) + (p.trust === '低可信' ? '<span class="lt"> · 低可信</span>' : ''), p.c.s, p.c.e, p.trust === '低可信' ? ' low' : '', 5 + k);
     });
+    if (res && res.stock) { const inR = (d) => d != null && d >= E.TODAY && d <= E.TODAY + 29; if (inR(res.stock.latest) || inR(res.stock.so)) { h += '<div class="lab" style="grid-row:7;grid-column:1">库存</div>'; if (inR(res.stock.latest)) h += place('lt', '最晚', res.stock.latest, res.stock.latest, '', 7); if (inR(res.stock.so)) h += place('so', '断料', res.stock.so, res.stock.so, '', 7); } }
     $('cal').innerHTML = h;
     $('cal').querySelectorAll('.cell').forEach((c) => {
       const d = days[+c.dataset.i], head = '<b>' + E.md(d.d) + ' ' + wk(d.d) + '</b> · 距今 ' + d.i + ' 天<br>';
@@ -492,7 +549,7 @@
   $('adoptOk').onclick = () => { $('mAdopt').classList.remove('on'); toast('已采纳（原型演示，未写入）'); };
 
   // ---------- 运行 ----------
-  function run() { const f = readForm(); last = E.predict(f); curTons = f.tons; selDay = (last.plans && last.plans[0]) ? last.plans[0].c.s : E.TODAY; renderResult(last); renderCalendar(last, f.tons); }
+  function run() { const f = readForm(); last = E.predict(toInput(f)); curTons = f.tons; selDay = (last.plans && last.plans[0]) ? last.plans[0].c.s : E.TODAY; renderResult(last); renderCalendar(last, f.tons); }
   function drawPresets() {
     $('presets').innerHTML = PRESETS.map((p, i) => '<button class="preset' + (i === cur ? ' on' : '') + '" data-i="' + i + '" data-tip="' + p.tip + '"><span class="no">' + (i + 1) + '</span><b>' + p.label + '</b></button>').join('');
     $('presets').querySelectorAll('.preset').forEach((b) => b.onclick = () => { cur = +b.dataset.i; drawPresets(); writeForm(PRESETS[cur].v); run(); });
@@ -500,8 +557,8 @@
   $('go').onclick = run;
   $('reset').onclick = () => { cur = 0; drawPresets(); writeForm(PRESETS[0].v); run(); };
   ['tons', 'ws', 'we'].forEach((id) => $(id).addEventListener('input', updateHints));
-  const q0 = new URLSearchParams(location.search);
-  if (q0.get('biz')) { cur = -1; drawPresets(); writeForm({ biz: q0.get('biz'), tons: +q0.get('tons'), load: q0.get('load'), disch: q0.get('disch'), ws: q0.get('ws'), we: q0.get('we') }); run(); }
+  const q0 = new URLSearchParams(location.search); if (q0.get('buf')) bufDays = +q0.get('buf');
+  if (q0.get('biz')) { cur = -1; drawPresets(); writeForm({ biz: q0.get('biz'), tons: +q0.get('tons'), load: q0.get('load'), disch: q0.get('disch'), ws: q0.get('ws'), we: q0.get('we'), item: q0.get('item') || '' }); run(); }
   else { drawPresets(); writeForm(PRESETS[0].v); run(); }
   window.__P02 = { PRESETS, pick(i) { cur = i; drawPresets(); writeForm(PRESETS[i].v); run(); }, toggleCands(v) { showCands = v; renderResult(last); } };
 })();

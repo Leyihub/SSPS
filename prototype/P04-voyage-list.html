@@ -143,7 +143,7 @@
       '<div class="field"><div style="color:var(--muted);font-size:12px;margin-bottom:4px">卸港</div><select class="inp" id="nd">' + M.ports.map((p) => '<option value="' + p.en + '"' + (p.isLocal ? ' selected' : '') + '>' + C.zh(p.en) + '</option>').join('') + '</select></div></div>' +
       '<div class="field"><div style="color:var(--muted);font-size:12px;margin-bottom:4px">预计货量（吨）</div><input class="inp" id="nt" type="number" value="50000"></div>' +
       '<div style="color:var(--muted);font-size:12px">船舶可以先空着，宣船后再关联；创建后在详情页补货物明细和时间节点。负责业务员默认是你。</div>',
-      onOpen: (m) => { m.querySelectorAll('#nb button').forEach((b) => b.onclick = () => { m.querySelectorAll('#nb button').forEach((x) => x.classList.toggle('on', x === b)); const prod = b.textContent === '成品销售船'; m.querySelector('#nl').value = prod ? 'BAHODOPI' : 'SURIGAO'; m.querySelector('#nd').value = prod ? 'HAIPHONG' : 'BAHODOPI'; }); },
+      onOpen: (m) => { m.querySelector('#nl').value = (M.ports.find((p) => !p.isLocal) || M.ports[0]).en; m.querySelectorAll('#nb button').forEach((b) => b.onclick = () => { m.querySelectorAll('#nb button').forEach((x) => x.classList.toggle('on', x === b)); const prod = b.textContent === '成品销售船'; m.querySelector('#nl').value = prod ? 'BAHODOPI' : 'SURIGAO'; m.querySelector('#nd').value = prod ? 'HAIPHONG' : 'BAHODOPI'; }); },
       onOk: (m) => {
         const biz = m.querySelector('#nb .on').textContent, load = m.querySelector('#nl').value, disch = m.querySelector('#nd').value, tons = +m.querySelector('#nt').value;
         if (load === disch) { C.toast('装港和卸港不能相同'); return false; }

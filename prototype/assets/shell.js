@@ -3,6 +3,8 @@
   const PAGES = [
     { id: 'P01', name: '工作台', file: 'P01-workbench.html', group: '工作', user: '业务员',
       desc: '我的待办：待补节点、ETA 超过 3 天未更新、本周到港、数据质量问题；一键进入航次或预测', api: 'A01 A07 A25' },
+    { id: 'P11', name: '智能提问', file: 'P11-ask.html', group: '预测', user: '业务员',
+      desc: '用文字或语音说出需求，系统判断船型、识别物料和货量，展示库存可用天数与断料日，再生成不会断料的预测', api: 'A29 A30' },
     { id: 'P02', name: '智能发船预测', file: 'P02-prediction.html', group: '预测', user: '业务员',
       desc: '输入业务类型、货量、装卸港、受载期/期望窗口；Plan A / Plan B 卡片；下方 30 天容量日历；采纳与宣船文案', api: 'A20 A21 A23 A24' },
     { id: 'P03', name: '预测详情', file: 'P03-prediction-detail.html', group: '预测', user: '业务员', sub: true,
@@ -22,7 +24,7 @@
     { id: 'P10', name: '系统管理', file: 'P10-admin.html', group: '系统', user: '系统管理员',
       desc: '同步日志、兼容表手动刷新、迁移 dry-run 报告、连通性自检', api: 'A26–A28' },
   ];
-  const BUILT = { P01: '待评审', P02: '待评审', P03: '待评审', P04: '待评审', P05: '待评审', P06: '待评审', P07: '待评审', P08: '待评审', P09: '待评审', P10: '待评审' };   // 每做完一页在这里登记；未登记 = 待做
+  const BUILT = { P01: '待评审', P11: '待评审', P02: '待评审', P03: '待评审', P04: '待评审', P05: '待评审', P06: '待评审', P07: '待评审', P08: '待评审', P09: '待评审', P10: '待评审' };   // 每做完一页在这里登记；未登记 = 待做
 
   function navHtml(active) {
     let h = '<div class="brand"><span class="logo">S</span><div><b>SSPS</b><small>智慧发船预测系统</small></div></div>';

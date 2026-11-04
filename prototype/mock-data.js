@@ -194,12 +194,15 @@
     { code: '062', cn: '天津', en: 'TIANJIN', country: '中国', nature: '外港', isLocal: false },
     { code: '071', cn: '新加坡', en: 'SINGAPORE', country: '新加坡', nature: '外港', isLocal: false },
     { code: '039', cn: '肯达里', en: 'KENDARI', country: '印度尼西亚', nature: '内港', isLocal: false },
+    { code: '063', cn: '秦皇岛', en: 'QINHUANGDAO', country: '中国', nature: '外港', isLocal: false },
+    { code: '064', cn: '唐山', en: 'TANGSHAN', country: '中国', nature: '外港', isLocal: false },
+    { code: '065', cn: '新村港', en: 'XINCUN', country: '中国', nature: '外港', isLocal: false },
   ];
   extraPorts.forEach((p) => M.ports.push(p));
   const alias = { BAHODOPI: ['IMIP', 'BAHODOPI(IMIP)', 'BAHODOPI PORT', '巴浩多比港'], SURIGAO: ['SURIGAO PORT', 'Surigao', '苏里高港'], TAGANITO: ['TAGANITO PORT', 'Taganito', '塔加尼托港'],
     JAKARTA: ['JKT', 'JAKARTA PORT', '雅加达港', 'TANJUNG PRIOK'], SURABAYA: ['SBY', 'SURABAYA PORT', '泗水港'], HAIPHONG: ['HAI PHONG', 'HAIPHONG PORT', '海防港'],
-    QINGDAO: ['QINGDAO PORT', 'Tsingtao'], TIANJIN: ['TIANJIN XINGANG', '天津新港'], SINGAPORE: ['SIN', 'SINGAPORE PORT'], KENDARI: ['KENDARI PORT'] };
-  const region = { BAHODOPI: '中苏拉威西', SURIGAO: '棉兰老', TAGANITO: '棉兰老', JAKARTA: '爪哇', SURABAYA: '爪哇', HAIPHONG: '越南北部', QINGDAO: '山东', TIANJIN: '天津', SINGAPORE: '—', KENDARI: '东南苏拉威西' };
+    QINGDAO: ['QINGDAO PORT', 'Tsingtao'], TIANJIN: ['TIANJIN XINGANG', '天津新港'], SINGAPORE: ['SIN', 'SINGAPORE PORT'], KENDARI: ['KENDARI PORT'], QINHUANGDAO: ['QHD', '秦皇岛港', 'QINHUANGDAO PORT'], TANGSHAN: ['京唐港', '曹妃甸', 'TANGSHAN PORT'], XINCUN: ['新村', 'XINCUN PORT'] };
+  const region = { BAHODOPI: '中苏拉威西', SURIGAO: '棉兰老', TAGANITO: '棉兰老', JAKARTA: '爪哇', SURABAYA: '爪哇', HAIPHONG: '越南北部', QINGDAO: '山东', TIANJIN: '天津', SINGAPORE: '—', KENDARI: '东南苏拉威西', QINHUANGDAO: '河北', TANGSHAN: '河北', XINCUN: '浙江' };
   M.ports.forEach((p) => { p.alias = alias[p.en] || []; p.region = region[p.en] || ''; p.status = '启用'; });
 
   // ---------- 航次（T04 子集，丰富版） ----------
@@ -312,7 +315,10 @@
    rr('R-006', 'BAHODOPI', 'QINGDAO', ['成品销售船'], null, 11, 13, '韩墨', 1, 11.2, 12.0),
    rr('R-007', 'BAHODOPI', 'TIANJIN', ['成品销售船'], null, 12, 14, '韩墨', 2, 12.4, 13.5),
    rr('R-008', 'SURABAYA', 'BAHODOPI', ['物资备件船'], null, 3, 4, '陈砚秋', 6, 3.4, 4.2),
-   rr('R-009', 'SINGAPORE', 'BAHODOPI', ['物资备件船'], null, 6, 8, '陈砚秋', 0, null, null)].forEach((r) => {
+   rr('R-009', 'SINGAPORE', 'BAHODOPI', ['物资备件船'], null, 6, 8, '陈砚秋', 0, null, null),
+   rr('R-010', 'QINHUANGDAO', 'BAHODOPI', ['大宗采购船'], '5万吨档', 11, 13, '周晓棠', 38, 10.6, 12.4),
+   rr('R-011', 'TANGSHAN', 'BAHODOPI', ['大宗采购船'], '5万吨档', 11, 14, '周晓棠', 21, 11.2, 13.5),
+   rr('R-012', 'XINCUN', 'BAHODOPI', ['大宗采购船'], null, 9, 12, '陈砚秋', 2, 9.5, 11.0)].forEach((r) => {
     r.basis = r.samples >= 5 ? '统计值' : '经验值'; r.effP50 = r.samples >= 5 ? r.p50 : r.exp; r.effP80 = r.samples >= 5 ? r.p80 : r.expMax; M.routeRules.push(r); });
   M.routeRules.forEach((r) => { r.status = r.status || '启用'; });
   // 原有规则 R-003 的「适用业务类型」保持仅大宗（物资备件船借用）
@@ -389,4 +395,38 @@
     const x = M.bulkSettle[id], g = x.gauge || 50000; i++;
     Object.assign(x, { g1: Math.round(g * 0.3333), g2: Math.round(g * 0.3333), g3: g - 2 * Math.round(g * 0.3333), other: 0, carTurn: 150 + i * 6, x1Cars: 40 + i * 2, crossTruck: 0, crossBelt: 0, noHandover: false, fx: 15820 + i * 3, portUnit: 0.26 });
   });
+})();
+
+/*
+ * ===== 库存消耗模拟（示例数据，数值全部虚构）=====
+ * 结构对照企微「物料消耗明细」表：导入日期、库存日期、品名、物料类型、日耗、库存、可用天数。
+ * 该表的库存序列已经包含「已排定到货」，所以断料日 = 模拟库存首次降到 0 的那一天（= 断料计划）。
+ * 真实文件含业务数据，不入库；P11 页面支持在本机浏览器里导入真实文件（只在本地解析）。
+ */
+(function () {
+  const M = window.MOCK, DAY = 86400000;
+  const dnOf = (iso) => { const [y, m, d] = iso.split('-').map(Number); return Math.round(Date.UTC(y, m - 1, d) / DAY); };
+  const T0 = dnOf(M.today);
+  // [物料类型, 品名, 当前库存(吨), 日耗(吨), 已排定到货[[第几天, 吨]]]
+  const RAW = [
+    ['铁矿', '铁矿总库存', 700000, 21000, [[28, 300000]]], ['铁矿', '烧结粉矿', 380000, 11000, [[25, 150000]]], ['铁矿', '烧结、竖炉精粉', 260000, 8500, []],
+    ['铁矿', '中低硅块', 34000, 2100, []], ['铁矿', '高硅块', 12000, 1800, []], ['铁矿', '长协-巴混', 120000, 4800, [[20, 60000]]], ['铁矿', '卡拉拉精粉', 7200, 260, []],
+    ['铁矿', '毛塔精粉', 0, 400, []], ['铁矿', '印粉', 4500, 500, []], ['铁矿', '氧化铁皮', 30000, 1500, []], ['铁矿', '超特粉', 210000, 4000, []], ['铁矿', '炼铁-酸性料', 52000, 4200, []],
+    ['焦煤', '焦煤总库存', 380000, 8000, [[36, 120000]]], ['焦煤', '一线主焦煤', 60000, 1400, []], ['焦煤', '二线主焦煤', 44000, 1600, []], ['焦煤', '1/3焦煤', 150000, 2400, []], ['焦煤', '肥煤', 70000, 800, []],
+    ['焦煤', '气煤', 28000, 1100, []], ['焦煤', '焦化喷吹煤', 30000, 1300, []], ['焦煤', '低硫气煤', 1900, 700, []], ['焦煤', '高硫气煤', 5000, 450, []], ['焦煤', '焦粉', 18000, 450, []],
+    ['焦煤', '炼铁喷吹煤', 90000, 2500, []], ['焦煤', '焦炭', 33000, 900, []],
+    ['辅料', '废钢', 11000, 450, []], ['辅料', '生铁', 70000, 1000, []], ['辅料', '烧结石灰石', 80000, 3000, [[20, 40000]]], ['辅料', '烧结凌美石粉', 28000, 400, []],
+    ['辅料', '炼钢凌美石块', 15000, 260, []], ['辅料', '炼钢石灰石小料', 11000, 1000, []],
+  ];
+  const HORIZON = 150;
+  const items = RAW.map(([type, name, stock0, daily, arr]) => {
+    const series = []; let s = stock0;
+    for (let k = 0; k <= HORIZON; k++) {
+      if (k > 0) { s = Math.max(0, s - daily); const a = arr.find((x) => x[0] === k); if (a) s += a[1]; }
+      series.push([T0 + k, Math.round(s), daily]);
+    }
+    const out = series.find((x) => x[1] <= 0);
+    return { type, name, stock: stock0, daily, days: Math.floor(stock0 / daily), series, stockout: out ? out[0] : null, arrivals: arr.map((a) => [T0 + a[0], a[1]]) };
+  });
+  M.inventory = { updated: M.today + ' 08:30', source: '库存消耗模拟表（示例数据）', sample: true, warnDays: 15, safeDays: 25, bufferDays: 3, items };
 })();

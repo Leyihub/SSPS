@@ -106,6 +106,6 @@
   const KEY = 'ssps-proto-v1', KEYS = ['voyageList', 'etaRevisions', 'changeLog', 'issues', 'cargoLines', 'batches', 'syncLogs', 'routeRules', 'vessels', 'ports', 'bulkSettle', 'salesExt'];
   try { const raw = sessionStorage.getItem(KEY); if (raw) { const d = JSON.parse(raw); KEYS.forEach((k) => { if (d[k]) M[k] = d[k]; }); } } catch (e) { /* 无存储时忽略 */ }
   C.persist = () => { try { const o = {}; KEYS.forEach((k) => { o[k] = M[k]; }); sessionStorage.setItem(KEY, JSON.stringify(o)); } catch (e) { /* ignore */ } };
-  C.resetData = () => { try { sessionStorage.removeItem(KEY); } catch (e) { /* ignore */ } };
+  C.resetData = () => { try { sessionStorage.removeItem(KEY); sessionStorage.removeItem('ssps-inventory'); } catch (e) { /* ignore */ } };
   window.C = C;
 })();
