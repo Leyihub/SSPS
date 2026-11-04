@@ -17,6 +17,18 @@
 5. 发现规格冲突时直接指出并给出建议的解决方式。
 6. 回复用中文。
 
+## 当前阶段：产品原型（先原型、后代码）
+
+先完成 P01–P10 的可点击原型，由 Leyinet 评审确认后再进入妙搭开发。原型阶段不需要妙搭、不需要 lark-cli、不连飞书。
+
+1. 位置：`prototype/`。每个页面一个独立 HTML 文件（如 `prototype/P02-prediction.html`），原生 HTML/CSS/JS，不用构建工具；另有 `prototype/index.html` 作为导航入口。
+2. 页面范围与内容以 `docs/implementation-plan.md` 第 9 节为准，字段以 `docs/schema/` 为准，状态以 `docs/schema/status-rules.md` 为准，不得自创字段或状态。
+3. 示例数据：在 `prototype/mock-data.js` 中手工构造，船名、合同号、人名一律虚构，不使用真实业务数据。
+4. 视觉基线：1920px 宽的密集 ERP 布局；导航 #26394f（渐变到 #203348）；主色 #1677ff；卡片圆角 8–12px、轻阴影；参考 SAP Fiori / Oracle TMS 的风格。
+5. 必须体现：无数据灰色斜线、CMR 口径与色阶、≤15 天 / ＞15 天两条路径的不同显示、Plan A/B 卡片、S1 溯源区块、航程「经验值 / 统计值」标签、「低可信」标签。
+6. 每完成一页，用 Playwright 截图保存为 `prototype/screenshots/<页面>.png` 一并提交，方便在 GitHub 上直接查看。
+7. 每页做完先提交一次并说明，等 Leyinet 截图反馈后再改。
+
 ## 已锁定业务规则（沿用德龙版，不重新讨论）
 
 1. 容量指标只用 CMR（容量余量率，越高越充裕），任何界面不得使用其他容量口径。
