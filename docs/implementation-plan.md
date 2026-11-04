@@ -234,7 +234,7 @@ flowchart LR
 | 17 | 合同执行人员 | 人员 |  |  |
 | 18 | 储运物料名 / 储运大类 / 本地国际 | 单选 ×3 |  | 原「储运1–3」；「储运4/5」整列为空，删除 |
 
-### T06 大宗卸船结算扩展（金额字段按部门隔离）
+### T06 大宗卸船结算扩展（作业数据与费用结算分权限；金额字段按部门隔离）
 
 | # | 字段 | 类型 | 说明 |
 | --- | --- | --- | --- |
@@ -382,7 +382,7 @@ m\_port、m\_berth、m\_vessel、m\_voyage、m\_cargo、m\_bulk\_settle、m\_sal
 | A11 | POST | /api/voyages/:id/milestones | 记录一个实际时间节点（如「已离装港」），写 D02 | 业、主 |
 | A12 | POST | /api/voyages/:id/eta | 修订当前 ETA，必填依据，写 D01 | 业、主 |
 | A13 | POST / PATCH / DELETE | /api/voyages/:id/cargo-lines | 货物明细增改删 | 业、主 |
-| A14 | PATCH | /api/voyages/:id/bulk-settlement | 大宗卸船结算扩展 | 大宗采购部业、主 |
+| A14 | PATCH | /api/voyages/:id/bulk-settlement | 大宗卸船结算扩展：作业数据（大宗采购部业、主 + 仓储物流部）；费用结算（仅大宗采购部业、主） | 分组鉴权 |
 | A15 | PATCH | /api/voyages/:id/sales-ext | 成品销售扩展 | 商务海运部业、主 |
 | A16 | POST | /api/voyages/:id/flags | 打或取消异常标记 | 业、主 |
 | A17 | POST | /api/berth-plans/import | 手动上传 IMIP Excel，返回校验报告 | 物、系 |
