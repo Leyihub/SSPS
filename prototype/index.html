@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1920">
+<title>SSPS 产品原型导航</title>
+<link rel="stylesheet" href="assets/app.css">
+<style>
+.hero{padding:20px 24px;display:grid;grid-template-columns:1.25fr 1fr;gap:28px;align-items:start}
+.hero h1{margin:0 0 6px;font-size:22px}
+.hero p{margin:0 0 8px;line-height:1.85;color:#3b4a5c}
+.stat{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.stat div{border:1px solid var(--line);border-radius:10px;padding:10px 14px;background:#fafbfc}
+.stat b{display:block;font-size:26px;line-height:1.2}.stat span{color:var(--muted);font-size:12px}
+.pgrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;margin-top:16px}
+.pc{padding:14px 16px 12px;display:flex;flex-direction:column;gap:6px;min-height:176px;position:relative;color:inherit}
+.pc .code{font:700 12px/1 ui-monospace,Menlo,Consolas,monospace;color:var(--primary)}
+.pc h3{margin:0;font-size:15px}
+.pc .who{font-size:12px;color:var(--muted)}
+.pc p{margin:0;font-size:12.5px;line-height:1.7;color:#4a596b;flex:1}
+.pc .foot{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted)}
+.pc.built{border:1.5px solid var(--primary);cursor:pointer}
+.pc.built:hover{box-shadow:0 6px 18px rgba(22,119,255,.18)}
+.pc.todo{background:#fafbfc;border-style:dashed;border-color:#d5dbe3;box-shadow:none}
+.pc.todo h3,.pc.todo .code{color:#8a97a8}
+.cols{display:grid;grid-template-columns:1.2fr 1fr;gap:16px;margin-top:16px}
+table.t{width:100%;border-collapse:collapse}
+table.t th,table.t td{padding:8px 12px;border-bottom:1px solid var(--line-2);text-align:left;vertical-align:top;line-height:1.65}
+table.t th{background:#f7f9fb;color:var(--muted);font-weight:500;font-size:12px}
+.rule-no{display:inline-block;min-width:22px;text-align:center;border-radius:4px;background:#26394f;color:#fff;font-size:11px;padding:0 5px}
+.leg{display:flex;flex-wrap:wrap;gap:10px 22px;padding:14px 16px;align-items:center}
+.leg .g{display:flex;align-items:center;gap:6px}
+.swl{display:inline-block;min-width:54px;padding:2px 8px;border:1px solid;border-radius:6px;text-align:center;font-weight:600}
+.docs{padding:12px 16px 14px;line-height:2}
+.docs code{background:#f0f3f7;border-radius:4px;padding:1px 6px;font-size:12px}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside id="nav"></aside>
+  <div class="main">
+    <header id="topbar"></header>
+    <main class="page">
+      <section class="card hero">
+        <div>
+          <h1>SSPS 智慧发船预测系统 · 产品原型</h1>
+          <p>这是 P01–P10 共 10 个页面的可点击原型，用来让 Leyinet 评审页面与规则，评审确认之后才进入妙搭开发。原型只用原生 HTML / CSS / JS，示例数据全部虚构，不连飞书，也不是任何已上线功能。</p>
+          <p>系统的核心是「智能发船计划预测」：帮业务员根据泊位承载能力、航行周期和到港规律，判断最佳发船日、最佳到港窗口和泊位是否够用。它不是港口实时调度塔台，也不做数字孪生大屏。</p>
+          <p>当前进度：原型阶段，已完成 <b id="nBuilt"></b> 页，其余 <b id="nTodo"></b> 页待做；无任何功能已上线。每页做完先由 Leyinet 看截图反馈，再做下一页。</p>
+        </div>
+        <div>
+          <div class="stat">
+            <div><b id="sBuilt">1</b><span>原型已完成 · 待评审</span></div>
+            <div><b id="sTodo">9</b><span>待做</span></div>
+            <div><b>0</b><span>已上线</span></div>
+          </div>
+          <div class="hint" style="margin-top:10px">页面范围以 <code>docs/implementation-plan.md</code> 第 9 节为准，字段以 <code>docs/schema/</code> 为准，状态以 <code>docs/schema/status-rules.md</code> 为准。截图保存在 <code>prototype/screenshots/</code>。</div>
+        </div>
+      </section>
+
+      <div class="pgrid" id="pgrid"></div>
+
+      <div class="cols">
+        <section class="card">
+          <div class="card-h"><h2>已锁定规则在原型中的落点</h2><span class="muted">只列已完成页面；待做页面的落点标「计划」</span></div>
+          <table class="t" id="rules"></table>
+        </section>
+        <section>
+          <div class="card">
+            <div class="card-h"><h2>视觉语言速查</h2></div>
+            <div class="leg">
+              <div class="g"><b>CMR 色阶</b></div>
+              <div class="g"><span class="swl c1">≥50%</span>充裕</div>
+              <div class="g"><span class="swl c2">30–50%</span>适中</div>
+              <div class="g"><span class="swl c3">15–30%</span>紧张</div>
+              <div class="g"><span class="swl c4">&lt;15%</span>拥堵</div>
+              <div class="g"><span class="swl nd">无数据</span>灰色斜线，绝不是 0%</div>
+            </div>
+            <div class="leg" style="border-top:1px solid var(--line-2)">
+              <div class="g"><b>标签</b></div>
+              <span class="tag amber">经验值</span><span class="tag blue">统计值 · n=14</span><span class="tag lowtrust">⚠ 低可信</span><span class="tag gray">反向近似 · 仅供参考</span><span class="tag gray">借用大宗航线样本</span>
+            </div>
+            <div class="note" style="padding:0 16px 12px">30% 是 Plan B 的余量门槛（已锁定）；色阶的其余分界（50% / 15%）是原型建议值，待 Leyinet 确认。</div>
+          </div>
+          <div class="card" style="margin-top:16px">
+            <div class="card-h"><h2>文档地图</h2></div>
+            <div class="docs">
+              <code>CLAUDE.md</code> 项目约定与锁定规则<br>
+              <code>docs/implementation-plan.md</code> 实施计划书（第 9 节为页面清单）<br>
+              <code>docs/schema/</code> 飞书表 T01–T10、应用库 D01–D10、状态规则<br>
+              <code>docs/open-questions.md</code> 待确认事项（含原型阶段新增项）
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="assets/shell.js"></script>
+<script>
+(function () {
+  SHELL.mount({ active: 'index', title: '原型导航' });
+  const P = SHELL.PAGES, B = SHELL.BUILT, order = ['P01','P02','P03','P04','P05','P06','P07','P08','P09','P10'];
+  const byId = Object.fromEntries(P.map((p) => [p.id, p]));
+  document.getElementById('pgrid').innerHTML = order.map((id) => {
+    const p = byId[id], built = !!B[id];
+    const inner = '<div style="display:flex;justify-content:space-between;align-items:center"><span class="code">' + p.id + '</span>' +
+      (built ? '<span class="tag blue">' + B[id] + '</span>' : '<span class="tag gray">待做</span>') + '</div>' +
+      '<h3>' + p.name + '</h3><div class="who">主要用户：' + p.user + '</div><p>' + p.desc + '</p>' +
+      '<div class="foot"><span>调用接口 ' + p.api + '</span>' + (built ? '<span style="color:var(--primary)">打开 →</span>' : '') + '</div>';
+    return built ? '<a class="card pc built" href="' + p.file + '">' + inner + '</a>' : '<div class="card pc todo">' + inner + '</div>';
+  }).join('');
+  const nb = Object.keys(B).length;
+  ['nBuilt', 'sBuilt'].forEach((i) => document.getElementById(i).textContent = nb);
+  ['nTodo', 'sTodo'].forEach((i) => document.getElementById(i).textContent = 10 - nb);
+
+  const R = [
+    ['CMR 口径与色阶', 'P02 日历、Plan 卡片、候选窗口；全站只用「容量余量率」一种口径', '已做 P02'],
+    ['无数据 = 灰色斜线', 'P02 日历格、候选窗口、Plan 逐日条；整窗无数据时给出说明而不是 0%', '已做 P02'],
+    ['≤15 天 / ＞15 天两条路径', 'P02 路径判定框、运行信息、Plan 卡片（CMR 与重叠船数）、日历分界线', '已做 P02'],
+    ['Plan A / Plan B 卡片', 'P02 结果区；Plan B 要求 CMR 余量 ≥30%', '已做 P02'],
+    ['航程「经验值 / 统计值」标签', 'P02 Plan 卡片航程口径行', '已做 P02'],
+    ['「低可信」标签', 'P02 Plan B 降级场景（场景 3）', '已做 P02'],
+    ['S1 参数匹配溯源', 'P02 卡片内有摘要行并跳转；完整 S1 区块在 P03', '计划 P03'],
+    ['泊位池与吨级匹配分母', 'P02 货量下方提示与日历分母；可用泊位视图在 P03', '部分 P02 / 计划 P03'],
+  ];
+  document.getElementById('rules').innerHTML = '<tr><th style="width:30%">规则</th><th>落点</th><th style="width:16%">状态</th></tr>' +
+    R.map((r, i) => '<tr><td><span class="rule-no">' + (i + 1) + '</span> ' + r[0] + '</td><td>' + r[1] + '</td><td>' +
+      (r[2].startsWith('已做') ? '<span class="tag green">' + r[2] + '</span>' : '<span class="tag gray">' + r[2] + '</span>') + '</td></tr>').join('');
+})();
+</script>
+</body>
+</html>
