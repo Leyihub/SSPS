@@ -97,8 +97,8 @@
       batchNo: mode === 'cmr' ? M.batch.batchNo : null, rule, borrowed,
       runBy: M.user.name, at: M.today + ' 09:42',
     };
-    if (biz !== '成品销售船' && !rule) { res.noRule = true; return res; }  // 缺规则：无法反推发船日
 
+    if (!inp.strict && biz !== '成品销售船' && !rule) { res.noRule = true; return res; }  // v1：缺规则时拦截；v2（strict）只是不给发船日
     const all = buildCandidates(ws, we, mode, P);
     const feasible = (c) => biz === '成品销售船' || !rule || (c.e - Math.ceil(rule.effP80)) >= TODAY; // 发船日不得早于今天
     const usable = all.filter((c) => !c.none && feasible(c));
@@ -110,7 +110,7 @@
       offPool: rows.filter((r) => !r.inPool).length,
     };
     const complete = usable.filter((c) => c.complete).sort(rankSort(mode));
-    const sparse = usable.filter((c) => !c.complete).sort(rankSort(mode));
+    const sparse = inp.strict ? [] : usable.filter((c) => !c.complete).sort(rankSort(mode));
 
     let A = null, B = null, bFallback = false;
     if (complete.length) A = complete[0]; else if (sparse.length) A = sparse[0];
@@ -130,9 +130,11 @@
       const low = reasons.length > 0;
       const p = { label, c, mode, trust: low ? '低可信' : '正常', reasons, qualifies: c.metric !== null && qualify(mode, c.metric, P.n) };
       if (biz !== '成品销售船') {
+        if (rule) {
         p.depart = c.e - Math.ceil(rule.effP80);                          // 最晚到港日按 P80 反推
         p.etaFrom = p.depart + Math.ceil(rule.effP50);                    // 按 P50 预计抵港
         p.etaTo = p.depart + Math.ceil(rule.effP80);                      // 按 P80 预计抵港
+        }
       } else {
         p.deadline = we;                                                  // 截止日 = 最晚装船日 = 受载期止
         p.slack = we - c.e;
@@ -152,6 +154,23 @@
       days.push(Object.assign({ d, i, mode, dist: i }, P.n ? dayFn(mode)(d, P) : { state: 'nodata' }));
     }
     return { P, days };
+  }
+
+  // ---------- 某一天的船只明细（点击日历用） ----------
+  function dayDetail(d, tons) {
+    const P = poolFor(tons), mode = modeOf(d), info = dayFn(mode)(d, P);
+    if (info.state !== 'ok') return { d, mode, state: 'nodata', P, list: [] };
+    let list;
+    if (mode === 'cmr') {
+      list = rows.filter((r) => r.inPool && P.ids.has(r.berth) && r.s <= d && d <= r.e).map((r) => ({
+        vessel: r.vessel, berth: r.berth, cargo: r.cargo, tons: r.tons, eta: dn(r.eta), start: r.s, end: r.e,
+        arriving: dn(r.eta) === d, berthing: r.s === d }));
+    } else {
+      list = info.ships.map((v) => ({ vessel: v.vessel, id: v.id, load: v.load, disch: v.disch, biz: v.biz, tons: v.totalTons,
+        start: v.s, end: v.e, status: v.status, side: v.localSide, arriving: v.s === d }));
+    }
+    list.sort((a, b) => (!!b.arriving - !!a.arriving) || (!!b.berthing - !!a.berthing) || (a.start - b.start));
+    return Object.assign({ d, mode, state: 'ok', P, list }, mode === 'cmr' ? { cmr: info.cmr, occ: info.occ } : { count: info.count });
   }
 
   // ---------- 宣船文案（只引用引擎结果，不改写数值） ----------
@@ -175,5 +194,5 @@
   }
 
   window.ENGINE = { dn, iso, wk, md, TODAY, PATH_LIMIT, PLAN_B_MIN_CMR, WINDOW_LEN, poolFor, needTier,
-    planCoverTo, voyHorizon, predict, calendar, announce, modeOf, findRule, qualify, cancelledVoy, rows, voyages };
+    planCoverTo, voyHorizon, predict, calendar, dayDetail, announce, modeOf, findRule, qualify, cancelledVoy, rows, voyages };
 })();

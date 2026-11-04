@@ -22,7 +22,7 @@
     { id: 'P10', name: '系统管理', file: 'P10-admin.html', group: '系统', user: '系统管理员',
       desc: '同步日志、兼容表手动刷新、迁移 dry-run 报告、连通性自检', api: 'A26–A28' },
   ];
-  const BUILT = { P02: '原型已完成，待评审' };   // 每做完一页在这里登记；未登记 = 待做
+  const BUILT = { P02: 'v2 草图 · 待评审' };   // 每做完一页在这里登记；未登记 = 待做
 
   function navHtml(active) {
     let h = '<div class="brand"><span class="logo">S</span><div><b>SSPS</b><small>智慧发船预测系统</small></div></div>';
