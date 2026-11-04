@@ -59,10 +59,11 @@
 ## 文档地图
 
 - `docs/implementation-plan.md`：实施计划书 V1.0 的导出快照。在线版：https://claude.ai/artifact/VM4TLGJqdbd2FJvQAibNfJ
-- `docs/schema/`：多维表格 T01–T10、应用库 D01–D10、状态推导规则、迁移清洗规则
+- `docs/schema/`：多维表格 T01–T10、应用库 D01–D12、状态推导规则、迁移清洗规则
+- `docs/schema/base-build-checklist.md`：多维表格建设清单（Leyinet 在飞书里照着逐项建表、勾选）
 - `docs/open-questions.md`：待 Leyinet 确认的事项，未确认项不要自行假定
 - `docs/data-profile/`：企微导出的列结构与填充统计（不含业务数据）
 
 ## 编号约定
 
-K01–K13 是访谈决策；T01–T10 是飞书表；D01–D10 是应用库自有表（库存相关 D11–D12 待确认）；A01–A30 是后端接口；P01–P11 是页面（P11 智能提问是预测入口，导航里排在 P02 前面）；M1–M3 / G1–G3 是里程碑和验收门。
+K01–K14 是访谈决策；T01–T10 是飞书表；D01–D12 是应用库自有表（D11–D12 是库存断料）；A01–A30 是后端接口；P01–P11 是页面（P11 智能提问是预测入口，导航里排在 P02 前面）；M1–M3 / G1–G3 是里程碑和验收门。
