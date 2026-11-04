@@ -188,7 +188,7 @@
     }
     if (plan.mode === 'cmr') out.push(s('窗口内最低泊位余量 '), v(pct(plan.c.metric)), s('（能装下的泊位 '), v(P.n + ' 个'), s('）；'));
     else out.push(s('窗口内同期最多 '), v(plan.c.metric + ' 艘'), s(' 船（能装下的泊位 '), v(P.n + ' 个'), s('）；'));
-    if (rule && i.biz !== '成品销售船') out.push(s('航程按' + (rule.basis === '经验值' ? '业务员估算' : '历史统计') + ' '), v(Math.ceil(rule.effP50) + '～' + Math.ceil(rule.effP80) + ' 天'), s('；'));
+    if (rule && i.biz !== '成品销售船') out.push(s('航程按' + (rule.basis === '经验值' ? '经验估算' : '历史统计') + ' '), v(Math.ceil(rule.effP50) + '～' + Math.ceil(rule.effP80) + ' 天'), s('；'));
     if (plan.trust === '低可信') out.push(s('本方案数据不完整，请谨慎采用；'));
     if (i.biz === '成品销售船' && plan.custEta) out.push(s('到客户港预计 '), v(md(plan.custEta[0]) + ' ~ ' + md(plan.custEta[1])), s('（仅供参考）；'));
     out.push(s('以上数值由规则计算得出，文案未改写。'));
