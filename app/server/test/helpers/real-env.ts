@@ -4,6 +4,8 @@ import { createDrizzleOutboxStore } from '../../lark/outbox-store';
 import { mBerth, mPort, mRouteRule } from '../../database/schema';
 import { seedMaster } from '../../adapters/memory/seed';
 import { DrizzleMasterStore } from '../../adapters/drizzle/drizzle-master-store';
+import { DrizzleVoyageStore } from '../../adapters/drizzle/drizzle-voyage-store';
+import { MemoryUserLookup } from '../../adapters/memory/memory-user-lookup';
 import { F } from '../../lark/fieldmap';
 import { FakeBase } from './fake-base';
 import { testDb } from './pg';
@@ -28,4 +30,12 @@ export async function realMasterEnv(seed = true) {
     }
   }
   return { ...t, fake, outbox, master };
+}
+
+/** 航次的真实仓储环境：在主数据环境上再建航次仓储，并预置测试要用的船舶（航次的船舶必须在主数据里） */
+export async function realVoyageEnv(users: Record<string, { name: string; feishuId?: string }> = {}, vessels: string[] = ['MV TEST', 'MV X']) {
+  const env = await realMasterEnv();
+  for (const name of vessels) await env.master.saveVessel({ name, alias: [], mmsi: null, imo: null, type: '散货船', dwt: null, length: null, tier: null });
+  const lookup = new MemoryUserLookup(users), store = new DrizzleVoyageStore(env.db as any, env.fake, env.outbox, lookup);
+  return { ...env, store, lookup };
 }

@@ -10,7 +10,7 @@ import { CONFIG } from '../../config';
 import { dn } from '../../lib/dates';
 import { parseDateTime, parseNumber } from '../../importers/common';
 import {
-  Actor, CargoLine, ETA_BASIS, FLAGS, SALES_WAYS, MILESTONE_FIELDS, MONEY_KEYS, MONEY_LABEL, OPS_KEYS, VOYAGE_EDITABLE, Voyage, isBulk, isProduct, localDate,
+  Actor, BOOL_KEYS, CargoLine, DATE_KEYS_SETTLE, ETA_BASIS, FLAGS, SALES_WAYS, MILESTONE_FIELDS, MONEY_KEYS, MONEY_LABEL, OPS_KEYS, TEXT_KEYS, VOYAGE_EDITABLE, Voyage, isBulk, isProduct, localDate,
 } from '../../domain/voyage';
 import { canCreateVoyage, canEditMoney, canEditOps, canEditSales, canEditVoyage, canSeeMoney } from '../../domain/permissions';
 import type { CreateVoyageDto, ListQuery } from './voyage.dto';
@@ -303,11 +303,16 @@ export class VoyageService {
     if (bad.length) throw invalid('不能修改结算字段：' + bad.join('、'));
     if (keys.some((k) => OPS_SET.has(k)) && !canEditOps(a, v)) throw forbidden('没有修改作业数据的权限');
     if (keys.some((k) => MONEY_SET.has(k)) && !canEditMoney(a, v)) throw forbidden('费用结算只有大宗采购部的负责业务员或主管可以修改');
-    const old = (await this.store.settlement(id)) || {}, patch: Record<string, string | number | boolean | null> = {};
+    const old = (await this.store.settlement(id)) || {}, patch: Record<string, string | number | boolean | null> = {}, errs: string[] = [];
     for (const k of keys) {
-      const raw = (body as any)[k];
-      patch[k] = raw === '' ? null : raw;
+      const raw = (body as any)[k], label = MONEY_LABEL[k] || k;
+      if (raw === '' || raw === null) { patch[k] = null; continue; }
+      if (BOOL_KEYS.has(k)) { if (typeof raw === 'boolean') patch[k] = raw; else errs.push('「' + label + '」必须是 true 或 false'); }
+      else if (DATE_KEYS_SETTLE.has(k)) { if (typeof raw === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(raw)) patch[k] = raw; else errs.push('「' + label + '」必须是 YYYY-MM-DD'); }
+      else if (TEXT_KEYS.has(k)) { if (typeof raw !== 'string') errs.push('「' + label + '」必须是文本'); else if (k === 'demCur' && !['IDR', 'USD'].includes(raw)) errs.push('币种只能是 IDR 或 USD'); else patch[k] = raw; }
+      else { const n = typeof raw === 'number' ? raw : typeof raw === 'string' && raw.trim() !== '' ? Number(raw) : NaN; if (Number.isFinite(n)) patch[k] = n; else errs.push('「' + label + '」必须是数字'); }
     }
+    if (errs.length) throw invalid(errs.join('；'));
     const saved = await this.store.saveSettlement(id, patch, sub(key, 'settle'));
     const at = this.now();
     const labels = { ...Object.fromEntries(OPS_KEYS.map((k) => [k, '结算 ' + k])), ...MONEY_LABEL };

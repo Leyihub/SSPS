@@ -12,7 +12,8 @@ export interface BaseGateway {
   remove(table: TableKey, recordIds: string[]): Promise<void>;
 }
 
-export function createBitableGateway(b: { createRecords: Function; batchUpdate: Function; batchDelete: Function }): BaseGateway {
+type AnyFn = (...a: any[]) => any;
+export function createBitableGateway(b: { createRecords: AnyFn; batchUpdate: AnyFn; batchDelete: AnyFn }): BaseGateway {
   const q = (o?: WriteOpts) => (o?.userIdType ? 'user_id_type=' + o.userIdType : '');
   return {
     create: (t, records, o) => b.createRecords(t, records, q(o)),

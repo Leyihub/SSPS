@@ -40,6 +40,10 @@ export const MILESTONE_FIELDS = ['actLoadArr', 'loadBerth', 'actLoadDep', 'actDi
 // T06 字段分组：作业数据（大宗采购部 + 仓储物流部）与费用结算（仅大宗采购部），键名对照原型
 export const OPS_KEYS = ['terms', 'rate', 'allowDays', 'turn', 'gauge', 'g1', 'g2', 'g3', 'truck', 'belt', 'weigh', 'other', 'carTurn', 'x1Cars', 'crossTruck', 'crossBelt', 'beltOff3', 'beltOff4', 'sendDay', 'backDay', 'noHandover', 'rain', 'issue'] as const;
 export const MONEY_KEYS = ['demRate', 'demCur', 'demUsd', 'fx', 'portUnit', 'portFee', 'loadFee'] as const;
+/** 结算字段的取值类型：数字 / 日期（YYYY-MM-DD）/ 勾选 / 文本；币种只能 IDR 或 USD */
+export const BOOL_KEYS = new Set(['noHandover', 'rain']);
+export const DATE_KEYS_SETTLE = new Set(['sendDay', 'backDay']);
+export const TEXT_KEYS = new Set(['terms', 'issue', 'demCur']);
 export const MONEY_LABEL: Record<string, string> = { demRate: '滞期费率', demCur: '币种', demUsd: '滞期费 / 速遣费', fx: '汇率', portUnit: '港务费单价', portFee: '港务费', loadFee: '装卸费' };
 
 /** 本港侧 */
