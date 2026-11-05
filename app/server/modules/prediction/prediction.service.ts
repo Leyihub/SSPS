@@ -13,6 +13,7 @@ import { VoyageService } from '../voyage/voyage.service';
 import type { PredictDto } from './prediction.dto';
 
 export interface UserLite { userId?: string; userName?: string }
+// user 在平台外（本地无登录态）可能是 undefined，所以取值一律用 ?.
 
 @Injectable()
 export class PredictionService {
@@ -40,7 +41,7 @@ export class PredictionService {
     if (res.noCandidate) return { status: 'no_candidate' as const, runNo: null, result: toApiResult(res) };
 
     const runNo = await this.store.nextRunNo(s.today);
-    const meta = { batchNo: s.berthPlanBatch?.batchNo ?? null, planDate: s.berthPlanBatch?.planDate ?? null, batchSource: s.berthPlanBatch?.source ?? null, planCoverTo: engine.planCoverTo, voyHorizon: engine.voyHorizon, inventoryBatchNo: s.inventory.batchNo, runBy: user.userName || user.userId || null, now: new Date().toISOString() };
+    const meta = { batchNo: s.berthPlanBatch?.batchNo ?? null, planDate: s.berthPlanBatch?.planDate ?? null, batchSource: s.berthPlanBatch?.source ?? null, planCoverTo: engine.planCoverTo, voyHorizon: engine.voyHorizon, inventoryBatchNo: s.inventory.batchNo, runBy: user?.userName || user?.userId || null, now: new Date().toISOString() };
     await this.store.save({ runNo, run: toRunRecord(res, runNo, meta), plans: res.plans.filter(Boolean).map((p: any) => toPlanRecord(res, p, runNo, meta)) });
     return { status: 'ok' as const, runNo, result: toApiResult(res) };
   }
@@ -69,7 +70,7 @@ export class PredictionService {
     if (!plan) throw new BusinessException(ResponseCode.NOT_FOUND, '这次预测没有方案 ' + label, HttpStatus.NOT_FOUND);
     const s = await this.snap.load();
     const parts = announceFromProvenance(plan.provenance, this.portName(s));
-    const a = { label, parts, text: parts.map((x) => x.t).join(''), by: user.userName || user.userId || '', at: new Date().toISOString() };
+    const a = { label, parts, text: parts.map((x) => x.t).join(''), by: user?.userName || user?.userId || '', at: new Date().toISOString() };
     await this.store.saveAnnouncement(runNo, a);
     return a;
   }

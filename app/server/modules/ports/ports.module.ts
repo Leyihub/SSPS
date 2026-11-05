@@ -1,12 +1,14 @@
 import { Global, Module } from '@nestjs/common';
-import { SNAPSHOT_PORT, PREDICTION_STORE, VOYAGE_STORE, DIRECTORY_PORT, MASTER_STORE } from '../../ports/tokens';
+import { SNAPSHOT_PORT, PREDICTION_STORE, VOYAGE_STORE, DIRECTORY_PORT, MASTER_STORE, IMPORT_STORE } from '../../ports/tokens';
 import { MemoryPredictionStore } from '../../adapters/memory/memory-prediction-store';
 import { MemoryVoyageStore } from '../../adapters/memory/memory-voyage-store';
 import { MemoryDirectory } from '../../adapters/memory/memory-directory';
 import { MemoryMasterStore } from '../../adapters/memory/memory-master-store';
+import { MemoryImportStore } from '../../adapters/memory/memory-import-store';
 import { LiveSnapshot } from '../../adapters/memory/live-snapshot';
 import { seedMaster } from '../../adapters/memory/seed';
 import type { MasterStorePort } from '../../ports/master-store.port';
+import type { ImportStorePort } from '../../ports/import-store.port';
 import type { VoyageStorePort } from '../../ports/voyage-store.port';
 
 /**
@@ -18,10 +20,11 @@ import type { VoyageStorePort } from '../../ports/voyage-store.port';
   providers: [
     { provide: MASTER_STORE, useFactory: () => new MemoryMasterStore(seedMaster()) },
     { provide: VOYAGE_STORE, useFactory: () => new MemoryVoyageStore() },
+    { provide: IMPORT_STORE, useFactory: () => new MemoryImportStore() },
     { provide: DIRECTORY_PORT, useFactory: () => new MemoryDirectory() },
     { provide: PREDICTION_STORE, useClass: MemoryPredictionStore },
-    { provide: SNAPSHOT_PORT, inject: [MASTER_STORE, VOYAGE_STORE], useFactory: (m: MasterStorePort, v: VoyageStorePort) => new LiveSnapshot(m, v) },
+    { provide: SNAPSHOT_PORT, inject: [MASTER_STORE, VOYAGE_STORE, IMPORT_STORE], useFactory: (m: MasterStorePort, v: VoyageStorePort, i: ImportStorePort) => new LiveSnapshot(m, v, i) },
   ],
-  exports: [SNAPSHOT_PORT, PREDICTION_STORE, VOYAGE_STORE, DIRECTORY_PORT, MASTER_STORE],
+  exports: [SNAPSHOT_PORT, PREDICTION_STORE, VOYAGE_STORE, DIRECTORY_PORT, MASTER_STORE, IMPORT_STORE],
 })
 export class PortsModule {}

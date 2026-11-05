@@ -74,9 +74,10 @@
 | 建库 SQL | `app/db/001-ssps-core.sql`（`scripts/build-ddl.mjs` 生成） | 已按平台规范生成 12 张表；待你用 `+db-execute` 执行，再 `npm run gen:db-schema` |
 | 航次与货物 A07–A16 | `app/server/modules/voyage` | 已写好并测试：列表、详情（金额按权限裁剪）、新建、改字段、录节点（时序校验）、ETA 修订、异常标记、货物明细增改删、卸船结算分组鉴权、销售扩展；变更日志、数据质量问题、幂等键；14 个服务测试 + 权限测试通过。写飞书的真实仓储待建库后接入 |
 | 主数据 A01–A06、数据质量 A25、采纳写回 A23 | `app/server/modules/{master,voyage,prediction}` | 已写好并测试：当前用户、港口（别名模糊匹配）、泊位、船舶（重名 / IMO / MMSI 查重）、航程规则（唯一性、统计列只读）、每日重算 P50/P80、数据质量清单与关闭、采纳方案新建或写回待宣船航次；动态快照让航次和主数据的修改立刻进入预测。80 个测试通过 |
-| 靠船计划 A17–A19、库存 A30、系统管理 A26–A28 | `app/server/modules/` | 计划中 |
+| 靠船计划 A17、A19、库存 A30 | `app/server/modules/imports`、`server/lib/xlsx.ts` | 已写好并测试：直接上传 .xlsx（零依赖读取器）或上传解析好的行；缺列 / 空文件整批拒绝；90 天过滤与分类计数；异常行进数据质量清单；新批次整体写完才切当前批次；文件 token 去重；按船名关联航次；库存错误值行单独存。导入后日历和预测立即用上新批次 |
+| 云空间拉取 A18、系统管理 A26–A28 | `app/server/modules/` | 计划中（依赖飞书客户端接入） |
 | 飞书仓储层（先写飞书再回写镜像）与定时任务 | `app/server/` | 计划中（客户端、写队列、幂等、补偿已有） |
 | 迁移脚本（读 Excel） | — | 计划中（清洗规则已有） |
 | 前端 React 重写（P01–P11） | `app/client/src/pages/` | 计划中 |
 
-运行测试：`cd app && npm test`（80 个）；类型检查：`npm run type:check:server`；代码检查：`npx eslint server --quiet`。
+冒烟（真起 Nest，走完整条 HTTP 主线）：`cd app && npm run smoke`；运行测试：`cd app && npm test`（90 个）；类型检查：`npm run type:check:server`；代码检查：`npx eslint server --quiet`。

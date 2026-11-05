@@ -26,6 +26,7 @@
     "lint": "node ./scripts/lint.js",
     "precommit": "node scripts/hooks/run-precommit.js",
     "upgrade": "npx -y @lark-apaas/fullstack-cli sync --disable-gen-openapi",
+    "smoke": "npm run build:server && node scripts/smoke.cjs",
     "test": "tsx --tsconfig tsconfig.node.json --test --test-reporter=spec 'server/test/*.spec.ts'"
   },
   "dependencies": {
