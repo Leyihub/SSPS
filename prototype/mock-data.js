@@ -393,7 +393,7 @@
   const M = window.MOCK; let i = 0;
   Object.keys(M.bulkSettle).forEach((id) => {
     const x = M.bulkSettle[id], g = x.gauge || 50000; i++;
-    Object.assign(x, { g1: Math.round(g * 0.3333), g2: Math.round(g * 0.3333), g3: g - 2 * Math.round(g * 0.3333), other: 0, carTurn: 150 + i * 6, x1Cars: 40 + i * 2, crossTruck: 0, crossBelt: 0, noHandover: false, fx: 15820 + i * 3, portUnit: 0.26 });
+    Object.assign(x, { g1: 35 + (i % 4) * 5, g2: 30 + (i % 3) * 5, g3: 40 + (i % 5) * 5, other: 0, carTurn: 150 + i * 6, x1Cars: 40 + i * 2, crossTruck: 0, crossBelt: 0, noHandover: false, fx: 15820 + i * 3, portUnit: 0.26 });
   });
 })();
 

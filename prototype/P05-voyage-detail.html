@@ -182,7 +182,7 @@ textarea.inp{height:auto;min-height:60px;padding:6px 9px}
   // 字段分两块：作业数据（水尺、运量、管带机、交接）和费用结算（金额，按部门隔离）
   const OPS = [
     ['条款与计划', [['terms', '卸货条款', 'text'], ['rate', '卸率（吨/天）', 'num'], ['allowDays', '允许卸货天数', 'num'], ['turn', 'TURN TIME（小时）', 'num']]],
-    ['水尺与运量', [['gauge', '卸港水尺吨位（吨）', 'num'], ['g1', '水尺 1（吨）', 'num'], ['g2', '水尺 2（吨）', 'num'], ['g3', '水尺 3（吨）', 'num'], ['truck', '汽运量（吨）', 'num'], ['belt', '管带机运量（吨）', 'num'], ['weigh', '过磅重量（吨）', 'num'], ['other', '其他部门运量（吨）', 'num'], ['carTurn', '倒运车数（车）', 'num'], ['x1Cars', 'X1 管带机车数（车）', 'num'], ['crossTruck', '跨月船汽运预估（吨）', 'num'], ['crossBelt', '跨月船管带机预估（吨）', 'num']]],
+    ['水尺与运量', [['gauge', '卸港水尺吨位（吨）', 'num'], ['g1', '水尺 1（分钟）', 'num'], ['g2', '水尺 2（分钟）', 'num'], ['g3', '水尺 3（分钟）', 'num'], ['truck', '汽运量（吨）', 'num'], ['belt', '管带机运量（吨）', 'num'], ['weigh', '过磅重量（吨）', 'num'], ['other', '其他部门运量（吨）', 'num'], ['carTurn', '倒运车数（车）', 'num'], ['x1Cars', 'X1 管带机车数（车）', 'num'], ['crossTruck', '跨月船汽运预估（吨）', 'num'], ['crossBelt', '跨月船管带机预估（吨）', 'num']]],
     ['管带机与交接', [['beltOff3', '3# 管带机未运行（小时）', 'num'], ['beltOff4', '4# 管带机未运行（小时）', 'num'], ['sendDay', '交接发出日', 'date'], ['backDay', '交接签回日', 'date'], ['noHandover', '德天不用交接', 'bool'], ['rain', '小雨保函', 'bool'], ['issue', '影响卸船因素 / 异常反馈', 'textarea']]],
   ];
   const MONEY = [['demRate', '滞期费率', 'num'], ['demCur', '币种', 'cur'], ['demUsd', '滞期费 / 速遣费（USD）', 'num'], ['fx', '汇率', 'num'], ['portUnit', '港务费单价', 'num'], ['portFee', '港务费（USD）', 'num'], ['loadFee', '装卸费（USD）', 'num']];
@@ -214,7 +214,7 @@ textarea.inp{height:auto;min-height:60px;padding:6px 9px}
     if (!seeMoney()) money = '<div class="sec"><h3>费用与结算' + C.ic('金额类字段按部门隔离：只有大宗采购部（及系统管理员）能看。用右上角的「模拟身份」可以切换体验。') + '</h3><div class="kvg">' + MONEY.map((f) => '<div class="it"><div class="k">' + f[1] + '</div><div class="v"><span class="lock">无权限查看</span></div></div>').join('') + '</div></div>';
     else money = '<div class="sec"><h3>费用与结算' + C.ic('金额类字段按部门隔离：只有大宗采购部（及系统管理员）能看和改。') + '</h3><div class="kvg">' + MONEY.map((f) => itemX('m_' + f[0], f[1], fv(f[2], x[f[0]]) + (f[0] === 'demRate' && x.demCur ? ' ' + x.demCur + ' / 天' : ''), em ? finp(f[2], f[0], x[f[0]]) : null)).join('') + '</div></div>' +
       (canMoney() ? '<div class="bar2"><span class="note2">' + (em ? '编辑中：金额只有大宗采购部能改。' : '费用结算只有大宗采购部能改。') + '</span><span style="display:flex;gap:8px">' + (em ? '<button class="btn" id="xCancel">取消</button><button class="btn primary" id="xSaveMoney">保存费用结算</button>' : '<button class="btn" id="xEditMoney">编辑费用结算</button>') + '</span></div>' : '');
-    return grp(OPS[0][0], OPS[0][1]) + grp(OPS[1][0], OPS[1][1], '水尺是按船的吃水深度推算载货量的测量，卸港后登记。作业数据由大宗采购部和仓储物流部登记，这个权限划分待确认。') + grp(OPS[2][0], OPS[2][1]) + opsBar + money;
+    return grp(OPS[0][0], OPS[0][1], '卸货条款为 CQD（按港口习惯尽快装卸）时没有固定卸率，卸率留空。') + grp(OPS[1][0], OPS[1][1], '卸港水尺吨位是按船的吃水推算的实际载货量（吨）；水尺 1–3 记每次水尺测量的耗时（分钟）。作业数据由大宗采购部和仓储物流部登记，这个权限划分待确认。') + grp(OPS[2][0], OPS[2][1], '小雨保函：雨天装卸货物时出具的责任保证文件，勾选表示本船出具了。') + opsBar + money;
   }
   // 保存：作业数据 / 费用结算 / 销售扩展
   function saveSettle(kind) {
@@ -236,8 +236,8 @@ textarea.inp{height:auto;min-height:60px;padding:6px 9px}
   function gaugeModal() {
     const x = M.bulkSettle[v.id] || {};
     C.modal({ title: '登记水尺', ok: '保存', width: 480, body:
-      '<div class="note2" style="margin:0 0 10px">卸港后登记水尺读数；卸港水尺吨位是水尺推算出的实际载货量。保存后记入变更日志。</div>' +
-      ['gauge:卸港水尺吨位（吨）', 'g1:水尺 1（吨）', 'g2:水尺 2（吨）', 'g3:水尺 3（吨）'].map((q) => { const [k, l] = q.split(':'); return '<div class="field"><div class="f-lab2">' + l + '</div><input class="inp" type="number" step="any" id="g_' + k + '" value="' + (x[k] == null ? '' : x[k]) + '"></div>'; }).join('') + '<div class="errtxt" id="ge"></div>',
+      '<div class="note2" style="margin:0 0 10px">卸港后登记：卸港水尺吨位是按吃水推算的实际载货量（吨）；水尺 1–3 记每次测量的耗时（分钟）。保存后记入变更日志。</div>' +
+      ['gauge:卸港水尺吨位（吨）', 'g1:水尺 1（分钟）', 'g2:水尺 2（分钟）', 'g3:水尺 3（分钟）'].map((q) => { const [k, l] = q.split(':'); return '<div class="field"><div class="f-lab2">' + l + '</div><input class="inp" type="number" step="any" id="g_' + k + '" value="' + (x[k] == null ? '' : x[k]) + '"></div>'; }).join('') + '<div class="errtxt" id="ge"></div>',
       onOk: (m) => { const cur = M.bulkSettle[v.id] || (M.bulkSettle[v.id] = {}); let n = 0;
         for (const k of ['gauge', 'g1', 'g2', 'g3']) { const raw = m.querySelector('#g_' + k).value; if (raw === '') continue; const val = +raw; if (!(val >= 0)) { m.querySelector('#ge').textContent = '水尺数值不能为负'; return false; } if (cur[k] !== val) { log('卸船作业 · ' + ({ gauge: '卸港水尺吨位', g1: '水尺 1', g2: '水尺 2', g3: '水尺 3' })[k], cur[k], val); cur[k] = val; n++; } }
         if (!n) { m.querySelector('#ge').textContent = '没有填写或没有修改'; return false; } C.persist(); ST.tab = 'ext'; render(); C.toast('水尺已登记，已记入变更日志'); } });
