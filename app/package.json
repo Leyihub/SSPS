@@ -12,6 +12,7 @@
     "dev:server": "NODE_ENV=development nest start --watch",
     "dev:client": "NODE_ENV=development vite --config vite.config.ts",
     "gen:db-schema": "npx -y @lark-apaas/db-schema-sync@latest --output server/database/schema.ts --export-custom-types",
+    "gen:db-schema:local": "node scripts/gen-db-schema-local.mjs",
     "gen:openapi": "echo 'UNSUPPORTED, SKIP'",
     "build": "./scripts/build.sh",
     "build:prod": "npm run build:server && npm run build:client",
