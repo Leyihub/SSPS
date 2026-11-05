@@ -35,6 +35,10 @@ export class CapacityService {
       return { code: b.code, terminal: b.terminal, capacity: b.capacity, status: b.status, category: b.category ?? null, basis: b.basis ?? null, note: b.note ?? null, state,
         vessel: row ? row.vessel : null, cargo: row ? row.cargo : null, tons: row ? row.tons : null, from: row ? row.s : null, to: row ? row.e : null };
     });
-    return { date, tons, detail: toApiResult(det), berths };
+    const detail = toApiResult(det);
+    if (detail.mode === 'cmr' && Array.isArray(detail.list)) {          // 靠船计划行关联到的航次：页面上船名可以点进去
+      detail.list = detail.list.map((x: any) => ({ ...x, matchVoyage: s.planRows.find((r) => r.vessel === x.vessel && r.berth === x.berth)?.matchVoyage ?? null }));
+    }
+    return { date, tons, detail, berths };
   }
 }
