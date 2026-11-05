@@ -21,7 +21,8 @@ const link = (name, target, multiple = false, note) => ({ name, type: 'link', ta
 const duplex = (name, target, backName, note) => ({ name, type: 'duplex', target, back_field_name: backName, ...(note ? { note } : {}) });
 // 飞书开放接口不支持创建「查找引用」字段（2026-11-05 建表实测），manual_ui = true：本机 agent 跳过，由人在界面手工配置
 const lookup = (name, via, targetField, agg = 'none', note) => ({ name, type: 'lookup', via, target_field: targetField, aggregate: agg, manual_ui: true, ...(note ? { note } : {}) });
-const formula = (name, logic, result, note) => ({ name, type: 'formula', logic, result, ...(note ? { note } : {}) });
+// expression：2026-11-05 实测通过的飞书公式原文（日期相减直接得到天数；空日期会被当作 1970-01-01，所以必须加非空保护；DATETIME_DIFF 不可用）
+const formula = (name, logic, result, note, expression) => ({ name, type: 'formula', logic, result, ...(expression ? { expression } : {}), ...(note ? { note } : {}) });
 const sys = (f) => Object.assign(f, { system_written: true });
 
 const tables = [
@@ -52,15 +53,15 @@ const tables = [
     t('承运方'), t('船方航次号'),
     link('装港', 'T01'), link('卸港', 'T01'), link('第二卸港', 'T01'), link('最终目的港', 'T01'),
     lookup('装港是否本港', '装港', '是否本港', 'none', '辅助字段，供「本港侧」公式使用'),
-    formula('本港侧', '装港是否本港 为真 → "装"，否则 → "卸"', 'text'),
+    formula('本港侧', '装港是否本港 为真 → "装"，否则 → "卸"', 'text', undefined, 'IF([装港是否本港], "装", "卸")'),
     dt('受载期始'), dt('受载期止'), dt('计划抵装港'), dt('实际抵装港'), dt('装港靠泊'), dt('计划离装港'), dt('实际离装港'),
     dt('计划抵卸港窗口始'), dt('计划抵卸港窗口止'), sys(dt('当前 ETA（卸港）')), dt('实际抵卸港'), dt('卸港靠泊'), dt('卸港离港'),
     sys(single('船舶状态', ['待宣船', '未到装港', '装港等泊', '装港装货', '航行中', '卸港等泊', '卸港卸货', '已结束'])),
     multi('异常标记', ['取消', '延期', '移泊', '改港']),
-    formula('装港逾期', '实际抵装港 和 受载期止 都有值，且 实际抵装港 晚于 受载期止 → "是"，否则为空', 'text'),
-    formula('实际航程（天）', '两者都有值时：实际抵卸港 − 实际离装港，单位天，保留 2 位小数；否则为空', 'number'),
-    formula('本港等泊（天）', '本港侧 = "卸"：卸港靠泊 − 实际抵卸港；本港侧 = "装"：装港靠泊 − 实际抵装港；单位天，2 位小数，缺值为空', 'number'),
-    formula('本港作业（天）', '本港侧 = "卸"：卸港离港 − 卸港靠泊；本港侧 = "装"：实际离装港 − 装港靠泊；单位天，2 位小数，缺值为空', 'number'),
+    formula('装港逾期', '实际抵装港 和 受载期止 都有值，且 实际抵装港 晚于 受载期止 → "是"，否则为空', 'text', undefined, 'IF(AND([实际抵装港] != "", [受载期止] != "", [实际抵装港] > [受载期止]), "是", "")'),
+    formula('实际航程（天）', '两者都有值时：实际抵卸港 − 实际离装港，单位天，保留 2 位小数；否则为空', 'number', undefined, 'IF(AND([实际抵卸港] != "", [实际离装港] != ""), ROUND([实际抵卸港] - [实际离装港], 2), "")'),
+    formula('本港等泊（天）', '本港侧 = "卸"：卸港靠泊 − 实际抵卸港；本港侧 = "装"：装港靠泊 − 实际抵装港；单位天，2 位小数，缺值为空', 'number', undefined, 'IF([本港侧] = "卸", IF(AND([卸港靠泊] != "", [实际抵卸港] != ""), ROUND([卸港靠泊] - [实际抵卸港], 2), ""), IF([本港侧] = "装", IF(AND([装港靠泊] != "", [实际抵装港] != ""), ROUND([装港靠泊] - [实际抵装港], 2), ""), ""))'),
+    formula('本港作业（天）', '本港侧 = "卸"：卸港离港 − 卸港靠泊；本港侧 = "装"：实际离装港 − 装港靠泊；单位天，2 位小数，缺值为空', 'number', undefined, 'IF([本港侧] = "卸", IF(AND([卸港离港] != "", [卸港靠泊] != ""), ROUND([卸港离港] - [卸港靠泊], 2), ""), IF([本港侧] = "装", IF(AND([实际离装港] != "", [装港靠泊] != ""), ROUND([实际离装港] - [装港靠泊], 2), ""), ""))'),
     link('计划泊位', 'T02', true), link('实际泊位', 'T02', true),
     person('负责业务员'), single('所属部门', ['大宗采购部', '商务海运部', '仓储物流部']), cb('重点关注'),
     single('审核状态', ['待审核', '已审核']),
@@ -103,9 +104,9 @@ const tables = [
     multi('适用业务类型', ['大宗采购船', '成品销售船', '物资备件船']), single('吨级档', ['5 万吨'], '待确认'),
     num('经验航程（天）', 1), num('经验航程上限（天）', 1), person('经验值维护人'),
     sys(num('样本数', 0)), sys(num('统计 P50（天）', 2)), sys(num('统计 P80（天）', 2)),
-    formula('采用口径', '样本数 ≥ 5 → "统计值"，否则 → "经验值"', 'text'),
-    formula('生效航程 P50（天）', '采用口径 = "统计值" → 统计 P50（天），否则 → 经验航程（天）', 'number'),
-    formula('生效航程 P80（天）', '采用口径 = "统计值" → 统计 P80（天），否则 → 经验航程上限（天）', 'number'),
+    formula('采用口径', '样本数 ≥ 5 → "统计值"，否则 → "经验值"', 'text', undefined, 'IF([样本数] >= 5, "统计值", "经验值")'),
+    formula('生效航程 P50（天）', '采用口径 = "统计值" → 统计 P50（天），否则 → 经验航程（天）', 'number', undefined, 'IF([采用口径] = "统计值", [统计 P50（天）], [经验航程（天）])'),
+    formula('生效航程 P80（天）', '采用口径 = "统计值" → 统计 P80（天），否则 → 经验航程上限（天）', 'number', undefined, 'IF([采用口径] = "统计值", [统计 P80（天）], [经验航程上限（天）])'),
     sys(dt('最近重算时间')), single('状态', ['启用', '停用']),
   ] },
 
@@ -130,7 +131,7 @@ tables.push({ key: 'T09b', name: 'T09b 兼容_大宗到船计划', fields: B.map
 const later = [
   { table: 'T04', after: 'T05', fields: [
     lookup('总货量（吨）', '货物明细', '预计装船重量（吨）', 'sum', '汇总 T05；「货物明细」是 T05 建「航次」双向关联时自动生成的反向字段'),
-    formula('拼船', '货物明细 关联的记录数 ≥ 2 → "是"，否则 → "否"', 'text'),
+    formula('拼船', '货物明细 关联的记录数 ≥ 2 → "是"，否则 → "否"', 'text', undefined, 'IF(COUNTA([货物明细]) >= 2, "是", "否")'),
   ] },
 ];
 
