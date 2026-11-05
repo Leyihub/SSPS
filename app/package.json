@@ -16,7 +16,7 @@
     "gen:openapi": "echo 'UNSUPPORTED, SKIP'",
     "build": "./scripts/build.sh",
     "build:prod": "npm run build:server && npm run build:client",
-    "build:server": "NODE_ENV=production nest build && rm -rf dist/server/test",
+    "build:server": "NODE_ENV=production nest build && node -e \"require('fs').rmSync('dist/server/test',{recursive:true,force:true})\"",
     "build:client": "NODE_ENV=production vite build --config vite.config.ts",
     "start": "NODE_ENV=production node main.js",
     "eslint": "eslint . --quiet",

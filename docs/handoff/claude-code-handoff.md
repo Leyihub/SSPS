@@ -37,9 +37,9 @@
 - **你（本机 Claude Code）**：主力。能访问飞书（`lark-cli` 已登录）、能连妙搭、能跑 `npm run dev`、能读他本机的真实 Excel。负责联调、修 bug、补剩余功能、跑迁移。
 - **云端 Claude**：仍可开会话接力，但只能写不需要飞书的代码和文档，通过 Git 交接。你和它改同一个仓库时，先 `git pull` 再动手。
 
-仓库：GitHub `leyihub/ssps`，本机路径通常是 `D:\AI Project\Project\SSPS`（Windows，PowerShell）。主分支 `main`。工程在 `app/`。
+仓库：GitHub `Leyihub/SSPS`（主分支 `main`，工程在 `app/`）。**一共有四个位置、两条独立的 Git 链路**（GitHub 远端 / 本机 GitHub 工作副本 `C:\Users\董金\WorkBuddy\SSPS` / 妙搭远端 `sprint/default` / 本机妙搭工作副本 `C:\Users\董金\ssps-miaoda`），地址、同步与发布流程、已发现的问题见 **`docs/handoff/deploy-flow.md`——开始前必读**。建议在 GitHub 工作副本里开发（那里有 `CLAUDE.md`、`docs/`），用 `scripts/miaoda-deploy.ps1 -Mode sync` 搬到妙搭副本再联调/推送/发布。
 
-> 关于「本机已打通与妙搭的同步机制」：我（写手册的云端 Claude）看不到你的本机，**不知道具体是哪种同步**（git 推送触发妙搭部署？`lark-cli apps` 同步？`npm run upgrade`？）。所以第 1 阶段第一步是让你自己确认并写进 `docs/handoff/local-env.md`，不要假定。
+> 同步机制（已由本机 WorkBuddy 实地核对，详见 `deploy-flow.md`）：GitHub 与妙搭是**两条独立链路**；`scripts/miaoda-deploy.ps1` 提供 `check/gates/sync/backup/push/release`。注意：**`push` 到妙搭 `sprint/default` 不等于上线**，`release` 才上线，且必须 Leyinet 当次授权；首次发布前必须先配好环境变量与平台角色，否则线上会跑内存演示模式（见 deploy-flow §4.3）。
 
 ---
 
@@ -197,7 +197,7 @@ scripts/              dev/build（平台维护）、smoke.cjs、demo-server.cjs�
 
 - [ ] `node -v` 是 22；`git pull` 到最新 `main`；`cd app && npm ci`（国内网络没问题；受限网络用 `--registry=https://registry.npmjs.org/ --replace-registry-host=always`；**不要并发跑多个 npm install**）。
 - [ ] `lark-cli` 已登录，能列出应用 `app_17heqwc44fd`（`lark-cli apps --help` 找命令，**不要猜参数**）。
-- [ ] 确认「本机与妙搭的同步机制」到底是什么：改代码后怎么到妙搭？（git 推送触发？`lark-cli apps` 发布命令？`+release-create`？）写下来。
+- [ ] **先 `git pull` 到最新 `main`**（本机 GitHub 副本曾停在 `f83861a`，落后 17 个提交，妙搭副本里那个首次合并提交是旧代码）；把 `scripts/miaoda-deploy.ps1` 提交进仓库；然后 `sync -DryRun` → `sync` → 核对 `ssps-miaoda/package.json` 的 `build:server` 等脚本（deploy-flow §4.2）。
 - [ ] 应用库能连：`database.enabled=true`；8 个镜像同步任务在跑；`m_*` 表有行（T01 10、T02 23、T08 10，其余可能为 0）。
 - [ ] `npm test`、`npm run type:check`、`npm run smoke` 在本机也全绿（说明环境没问题）。
 - [ ] `origin/local/db-schema-2026-11-05` 分支有一个旧提交（schema.ts 刷新），main 上的 schema.ts 已经是后来的 20 张表版本，**可忽略这个分支**；但要核对 `server/database/schema.ts` 与线上库一致（不一致就 `npm run gen:db-schema:local` 重新生成）。
