@@ -35,9 +35,9 @@
 
 - **Leyinet**：产品负责人，**非程序员**。拍业务口径、提供数据、做验收。汇报要用**中文白话**，不要贴大段代码；先说结论，再说依据；严格区分「已上线 / 已写好未验证 / 计划中」。需要他做的事要写成他能照做的步骤（PowerShell 命令放独立代码块）。
 - **你（本机 Claude Code）**：主力。能访问飞书（`lark-cli` 已登录）、能连妙搭、能跑 `npm run dev`、能读他本机的真实 Excel。负责联调、修 bug、补剩余功能、跑迁移。
-- **云端 Claude**：仍可开会话接力，但只能写不需要飞书的代码和文档，通过 Git 交接。你和它改同一个仓库时，先 `git pull` 再动手。
+- **云端 Claude**：不再参与代码开发（云端访问不到飞书，代码主线已改到本机平台仓库）；仅在你明确需要时帮忙写文档或不依赖飞书的纯代码，产物要手动搬进平台仓库。
 
-仓库：GitHub `Leyihub/SSPS`（主分支 `main`，工程在 `app/`）。**一共有四个位置、两条独立的 Git 链路**（GitHub 远端 / 本机 GitHub 工作副本 `C:\Users\董金\WorkBuddy\SSPS` / 妙搭远端 `sprint/default` / 本机妙搭工作副本 `C:\Users\董金\ssps-miaoda`），地址、同步与发布流程、已发现的问题见 **`docs/handoff/deploy-flow.md`——开始前必读**。建议在 GitHub 工作副本里开发（那里有 `CLAUDE.md`、`docs/`），用 `scripts/miaoda-deploy.ps1 -Mode sync` 搬到妙搭副本再联调/推送/发布。
+**代码与文档分仓**（2026-11-05 定稿，详见 **`docs/handoff/deploy-flow.md`——开始前必读**）：**代码主线是本机妙搭平台工作副本 `C:\Users\董金\ssps-miaoda`（`sprint/default`，Claude 的工作目录）**；文档、原型、交接材料、部署脚本在文档仓 `C:\Users\董金\WorkBuddy\SSPS`（`main`，远端 GitHub `Leyihub/SSPS`），其中 `app/` 是冻结的历史备份，不再写代码。启动方式：`cd C:\Users\董金\ssps-miaoda; claude --add-dir "C:\Users\董金\WorkBuddy\SSPS"`。本手册里写的 `app/…` 路径，在平台仓库里对应**仓库根**（如 `app/server/…` = `server/…`）。
 
 > 同步机制（已由本机 WorkBuddy 实地核对，详见 `deploy-flow.md`）：GitHub 与妙搭是**两条独立链路**；`scripts/miaoda-deploy.ps1` 提供 `check/gates/sync/backup/push/release`。注意：**`push` 到妙搭 `sprint/default` 不等于上线**，`release` 才上线，且必须 Leyinet 当次授权；首次发布前必须先配好环境变量与平台角色，否则线上会跑内存演示模式（见 deploy-flow §4.3）。
 
@@ -197,7 +197,7 @@ scripts/              dev/build（平台维护）、smoke.cjs、demo-server.cjs�
 
 - [ ] `node -v` 是 22；`git pull` 到最新 `main`；`cd app && npm ci`（国内网络没问题；受限网络用 `--registry=https://registry.npmjs.org/ --replace-registry-host=always`；**不要并发跑多个 npm install**）。
 - [ ] `lark-cli` 已登录，能列出应用 `app_17heqwc44fd`（`lark-cli apps --help` 找命令，**不要猜参数**）。
-- [ ] **先 `git pull` 到最新 `main`**（本机 GitHub 副本曾停在 `f83861a`，落后 17 个提交，妙搭副本里那个首次合并提交是旧代码）；把 `scripts/miaoda-deploy.ps1` 提交进仓库；然后 `sync -DryRun` → `sync` → 核对 `ssps-miaoda/package.json` 的 `build:server` 等脚本（deploy-flow §4.2）。
+- [ ] **一次性迁移**：文档仓 `git pull` 后，按 `deploy-flow.md` §2 把最新代码 `sync` 进平台仓库（先 `-DryRun`），核对 `package.json`，放 `CLAUDE.md`/`CLAUDE.local.md`（`docs/handoff/platform-repo/`），质量门全绿后 `-Mode push`；把 `scripts/miaoda-deploy.ps1` 提交进文档仓。之后所有代码只在平台仓库改。
 - [ ] 应用库能连：`database.enabled=true`；8 个镜像同步任务在跑；`m_*` 表有行（T01 10、T02 23、T08 10，其余可能为 0）。
 - [ ] `npm test`、`npm run type:check`、`npm run smoke` 在本机也全绿（说明环境没问题）。
 - [ ] `origin/local/db-schema-2026-11-05` 分支有一个旧提交（schema.ts 刷新），main 上的 schema.ts 已经是后来的 20 张表版本，**可忽略这个分支**；但要核对 `server/database/schema.ts` 与线上库一致（不一致就 `npm run gen:db-schema:local` 重新生成）。
@@ -246,7 +246,7 @@ npm run build:server && npm run preview:build && node scripts/demo-server.cjs 31
 6. 公式事实：飞书日期相减直接得天数；空日期按 1970 年算，要加 `!= ""` 保护；`DATETIME_DIFF` 不可用；查找引用字段不能通过 API 创建。
 7. 接口出错的响应：生产环境不返回堆栈（已加固）；CSV 导出已防公式注入；xlsx 读取有 50MB 解压上限、上传 10MB 限制。
 8. 历史迁移记录只读（`readonly=true`）；取消的航次不进重叠船数和 CMR。
-9. 提交：**中文提交信息**，一批做完就提交推送；每次提交后更新 `docs/development-workflow.md` 进度表；**每完成一个前端页面的联调，用 Playwright 截图存 `prototype/screenshots/` 或说明位置，等 Leyinet 反馈再改**（CLAUDE.md 工作约定第 7 条）。
+9. 提交：**中文提交信息**，一批做完就提交；**代码提交到平台仓库，文档（任务书、open-questions、进度表、本手册）提交到文档仓**，涉及两边时分别提交；每次提交后在文档仓更新 `docs/development-workflow.md` 进度表；**每完成一个前端页面的联调，用 Playwright 截图存 `prototype/screenshots/` 或说明位置，等 Leyinet 反馈再改**（CLAUDE.md 工作约定第 7 条）。
 10. 收到「继续」直接做下一步，不再确认；但**需要业务判断、会改变线上数据、会花钱/发消息/不可逆**的动作必须先问。
 
 ### 已替 Leyinet 做过的判断（别推翻，除非他改口）

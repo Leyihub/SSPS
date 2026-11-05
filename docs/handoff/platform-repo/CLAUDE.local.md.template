@@ -1,0 +1,14 @@
+# 本机路径（CLAUDE.local.md —— 只在本机，已加入 .gitignore，不提交、不推到妙搭）
+
+- 代码仓（本目录，Claude 的工作目录）：`C:\Users\董金\ssps-miaoda`（分支 `sprint/default`）
+- 文档仓：`C:\Users\董金\WorkBuddy\SSPS`（分支 `main`，GitHub：`https://github.com/Leyihub/SSPS.git`）
+  - `CLAUDE.md`、`docs/`、`prototype/`、`scripts/miaoda-deploy.ps1` 都在这里；这里的 `app/` 是**冻结的历史备份**，不要在里面写代码
+- 妙搭应用：`app_id = app_17heqwc44fd`
+- 部署脚本：`C:\Users\董金\WorkBuddy\SSPS\scripts\miaoda-deploy.ps1`（`-Repo C:\Users\董金\ssps-miaoda`）
+
+启动 Claude Code 时带上文档仓目录，免得每次读文档都要确认权限：
+
+```powershell
+cd C:\Users\董金\ssps-miaoda
+claude --add-dir "C:\Users\董金\WorkBuddy\SSPS"
+```

@@ -17,17 +17,14 @@
 5. 发现规格冲突时直接指出并给出建议的解决方式。
 6. 回复用中文。
 
-## 当前阶段：产品原型（先原型、后代码）
+## 当前阶段：妙搭开发（2026-11-05 起；产品原型 P01–P11 已完成并评审）
 
-先完成 P01–P11 的可点击原型，由 Leyinet 评审确认后再进入妙搭开发。原型阶段不需要妙搭、不需要 lark-cli、不连飞书。
+原型已由 Leyinet 评审确认，业务代码已合并进妙搭平台仓库，现在是**在本机用真实飞书和妙搭联调、补齐剩余功能、迁移、验收、发布**的阶段。原型仍是前端的视觉与交互基线、预测引擎的对照基准，下面几条继续有效：
 
-1. 位置：`prototype/`。每个页面一个独立 HTML 文件（如 `prototype/P02-prediction.html`），原生 HTML/CSS/JS，不用构建工具；另有 `prototype/index.html` 作为导航入口。
-2. 页面范围与内容以 `docs/implementation-plan.md` 第 9 节为准，字段以 `docs/schema/` 为准，状态以 `docs/schema/status-rules.md` 为准，不得自创字段或状态。
-3. 示例数据：在 `prototype/mock-data.js` 中手工构造，船名、合同号、人名一律虚构，不使用真实业务数据。
-4. 视觉基线：1920px 宽的密集 ERP 布局；导航 #26394f（渐变到 #203348）；主色 #1677ff；卡片圆角 8–12px、轻阴影；参考 SAP Fiori / Oracle TMS 的风格。
-5. 必须体现：无数据灰色斜线、CMR 口径与色阶、≤15 天 / ＞15 天两条路径的不同显示、Plan A/B 卡片、S1 溯源区块、航程「经验值 / 统计值」标签、「低可信」标签。
-6. 每完成一页，用 Playwright 截图保存为 `prototype/screenshots/<页面>.png` 一并提交，方便在 GitHub 上直接查看。
-7. 每页做完先提交一次并说明，等 Leyinet 截图反馈后再改。
+1. 原型位置：`prototype/`（原生 HTML/CSS/JS，每页一个文件，`prototype/index.html` 导航）；页面范围以 `docs/implementation-plan.md` 第 9 节为准，字段以 `docs/schema/` 为准，状态以 `docs/schema/status-rules.md` 为准，不得自创字段或状态。示例数据（`prototype/mock-data.js`）里的船名、合同号、人名一律虚构，不使用真实业务数据。
+2. 视觉基线：1920px 宽的密集 ERP 布局；导航 #26394f（渐变到 #203348）；主色 #1677ff；卡片圆角 8–12px、轻阴影；参考 SAP Fiori / Oracle TMS 的风格。
+3. 必须体现：无数据灰色斜线、CMR 口径与色阶、≤15 天 / ＞15 天两条路径的不同显示、Plan A/B 卡片、S1 溯源区块、航程「经验值 / 统计值」标签、「低可信」标签。
+4. 前端页面在真实平台联调完一页，用 Playwright 截图交给 Leyinet 看，等反馈后再改（截图可放 `prototype/screenshots/`）。
 
 ## 已锁定业务规则（沿用德龙版，不重新讨论）
 
@@ -49,7 +46,7 @@
 
 ## 环境与平台约束
 
-- 云端开发环境访问不到飞书（open.feishu.cn、miaoda.feishu.cn 均不通），只能访问 GitHub 和包仓库。云端负责写代码、写文档、用脱敏样例跑测试；`lark-cli` 的所有操作（+create / +init / npm run dev / +env-set / +release-create）以及真实飞书接口联调，都在 Leyinet 本机执行。
+- **开发与平台操作全部在 Leyinet 本机完成**：代码主线是本机妙搭平台工作副本（`+init` 拉下来的那个仓库，能 push、能发布），`lark-cli` 的所有操作（+db-execute / npm run dev / +env-set / +release-create）和真实飞书联调都在这里。GitHub 仓库只作文档、交接与代码备份，**不再承载代码开发**。云端环境（访问不到飞书）不再参与开发；历史上云端写的代码只在内存数据 / PGlite / 假飞书上测过。
 - 工程结构以 `lark-cli apps +init` 生成的 full_stack 脚手架为准。运行时代码用脚手架规定的 SDK（见脚手架里的 `.agents/skills/`）。后端只用 Node.js。
 - 妙搭应用库是 PostgreSQL，建表必须带审计列和 RLS（见平台 SQL 规范）。飞书多维表格到应用库的镜像用妙搭自带的 streaming 同步（`+db-sync-create`），后端不自己轮询多维表格。
 - 多维表格接口：批量写每次 ≤500 条；列表每页 ≤500 条；同一个 Base 的写入通过单线程队列串行。
@@ -64,6 +61,7 @@
 - `docs/schema/base-plan.json`：建表清单的机器可读版（`node scripts/build-base-plan.mjs` 生成）；`docs/schema/base-build-agent-prompt.md`：本机 agent 建表的步骤与提示词
 - `docs/development-workflow.md`：开发阶段的流程、环节衔接、Leyinet 需要推进的前置条件、开发进度表
 - `docs/scaffold-integration.md`：妙搭脚手架（NestJS + React + Drizzle）接入说明与 Leyinet 的操作步骤；`docs/schema/seed/` 与 `base-seed-agent-prompt.md`：T01/T02/T08 初始数据及录入提示词
+- `docs/handoff/`：交接手册（`claude-code-handoff.md`）、代码位置与发布流程（`deploy-flow.md`）、任务书、权限矩阵、定时任务、安全与性能记录
 - `docs/local-tasks-prompts.md`：需要 Leyinet 本机 AI 完成的事的完整提示词合集（按顺序）
 - `docs/open-questions.md`：待 Leyinet 确认的事项，未确认项不要自行假定
 - `docs/data-profile/`：企微导出的列结构与填充统计（不含业务数据）
@@ -74,4 +72,4 @@ K01–K14 是访谈决策；T01–T10 是飞书表；D01–D12 是应用库自�
 
 ## 本机 Claude Code 接手（2026-11-05）
 
-开发主力已从云端转到 Leyinet 本机的 Claude Code（本机能连飞书和妙搭）。**先读 `docs/handoff/claude-code-handoff.md`**（完整交接手册：现状、架构、联调路线图、未验证假设清单）；初始化提示词在 `docs/handoff/claude-code-init-prompt.md`。目前**没有任何功能上线**，云端代码只在内存数据 / PGlite / 假飞书上测过。
+开发主力是 Leyinet 本机的 Claude Code。**先读 `docs/handoff/claude-code-handoff.md`（完整交接手册）和 `docs/handoff/deploy-flow.md`（两个仓库的分工、同步与发布流程）**；初始化提示词在 `docs/handoff/claude-code-init-prompt.md`。**代码与文档分仓**：代码在平台工作副本 `C:\Users\董金\ssps-miaoda`（Claude 的工作目录）；文档、原型、交接材料在本仓库（`C:\Users\董金\WorkBuddy\SSPS`），本仓库的 `app/` 是冻结的历史备份，不再在里面写代码。目前**没有任何功能上线**，已写的代码只在内存数据 / PGlite / 假飞书上测过。
