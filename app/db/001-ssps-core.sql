@@ -33,7 +33,7 @@ CREATE POLICY service_role_bypass_policy ON eta_revision TO service_role USING (
 DROP POLICY IF EXISTS "修改全部数据" ON eta_revision;
 CREATE POLICY "修改全部数据" ON eta_revision AS PERMISSIVE FOR ALL TO authenticated USING (true) WITH CHECK (true);
 DROP POLICY IF EXISTS "查看全部数据" ON eta_revision;
-CREATE POLICY "查看全部数据" ON eta_revision AS PERMISSIVE FOR SELECT TO authenticated, anon USING (true);
+CREATE POLICY "查看全部数据" ON eta_revision AS PERMISSIVE FOR SELECT TO authenticated USING (true);
 DROP POLICY IF EXISTS "修改本人数据" ON eta_revision;
 CREATE POLICY "修改本人数据" ON eta_revision AS PERMISSIVE FOR ALL TO authenticated USING ((_created_by).user_id = current_setting('app.user_id', TRUE)) WITH CHECK ((_created_by).user_id = current_setting('app.user_id', TRUE));
 
@@ -67,7 +67,7 @@ CREATE POLICY service_role_bypass_policy ON milestone_log TO service_role USING 
 DROP POLICY IF EXISTS "修改全部数据" ON milestone_log;
 CREATE POLICY "修改全部数据" ON milestone_log AS PERMISSIVE FOR ALL TO authenticated USING (true) WITH CHECK (true);
 DROP POLICY IF EXISTS "查看全部数据" ON milestone_log;
-CREATE POLICY "查看全部数据" ON milestone_log AS PERMISSIVE FOR SELECT TO authenticated, anon USING (true);
+CREATE POLICY "查看全部数据" ON milestone_log AS PERMISSIVE FOR SELECT TO authenticated USING (true);
 DROP POLICY IF EXISTS "修改本人数据" ON milestone_log;
 CREATE POLICY "修改本人数据" ON milestone_log AS PERMISSIVE FOR ALL TO authenticated USING ((_created_by).user_id = current_setting('app.user_id', TRUE)) WITH CHECK ((_created_by).user_id = current_setting('app.user_id', TRUE));
 
@@ -114,7 +114,7 @@ CREATE POLICY service_role_bypass_policy ON berth_plan_batch TO service_role USI
 DROP POLICY IF EXISTS "修改全部数据" ON berth_plan_batch;
 CREATE POLICY "修改全部数据" ON berth_plan_batch AS PERMISSIVE FOR ALL TO authenticated USING (true) WITH CHECK (true);
 DROP POLICY IF EXISTS "查看全部数据" ON berth_plan_batch;
-CREATE POLICY "查看全部数据" ON berth_plan_batch AS PERMISSIVE FOR SELECT TO authenticated, anon USING (true);
+CREATE POLICY "查看全部数据" ON berth_plan_batch AS PERMISSIVE FOR SELECT TO authenticated USING (true);
 DROP POLICY IF EXISTS "修改本人数据" ON berth_plan_batch;
 CREATE POLICY "修改本人数据" ON berth_plan_batch AS PERMISSIVE FOR ALL TO authenticated USING ((_created_by).user_id = current_setting('app.user_id', TRUE)) WITH CHECK ((_created_by).user_id = current_setting('app.user_id', TRUE));
 
@@ -170,7 +170,7 @@ CREATE POLICY service_role_bypass_policy ON berth_plan_row TO service_role USING
 DROP POLICY IF EXISTS "修改全部数据" ON berth_plan_row;
 CREATE POLICY "修改全部数据" ON berth_plan_row AS PERMISSIVE FOR ALL TO authenticated USING (true) WITH CHECK (true);
 DROP POLICY IF EXISTS "查看全部数据" ON berth_plan_row;
-CREATE POLICY "查看全部数据" ON berth_plan_row AS PERMISSIVE FOR SELECT TO authenticated, anon USING (true);
+CREATE POLICY "查看全部数据" ON berth_plan_row AS PERMISSIVE FOR SELECT TO authenticated USING (true);
 DROP POLICY IF EXISTS "修改本人数据" ON berth_plan_row;
 CREATE POLICY "修改本人数据" ON berth_plan_row AS PERMISSIVE FOR ALL TO authenticated USING ((_created_by).user_id = current_setting('app.user_id', TRUE)) WITH CHECK ((_created_by).user_id = current_setting('app.user_id', TRUE));
 
@@ -210,7 +210,7 @@ CREATE POLICY service_role_bypass_policy ON inventory_batch TO service_role USIN
 DROP POLICY IF EXISTS "修改全部数据" ON inventory_batch;
 CREATE POLICY "修改全部数据" ON inventory_batch AS PERMISSIVE FOR ALL TO authenticated USING (true) WITH CHECK (true);
 DROP POLICY IF EXISTS "查看全部数据" ON inventory_batch;
-CREATE POLICY "查看全部数据" ON inventory_batch AS PERMISSIVE FOR SELECT TO authenticated, anon USING (true);
+CREATE POLICY "查看全部数据" ON inventory_batch AS PERMISSIVE FOR SELECT TO authenticated USING (true);
 DROP POLICY IF EXISTS "修改本人数据" ON inventory_batch;
 CREATE POLICY "修改本人数据" ON inventory_batch AS PERMISSIVE FOR ALL TO authenticated USING ((_created_by).user_id = current_setting('app.user_id', TRUE)) WITH CHECK ((_created_by).user_id = current_setting('app.user_id', TRUE));
 
@@ -248,7 +248,7 @@ CREATE POLICY service_role_bypass_policy ON inventory_row TO service_role USING 
 DROP POLICY IF EXISTS "修改全部数据" ON inventory_row;
 CREATE POLICY "修改全部数据" ON inventory_row AS PERMISSIVE FOR ALL TO authenticated USING (true) WITH CHECK (true);
 DROP POLICY IF EXISTS "查看全部数据" ON inventory_row;
-CREATE POLICY "查看全部数据" ON inventory_row AS PERMISSIVE FOR SELECT TO authenticated, anon USING (true);
+CREATE POLICY "查看全部数据" ON inventory_row AS PERMISSIVE FOR SELECT TO authenticated USING (true);
 DROP POLICY IF EXISTS "修改本人数据" ON inventory_row;
 CREATE POLICY "修改本人数据" ON inventory_row AS PERMISSIVE FOR ALL TO authenticated USING ((_created_by).user_id = current_setting('app.user_id', TRUE)) WITH CHECK ((_created_by).user_id = current_setting('app.user_id', TRUE));
 
@@ -289,7 +289,7 @@ CREATE POLICY service_role_bypass_policy ON prediction_run TO service_role USING
 DROP POLICY IF EXISTS "修改全部数据" ON prediction_run;
 CREATE POLICY "修改全部数据" ON prediction_run AS PERMISSIVE FOR ALL TO authenticated USING (true) WITH CHECK (true);
 DROP POLICY IF EXISTS "查看全部数据" ON prediction_run;
-CREATE POLICY "查看全部数据" ON prediction_run AS PERMISSIVE FOR SELECT TO authenticated, anon USING (true);
+CREATE POLICY "查看全部数据" ON prediction_run AS PERMISSIVE FOR SELECT TO authenticated USING (true);
 DROP POLICY IF EXISTS "修改本人数据" ON prediction_run;
 CREATE POLICY "修改本人数据" ON prediction_run AS PERMISSIVE FOR ALL TO authenticated USING ((_created_by).user_id = current_setting('app.user_id', TRUE)) WITH CHECK ((_created_by).user_id = current_setting('app.user_id', TRUE));
 
@@ -338,7 +338,7 @@ CREATE POLICY service_role_bypass_policy ON prediction_plan TO service_role USIN
 DROP POLICY IF EXISTS "修改全部数据" ON prediction_plan;
 CREATE POLICY "修改全部数据" ON prediction_plan AS PERMISSIVE FOR ALL TO authenticated USING (true) WITH CHECK (true);
 DROP POLICY IF EXISTS "查看全部数据" ON prediction_plan;
-CREATE POLICY "查看全部数据" ON prediction_plan AS PERMISSIVE FOR SELECT TO authenticated, anon USING (true);
+CREATE POLICY "查看全部数据" ON prediction_plan AS PERMISSIVE FOR SELECT TO authenticated USING (true);
 DROP POLICY IF EXISTS "修改本人数据" ON prediction_plan;
 CREATE POLICY "修改本人数据" ON prediction_plan AS PERMISSIVE FOR ALL TO authenticated USING ((_created_by).user_id = current_setting('app.user_id', TRUE)) WITH CHECK ((_created_by).user_id = current_setting('app.user_id', TRUE));
 
@@ -370,7 +370,7 @@ CREATE POLICY service_role_bypass_policy ON announcement TO service_role USING (
 DROP POLICY IF EXISTS "修改全部数据" ON announcement;
 CREATE POLICY "修改全部数据" ON announcement AS PERMISSIVE FOR ALL TO authenticated USING (true) WITH CHECK (true);
 DROP POLICY IF EXISTS "查看全部数据" ON announcement;
-CREATE POLICY "查看全部数据" ON announcement AS PERMISSIVE FOR SELECT TO authenticated, anon USING (true);
+CREATE POLICY "查看全部数据" ON announcement AS PERMISSIVE FOR SELECT TO authenticated USING (true);
 DROP POLICY IF EXISTS "修改本人数据" ON announcement;
 CREATE POLICY "修改本人数据" ON announcement AS PERMISSIVE FOR ALL TO authenticated USING ((_created_by).user_id = current_setting('app.user_id', TRUE)) WITH CHECK ((_created_by).user_id = current_setting('app.user_id', TRUE));
 
@@ -407,7 +407,7 @@ CREATE POLICY service_role_bypass_policy ON data_issue TO service_role USING (tr
 DROP POLICY IF EXISTS "修改全部数据" ON data_issue;
 CREATE POLICY "修改全部数据" ON data_issue AS PERMISSIVE FOR ALL TO authenticated USING (true) WITH CHECK (true);
 DROP POLICY IF EXISTS "查看全部数据" ON data_issue;
-CREATE POLICY "查看全部数据" ON data_issue AS PERMISSIVE FOR SELECT TO authenticated, anon USING (true);
+CREATE POLICY "查看全部数据" ON data_issue AS PERMISSIVE FOR SELECT TO authenticated USING (true);
 DROP POLICY IF EXISTS "修改本人数据" ON data_issue;
 CREATE POLICY "修改本人数据" ON data_issue AS PERMISSIVE FOR ALL TO authenticated USING ((_created_by).user_id = current_setting('app.user_id', TRUE)) WITH CHECK ((_created_by).user_id = current_setting('app.user_id', TRUE));
 
@@ -438,7 +438,7 @@ CREATE POLICY service_role_bypass_policy ON sync_log TO service_role USING (true
 DROP POLICY IF EXISTS "修改全部数据" ON sync_log;
 CREATE POLICY "修改全部数据" ON sync_log AS PERMISSIVE FOR ALL TO authenticated USING (true) WITH CHECK (true);
 DROP POLICY IF EXISTS "查看全部数据" ON sync_log;
-CREATE POLICY "查看全部数据" ON sync_log AS PERMISSIVE FOR SELECT TO authenticated, anon USING (true);
+CREATE POLICY "查看全部数据" ON sync_log AS PERMISSIVE FOR SELECT TO authenticated USING (true);
 DROP POLICY IF EXISTS "修改本人数据" ON sync_log;
 CREATE POLICY "修改本人数据" ON sync_log AS PERMISSIVE FOR ALL TO authenticated USING ((_created_by).user_id = current_setting('app.user_id', TRUE)) WITH CHECK ((_created_by).user_id = current_setting('app.user_id', TRUE));
 
@@ -476,7 +476,7 @@ CREATE POLICY service_role_bypass_policy ON write_queue TO service_role USING (t
 DROP POLICY IF EXISTS "修改全部数据" ON write_queue;
 CREATE POLICY "修改全部数据" ON write_queue AS PERMISSIVE FOR ALL TO authenticated USING (true) WITH CHECK (true);
 DROP POLICY IF EXISTS "查看全部数据" ON write_queue;
-CREATE POLICY "查看全部数据" ON write_queue AS PERMISSIVE FOR SELECT TO authenticated, anon USING (true);
+CREATE POLICY "查看全部数据" ON write_queue AS PERMISSIVE FOR SELECT TO authenticated USING (true);
 DROP POLICY IF EXISTS "修改本人数据" ON write_queue;
 CREATE POLICY "修改本人数据" ON write_queue AS PERMISSIVE FOR ALL TO authenticated USING ((_created_by).user_id = current_setting('app.user_id', TRUE)) WITH CHECK ((_created_by).user_id = current_setting('app.user_id', TRUE));
 

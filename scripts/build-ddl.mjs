@@ -106,7 +106,7 @@ CREATE POLICY service_role_bypass_policy ON ${t.name} TO service_role USING (tru
 DROP POLICY IF EXISTS "修改全部数据" ON ${t.name};
 CREATE POLICY "修改全部数据" ON ${t.name} AS PERMISSIVE FOR ALL TO authenticated USING (true) WITH CHECK (true);
 DROP POLICY IF EXISTS "查看全部数据" ON ${t.name};
-CREATE POLICY "查看全部数据" ON ${t.name} AS PERMISSIVE FOR SELECT TO authenticated, anon USING (true);
+CREATE POLICY "查看全部数据" ON ${t.name} AS PERMISSIVE FOR SELECT TO authenticated USING (true);
 DROP POLICY IF EXISTS "修改本人数据" ON ${t.name};
 CREATE POLICY "修改本人数据" ON ${t.name} AS PERMISSIVE FOR ALL TO authenticated USING ((_created_by).user_id = current_setting('app.user_id', TRUE)) WITH CHECK ((_created_by).user_id = current_setting('app.user_id', TRUE));
 
@@ -115,3 +115,28 @@ CREATE POLICY "修改本人数据" ON ${t.name} AS PERMISSIVE FOR ALL TO authent
 mkdirSync('app/db', { recursive: true });
 writeFileSync('app/db/001-ssps-core.sql', out);
 console.log('app/db/001-ssps-core.sql：' + T.length + ' 张表');
+
+// 002：已经按旧版 001 建好的库，用它把「查看全部数据」策略收回到仅登录用户（去掉 anon，2026-11-05 Leyinet 决定）。
+// 同时覆盖 8 张镜像表 m_*（由同步任务建表，默认策略带 anon）：表还不存在就跳过，同步任务建好后再执行一次即可。可重复执行。
+const MIRROR = ['m_port', 'm_berth', 'm_vessel', 'm_voyage', 'm_cargo', 'm_bulk_settle', 'm_sales_ext', 'm_route_rule'];
+const all = [...T.map((t) => t.name), ...MIRROR];
+const mig = `-- 收回匿名读取：「查看全部数据」策略只留 authenticated。由 scripts/build-ddl.mjs 生成，可重复执行。
+DO $$
+DECLARE t text;
+BEGIN
+  FOREACH t IN ARRAY ARRAY[${all.map((n) => "'" + n + "'").join(', ')}] LOOP
+    IF to_regclass('public.' || t) IS NOT NULL THEN
+      IF EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = t AND policyname = '查看全部数据') THEN
+        EXECUTE format('ALTER POLICY "查看全部数据" ON %I TO authenticated', t);
+      ELSE
+        EXECUTE format('CREATE POLICY "查看全部数据" ON %I AS PERMISSIVE FOR SELECT TO authenticated USING (true)', t);
+      END IF;
+    END IF;
+  END LOOP;
+END $$;
+
+-- 核对：不应再有任何包含 anon 的策略
+SELECT tablename, policyname, roles FROM pg_policies WHERE schemaname = 'public' AND 'anon' = ANY(roles);
+`;
+writeFileSync('app/db/002-restrict-anon-read.sql', mig);
+console.log('app/db/002-restrict-anon-read.sql：' + all.length + ' 张表（含 8 张镜像表，不存在则跳过）');
