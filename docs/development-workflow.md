@@ -72,9 +72,10 @@
 | 预测服务 A20–A24、A29 | `app/server/modules/{prediction,capacity}` | 已写好并测试：预测、详情、采纳（仅标记）、宣船文案（从已存溯源生成，数值和方案一致）、自然语言解析、容量日历、当日明细；8 个服务测试通过 |
 | 数据端口 | `app/server/{ports,adapters/memory}` | 接口和内存实现已写好；Drizzle 应用库和飞书多维表格的真实实现待建库后接入 |
 | 建库 SQL | `app/db/001-ssps-core.sql`（`scripts/build-ddl.mjs` 生成） | 已按平台规范生成 12 张表；待你用 `+db-execute` 执行，再 `npm run gen:db-schema` |
-| 航次与货物 A07–A16、主数据、靠船计划 A17–A19、库存 A30、数据质量 A25、系统管理 A26–A28 | `app/server/modules/` | 计划中 |
+| 航次与货物 A07–A16 | `app/server/modules/voyage` | 已写好并测试：列表、详情（金额按权限裁剪）、新建、改字段、录节点（时序校验）、ETA 修订、异常标记、货物明细增改删、卸船结算分组鉴权、销售扩展；变更日志、数据质量问题、幂等键；14 个服务测试 + 权限测试通过。写飞书的真实仓储待建库后接入 |
+| 主数据 A01–A06、靠船计划 A17–A19、库存 A30、数据质量 A25、系统管理 A26–A28 | `app/server/modules/` | 计划中 |
 | 飞书仓储层（先写飞书再回写镜像）与定时任务 | `app/server/` | 计划中（客户端、写队列、幂等、补偿已有） |
 | 迁移脚本（读 Excel） | — | 计划中（清洗规则已有） |
 | 前端 React 重写（P01–P11） | `app/client/src/pages/` | 计划中 |
 
-运行测试：`cd app && npm test`（49 个）；类型检查：`npm run type:check:server`；代码检查：`npx eslint server --quiet`。
+运行测试：`cd app && npm test`（70 个）；类型检查：`npm run type:check:server`；代码检查：`npx eslint server --quiet`。

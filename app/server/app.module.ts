@@ -7,6 +7,7 @@ import { ViewModule } from './modules/view/view.module';
 import { PortsModule } from './modules/ports/ports.module';
 import { PredictionModule } from './modules/prediction/prediction.module';
 import { CapacityModule } from './modules/capacity/capacity.module';
+import { VoyageModule } from './modules/voyage/voyage.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { CapacityModule } from './modules/capacity/capacity.module';
     PortsModule,
     PredictionModule,
     CapacityModule,
+    VoyageModule,
     // ====== @route-section: business-modules END ======
 
     // ⚠️ @route-order: last
