@@ -23,7 +23,8 @@ export const useRouteRules = () => useQuery({ queryKey: ['route-rules'], queryFn
 export const useIssues = (q: Record<string, unknown> = {}) => useQuery({ queryKey: ['issues', q], queryFn: () => get<DataIssueDto[]>('/api/data-issues', clean(q)) });
 export const useBerthBatches = () => useQuery({ queryKey: ['berth-batches'], queryFn: () => get<BerthBatchDto[]>('/api/berth-plans/batches') });
 export const useBerthRows = (batchNo?: string, status?: string) => useQuery({ queryKey: ['berth-rows', batchNo, status], queryFn: () => get<Array<Record<string, unknown>>>(`/api/berth-plans/batches/${batchNo}/rows`, clean({ status })), enabled: !!batchNo });
-export const useInventory = () => useQuery({ queryKey: ['inventory'], queryFn: () => get<{ batch: Record<string, unknown> | null; items: InventoryItemDto[]; errorRows: Array<Record<string, unknown>> }>('/api/inventory') });
+export interface InventoryStaleDto { stale: boolean; since: string | null; changes: Array<{ voyageId: string; voyageNo: string; vessel: string | null; item: string; field: string; at: string }> }
+export const useInventory = () => useQuery({ queryKey: ['inventory'], queryFn: () => get<{ batch: Record<string, unknown> | null; items: InventoryItemDto[]; errorRows: Array<Record<string, unknown>>; stale: InventoryStaleDto }>('/api/inventory') });
 export const useCalendar = (tons: number, days = 30) => useQuery({ queryKey: ['calendar', tons, days], queryFn: () => get<any>('/api/capacity/calendar', { tons, days }) });
 export const useDayDetail = (date: string | null, tons: number) => useQuery({ queryKey: ['cal-day', date, tons], queryFn: () => get<any>('/api/capacity/day', { date, tons }), enabled: !!date });
 export const useTrend = (name: string | null, marks: Array<{ d: number; tons: number }>, until?: number) => useQuery({ queryKey: ['trend', name, marks, until], queryFn: () => send<any>('post', '/api/inventory/trend', { name, marks, until }), enabled: !!name });

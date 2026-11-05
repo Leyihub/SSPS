@@ -5,7 +5,7 @@ import { api, getApiErrorMessage, useInventory, useMe, usePorts, useTrend } from
 import { nMd, nMdCn, nWk, stockLevel } from '../../ssps/cmr';
 import { dayNum, fmt, isoOf } from '../../ssps/format';
 import { StockChart } from '../../ssps/StockChart';
-import { Info } from '../../ssps/ui';
+import { Info, StaleNotice } from '../../ssps/ui';
 import { BIZ_TYPES, LOCAL_PORT } from '@shared/api.interface';
 import './p11.css';
 
@@ -186,6 +186,7 @@ export default function AskPage() {
         <div className="grp"><h2>库存可用天数分析<Info text="按库存消耗模拟表计算：可用天数 = 当前库存 ÷ 日耗。模拟库存已经包含已排定的到货，降到 0 的那一天就是断料日。点击某个物料可以带入提问。" /></h2>
           <div className="lg"><span><i style={{ background: '#52c41a' }} />充裕（&gt;25天）</span><span><i style={{ background: '#fa8c16' }} />偏紧（15–25天）</span><span><i style={{ background: '#ff4d4f' }} />危险（&lt;15天）</span></div></div>
         <div className="up"><span>{inv?.batch ? `批次 ${(inv.batch as R).batchNo}` : '还没有导入库存表'}</span>{inv?.batch && <span className="sample" style={{ background: '#f6ffed', borderColor: '#b7eb8f', color: '#237804' }}>已导入：{(inv.batch as R).fileName}</span>}</div>
+        <StaleNotice stale={inv?.stale} />
         <div className="itabs"><button className={invTab === 'mat' ? 'on' : ''} onClick={() => setInvTab('mat')}>按物料</button><button className={invTab === 'risk' ? 'on' : ''} onClick={() => setInvTab('risk')}>按风险</button></div>
         {invTab === 'mat' ? types.map((ty) => grp('t:' + ty, ty, items.filter((i) => i.type === ty).sort((a, b) => a.days - b.days), false))
           : ([['bad', '危险（15 天以内）'], ['mid', '偏紧（15–25 天）'], ['ok', '充裕（25 天以上）']] as Array<[string, string]>).map(([k, t]) => grp('r:' + k, t, items.filter((i) => lvl(i.days)[0] === k).sort((a, b) => a.days - b.days), true))}

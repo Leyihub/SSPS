@@ -60,3 +60,14 @@ export function ErrorBox({ error, onRetry }: { error: unknown; onRetry?: () => v
 export const PageTitle = ({ title, desc, right }: { title: string; desc?: ReactNode; right?: ReactNode }) => (
   <div className="ptitle"><div><h1>{title}</h1>{desc && <p>{desc}</p>}</div>{right && <div className="btns">{right}</div>}</div>
 );
+
+/** 库存表可能已过时的提醒：导入之后，相关在途航次改过到港时间 */
+export function StaleNotice({ stale }: { stale?: { stale: boolean; since: string | null; changes: Array<{ voyageId: string; voyageNo: string; vessel: string | null; item: string; field: string; at: string }> } }) {
+  if (!stale?.stale) return null;
+  const list = stale.changes.slice(0, 3).map((c) => `${c.item} · ${c.vessel || c.voyageNo || c.voyageId}（${c.field}，${c.at}）`).join('；');
+  return (
+    <div role="alert" style={{ margin: '8px 0', padding: '8px 10px', background: '#fffbe6', border: '1px solid #ffe58f', borderRadius: 6, color: '#ad6800', fontSize: 12, lineHeight: 1.6 }}>
+      <b>库存表可能已过时，请重新导入。</b>自 {stale.since} 导入之后，有 {stale.changes.length} 处相关航次改了到港时间：{list}{stale.changes.length > 3 ? ' 等' : ''}。
+    </div>
+  );
+}

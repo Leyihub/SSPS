@@ -5,7 +5,7 @@ import { api, getApiErrorMessage, useBerths, useCalendar, useInventory, useMe, u
 import { stockLevel, nMdCn } from '../../ssps/cmr';
 import { dayNum, fmt, isoOf } from '../../ssps/format';
 import { usePortName } from '../../ssps/hooks';
-import { Info } from '../../ssps/ui';
+import { Info, StaleNotice } from '../../ssps/ui';
 import { BIZ_TYPES, LOCAL_PORT } from '@shared/api.interface';
 import { AdoptModal, AnnounceModal, CalendarCard, PlanCard, StockCard, SummaryBar } from './parts';
 import './p02.css';
@@ -82,6 +82,7 @@ export default function PredictPage() {
   return (
     <div className="pg-p02">
       <div className="page-head"><div><h1>智能发船预测</h1><p>回答三件事：几号发船、哪几天到港、到港时泊位够不够。每次给出一个推荐方案和一个备选方案。</p></div></div>
+      {f.item && <StaleNotice stale={inv?.stale} />}
       <section className="card inbar">
         <div className="card-h"><h2 className="nw">预测输入</h2></div>
         <div className="frow">

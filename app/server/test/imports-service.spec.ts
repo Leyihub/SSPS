@@ -137,3 +137,21 @@ test('泊位对不上的行（泊位号无法识别）进数据质量清单「�
   const issues = (await vstore.issues()).filter((i) => i.type === '泊位未匹配');
   assert.equal(issues.length, 1); assert.match(issues[0].object, /MV BAD/); assert.match(issues[0].note, /待定/);
 });
+
+test('库存过期提醒：导入之后相关在途航次改了到港时间才提醒；不相关物料、导入之前的修改不算；重新导入后提醒消失', async () => {
+  const { svc, voyages } = mk();
+  const mkV = (t: string, name: string, vessel: string) => { voyages.clock = () => new Date(t); return voyages.create({ biz: '大宗采购船', load: 'SURIGAO', disch: 'BAHODOPI', planDischS: '2026-11-10', planDischE: '2026-11-12', eta: '2026-11-11 08:00', vessel, cargo: [{ name, tons: 1000 }] } as any, biz); };
+  const coal = (await mkV('2026-11-05T07:00:00Z', '焦煤（印尼）', 'MV COAL')).voyage, ore = (await mkV('2026-11-05T07:10:00Z', '镍矿', 'MV ORE')).voyage;
+  voyages.clock = () => new Date('2026-11-05T07:30:00Z'); await voyages.reviseEta(coal.id, '2026-11-11 20:00', '船代', biz);      // 导入之前的修改
+  const rows = [inv('焦煤', '2026-11-05', 8000, { 物料类型: '焦煤', 可用天数: 8 })];
+  await svc.importInventory({ fileName: 'i.xlsx', rows }, logi);                                                               // 08:30 导入
+  assert.equal((await svc.inventory()).stale.stale, false);
+  voyages.clock = () => new Date('2026-11-05T09:30:00Z'); await voyages.reviseEta(ore.id, '2026-11-11 20:00', '船代', biz);
+  assert.equal((await svc.inventory()).stale.stale, false, '镍矿不在库存表里，不相关');
+  await voyages.reviseEta(coal.id, '2026-11-12 08:00', '船代', biz);
+  const st = (await svc.inventory()).stale;
+  assert.equal(st.stale, true); assert.equal(st.since, '2026-11-05 08:30');
+  assert.deepEqual(st.changes.map((c) => [c.voyageId, c.item, c.field]), [[coal.id, '焦煤', 'ETA']]);
+  svc.clock = () => new Date('2026-11-05T10:30:00Z'); await svc.importInventory({ fileName: 'i2.xlsx', rows }, logi);
+  assert.equal((await svc.inventory()).stale.stale, false, '重新导入后不再提醒');
+});

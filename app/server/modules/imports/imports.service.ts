@@ -7,6 +7,7 @@ import type { DirectoryPort } from '../../ports/directory.port';
 import type { ImportStorePort, BerthRow } from '../../ports/import-store.port';
 import type { MasterStorePort } from '../../ports/master-store.port';
 import type { VoyageStorePort } from '../../ports/voyage-store.port';
+import { deriveStatus } from '../../domain/status';
 import type { Actor } from '../../domain/voyage';
 import { canImport } from '../../domain/permissions';
 import { HEADER_ALIASES, normalizeBerthPlan } from '../../importers/imipPlan';
@@ -25,6 +26,11 @@ const ymd = (s: string) => s.replace(/-/g, '');
 const normName = (s: string | null | undefined) => String(s || '').toUpperCase().replace(/[\s\-_.]/g, '');
 const REQUIRED_PLAN: Array<[keyof typeof HEADER_ALIASES, string]> = [['berth', '泊位'], ['vessel', '船名'], ['eta', '预计到港日期'], ['etb', '预计靠泊时间'], ['etd', '预计卸完时间']];
 const REQUIRED_INV = ['品名', '库存日期', '库存', '日耗'];
+
+/** 改了这些字段就算「到港时间变了」。ETA 修订会写变更日志「ETA」 */
+const ARRIVAL_FIELDS = new Set(['ETA', '计划抵卸港窗口始', '计划抵卸港窗口止']);
+const squash = (x: string) => x.toLowerCase().replace(/\s+/g, '');
+const nameMatch = (item: string, cargo: string) => { const a = squash(item), b = squash(cargo || ''); return a.length >= 2 && b.length >= 2 && (a.includes(b) || b.includes(a)); };
 
 @Injectable()
 export class ImportsService {
@@ -146,11 +152,32 @@ export class ImportsService {
   async inventory() {
     const cur = await this.store.currentInventory();
     return {
-      batch: cur.batch, errorRows: cur.errorRows,
+      batch: cur.batch, errorRows: cur.errorRows, stale: await this.inventoryStale(cur.batch, cur.items.map((i) => i.name)),
       items: cur.items.map((i) => ({ name: i.name, type: i.type, stock: i.stock, daily: i.daily, days: i.days, daysEstimated: !!i.daysEstimated, validUntil: i.validUntil ?? null, errorCount: i.errorCount ?? 0 })),
     };
   }
   inventoryBatches() { return this.store.inventoryBatches(); }
+
+  /**
+   * 库存过期提醒（规格「库存与预测补充规则 ④」）：库存表导入之后，如果和某个物料相关的未结束航次改了到港时间（ETA 修订，或计划抵卸港窗口被改），
+   * 就提示「库存表可能已过时，请重新导入」。物料与货物的对应暂按品名互相包含（忽略大小写和空格）判断，正式映射表待 Leyinet 确认（docs/open-questions.md）。
+   * 只比较导入时间之后的修改记录；没有当前批次时不提醒。
+   */
+  private async inventoryStale(batch: { batchNo: string; importedAt: string } | null, itemNames: string[]) {
+    const none = { stale: false, since: null as string | null, changes: [] as Array<{ voyageId: string; voyageNo: string; vessel: string | null; item: string; field: string; at: string }> };
+    if (!batch || !itemNames.length) return none;
+    const changes: typeof none.changes = [];
+    for (const v of await this.voyages.list()) {
+      const st = deriveStatus(v);
+      if (v.readonly || st === '已结束' || st === '已结束（取消）') continue;
+      const cargo = await this.voyages.cargo(v.id);
+      const item = itemNames.find((n) => cargo.some((c) => nameMatch(n, c.name) || nameMatch(n, c.alias)));
+      if (!item) continue;
+      for (const e of await this.voyages.changeLog(v.id)) if (ARRIVAL_FIELDS.has(e.field) && e.at > batch.importedAt) changes.push({ voyageId: v.id, voyageNo: v.no, vessel: v.vessel, item, field: e.field, at: e.at });
+    }
+    changes.sort((a, b) => b.at.localeCompare(a.at));
+    return { stale: changes.length > 0, since: batch.importedAt, changes };
+  }
 
   /**
    * 库存趋势（P02 的库存图和明细表用）：从今天到 until 的模拟库存，以及「加入某几船到货后」的走势。
