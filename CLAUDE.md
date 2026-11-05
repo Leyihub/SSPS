@@ -10,7 +10,7 @@
 
 ## 工作约定
 
-1. 只有 Leyinet 明确说「开始写」或同等指令时才写业务代码；设计阶段只出文档。
+1. 只有 Leyinet 明确说「开始写」或同等指令时才写业务代码；设计阶段只出文档。（2026-11-05 Leyinet 已下达「开始完成所有代码的开发」，开发阶段见 `docs/development-workflow.md`。）
 2. 收到「继续」直接做下一步，不再确认。
 3. 规格文档用编号结构；给领导看的材料用段落文字而不是表格。
 4. 汇报时严格区分「已上线」与「计划中」。
@@ -62,6 +62,7 @@
 - `docs/schema/`：多维表格 T01–T10、应用库 D01–D12、状态推导规则、迁移清洗规则
 - `docs/schema/base-build-checklist.md`：多维表格建设清单（Leyinet 在飞书里照着逐项建表、勾选）
 - `docs/schema/base-plan.json`：建表清单的机器可读版（`node scripts/build-base-plan.mjs` 生成）；`docs/schema/base-build-agent-prompt.md`：本机 agent 建表的步骤与提示词
+- `docs/development-workflow.md`：开发阶段的流程、环节衔接、Leyinet 需要推进的前置条件、开发进度表
 - `docs/open-questions.md`：待 Leyinet 确认的事项，未确认项不要自行假定
 - `docs/data-profile/`：企微导出的列结构与填充统计（不含业务数据）
 
