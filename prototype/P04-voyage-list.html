@@ -6,14 +6,35 @@
 <title>P04 航次列表 · SSPS 原型</title>
 <link rel="stylesheet" href="assets/app.css">
 <style>
+/* 2026-11-05 按 P01/P02 新风格重排；筛选、排序、分页规则不变 */
+.hero{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;padding:16px 20px;margin-bottom:14px;background:linear-gradient(100deg,#f3f8ff 0%,#eaf3ff 55%,#dfeeff 100%);border:1px solid #d6e6fb}
+.hero .ht{display:flex;align-items:center;gap:14px;min-width:0}
+.hero .av{width:48px;height:48px;border-radius:12px;background:#fff;display:grid;place-items:center;box-shadow:0 1px 4px rgba(22,119,255,.18);flex:none}
+.hero h1{margin:0;font-size:22px;color:#17365d}
+.hero p{margin:2px 0 0;color:#4a596b}
 .btns{display:flex;gap:8px;flex-wrap:wrap}
+.btns .btn{height:38px;padding:0 20px;white-space:nowrap}
+.sumrow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:14px}
+.sm{display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer;border:1px solid transparent;min-width:0}
+.sm:hover{border-color:var(--primary)}
+.sm.on{border-color:var(--primary);background:#f5faff}
+.sm .ico{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;flex:none}
+.sm .ico svg{width:24px;height:24px}
+.sm .lb{color:var(--muted);font-size:13px;white-space:nowrap}
+.sm b{display:block;font-size:28px;line-height:1.2}
+.sm .nt{font-size:12px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ch{display:flex;align-items:center;gap:8px;padding:12px 16px 6px;font-weight:600;font-size:15px;white-space:nowrap}
+.ch .btn{font-size:13px;font-weight:400}
+.ch .sp{flex:1}.ch .cnt{background:#f0f2f5;color:#5b6878;border-radius:10px;padding:0 8px;font-size:12px;line-height:20px;font-weight:500}
+.fcard{margin-bottom:14px}
+.list .tabs2{padding:0 8px}
 .flt{display:flex;flex-wrap:wrap;gap:8px 8px;align-items:center}
 .flt .lab{color:var(--muted);font-size:12px;white-space:nowrap;margin-right:2px}
 .flt .grp{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .dr{display:flex;align-items:center;gap:6px}
 .dr .inp{width:150px}
 .flt .inp{width:auto}
-.fbox{padding:12px 16px;border-bottom:1px solid var(--line-2);display:grid;gap:10px}
+.fbox{padding:6px 16px 14px;display:grid;gap:10px}
 .who{font-weight:600;white-space:nowrap}
 .sub2{display:block;color:var(--muted);font-size:12px;font-weight:400;white-space:nowrap}
 .mk{display:inline-flex;gap:4px;align-items:center;flex-wrap:nowrap}
@@ -35,6 +56,9 @@
   .cards{display:block}
   .dr .inp{width:100%}
   .dr{flex:1}
+  .sumrow{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .sm{padding:12px;gap:10px}.sm .ico{width:36px;height:36px}.sm b{font-size:24px}.sm .nt{display:none}
+  .hero{padding:14px}.hero .av{display:none}.btns{width:100%}.btns .btn{flex:1}
 }
 </style>
 </head>
@@ -42,10 +66,14 @@
 <div class="app"><aside id="nav"></aside>
   <div class="main"><header id="topbar"></header>
     <main class="page">
-      <div class="ptitle"><div><h1>航次列表</h1><p>全员可看全部航次；金额类字段按部门隔离，列表里不显示。</p></div>
-        <div class="btns"><button class="btn" id="exp">导出 Excel</button><button class="btn primary" id="newv">新建航次</button></div></div>
-      <section class="card">
-        <div class="tabs2" id="tabs"></div>
+      <div class="card hero">
+        <div class="ht"><div class="av"><svg width="28" height="28" viewBox="0 0 40 40"><path d="M6 26h28l-4 7H10z" fill="#1677ff"/><path d="M11 25V15h14l4 10z" fill="#69b1ff"/><rect x="14" y="9" width="7" height="6" rx="1" fill="#0958d9"/></svg></div>
+          <div><h1>航次列表</h1><p>全员可看全部航次；金额类字段按部门隔离，列表里不显示。</p></div></div>
+        <div class="btns"><button class="btn" id="exp">导出 Excel</button><button class="btn primary" id="newv">＋ 新建航次</button></div>
+      </div>
+      <div class="sumrow" id="sum"></div>
+      <section class="card fcard">
+        <div class="ch"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M4 5h16l-6 8v6l-4-2v-4z" fill="none" stroke="#1677ff" stroke-width="2" stroke-linejoin="round"/></svg>筛选条件<span class="sp"></span><button class="btn" id="clr" style="padding:2px 12px">↻ 清除筛选</button></div>
         <div class="fbox">
           <div class="flt"><span class="lab">状态</span><div class="grp" id="stf"></div></div>
           <div class="flt">
@@ -53,9 +81,12 @@
             <span class="lab">业务员</span><select class="inp" id="own"></select>
             <input class="inp" id="kw" placeholder="船名 / 航次号 / 船次号 / 合同号" style="min-width:230px">
             <div class="grp"><button class="chipf" id="onlyMe">只看我的</button><button class="chipf" id="onlyStar">重点关注</button></div>
-            <button class="btn" id="clr" style="padding:2px 12px">清除筛选</button>
           </div>
         </div>
+      </section>
+      <section class="card list">
+        <div class="ch"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10" stroke="#1677ff" stroke-width="2.2" stroke-linecap="round"/></svg>航次明细<span class="cnt" id="total"></span><span class="sp"></span></div>
+        <div class="tabs2" id="tabs"></div>
         <div class="tbl-wrap"><table class="tbl" id="tbl"></table></div>
         <div class="cards" id="cards"></div>
         <div class="pager" id="pager"></div>
@@ -102,6 +133,26 @@
   const route = (v) => C.zh(v.load) + ' → ' + C.zh(v.disch) + (v.disch2 ? ' / ' + C.zh(v.disch2) : '');
   const dateCell = (v) => { const l = C.localDate(v); return '<span class="nw">' + (l.act ? '<b>' + C.mdh(l.act) + '</b> <span class="mut">实际</span>' : C.md(l.plan) + ' <span class="mut">计划</span>') + '</span>' + (C.side(v) === '装' ? '<span class="sub2">装港侧</span>' : '<span class="sub2">卸港侧</span>'); };
 
+  // 指标卡：当前页签下按状态计数，点一下等于在「状态」里勾选这些状态（只是快捷筛选，规则不变）
+  const GROUPS = [
+    ['all', '当前页签航次', [], '#1677ff', '#e6f4ff', '<path d="M4 6h16M4 12h16M4 18h10" stroke="#COL" stroke-width="2.2" stroke-linecap="round" fill="none"/>'],
+    ['sail', '航行中', ['航行中'], '#0958d9', '#e6f4ff', '<path d="M3 15h18l-3 5H6z" fill="#COL"/><path d="M6 14V8h8l3 6z" fill="#COL" opacity=".55"/>'],
+    ['port', '在港（等泊 / 作业）', ['装港等泊', '装港装货', '卸港等泊', '卸港卸货'], '#d46b08', '#fff7e6', '<path d="M4 20V9l8-5 8 5v11z" fill="none" stroke="#COL" stroke-width="2" stroke-linejoin="round"/><path d="M9 20v-6h6v6" stroke="#COL" stroke-width="2" fill="none"/>'],
+    ['done', '已结束', ['已结束', '已结束（取消）'], '#389e0d', '#f6ffed', '<path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="#COL" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>'],
+  ];
+  function drawSum() {
+    const keep = S.st; S.st = new Set(); const base = rows(); S.st = keep;
+    const cur = [...S.st].sort().join('|');
+    $('sum').innerHTML = GROUPS.map(([k, lab, sts, col, bg, ic]) => {
+      const n = sts.length ? base.filter((v) => sts.includes(C.statusOf(v))).length : base.length;
+      const on = sts.length ? cur === [...sts].sort().join('|') : !S.st.size;
+      return '<div class="card sm' + (on ? ' on' : '') + '" data-g="' + k + '"><span class="ico" style="background:' + bg + '"><svg viewBox="0 0 24 24">' + ic.replace(/#COL/g, col) + '</svg></span><div style="min-width:0"><span class="lb">' + lab + '</span><b style="color:' + col + '">' + n + '</b><div class="nt">' + (k === 'all' ? '页签：' + S.tab : '点击筛选') + '</div></div></div>';
+    }).join('');
+    $('sum').querySelectorAll('[data-g]').forEach((c) => c.onclick = () => {
+      const g = GROUPS.find((x) => x[0] === c.dataset.g); S.st = new Set(g[2]); S.page = 1;
+      $('stf').querySelectorAll('button').forEach((b) => b.classList.toggle('on', S.st.has(b.dataset.s))); draw();
+    });
+  }
   function draw() {
     const all = rows(), pages = Math.max(1, Math.ceil(all.length / PAGE)); S.page = Math.min(S.page, pages);
     const cur = all.slice((S.page - 1) * PAGE, S.page * PAGE);
@@ -118,6 +169,7 @@
     $('pager').querySelectorAll('[data-p]').forEach((b) => b.onclick = () => { S.page = +b.dataset.p; draw(); });
     const pp = $('pp'), pn = $('pn'); pp.onclick = () => { S.page--; draw(); }; pn.onclick = () => { S.page++; draw(); };
     $('onlyMe').classList.toggle('on', S.me); $('onlyStar').classList.toggle('on', S.star);
+    $('total').textContent = all.length + ' 条'; drawSum();
   }
   // 状态筛选
   $('stf').innerHTML = C.STATUS.concat(['已结束（取消）']).map((s) => '<button class="chipf" data-s="' + s + '">' + s + '</button>').join('');
