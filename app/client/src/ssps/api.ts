@@ -26,6 +26,7 @@ export const useBerthRows = (batchNo?: string, status?: string) => useQuery({ qu
 export const useInventory = () => useQuery({ queryKey: ['inventory'], queryFn: () => get<{ batch: Record<string, unknown> | null; items: InventoryItemDto[]; errorRows: Array<Record<string, unknown>> }>('/api/inventory') });
 export const useCalendar = (tons: number, days = 30) => useQuery({ queryKey: ['calendar', tons, days], queryFn: () => get<any>('/api/capacity/calendar', { tons, days }) });
 export const useDayDetail = (date: string | null, tons: number) => useQuery({ queryKey: ['cal-day', date, tons], queryFn: () => get<any>('/api/capacity/day', { date, tons }), enabled: !!date });
+export const useTrend = (name: string | null, marks: Array<{ d: number; tons: number }>, until?: number) => useQuery({ queryKey: ['trend', name, marks, until], queryFn: () => send<any>('post', '/api/inventory/trend', { name, marks, until }), enabled: !!name });
 export const usePrediction = (runNo?: string) => useQuery({ queryKey: ['prediction', runNo], queryFn: () => get<any>('/api/predictions/' + runNo), enabled: !!runNo });
 
 type Inval = string[][];

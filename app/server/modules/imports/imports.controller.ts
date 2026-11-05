@@ -16,6 +16,12 @@ export class ImportDto {
   @IsOptional() @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: '计划日期必须是 YYYY-MM-DD' }) planDate?: string;
 }
 
+export class TrendDto {
+  @IsString() name!: string;
+  @IsOptional() @IsArray() @IsObject({ each: true }) marks?: Array<{ d: number; tons: number }>;
+  @IsOptional() until?: number;
+}
+
 @Controller('api/berth-plans')
 @NeedLogin()
 export class BerthPlanController {
@@ -32,6 +38,7 @@ export class InventoryController {
   constructor(private readonly svc: ImportsService) {}
   @Get() list() { return this.svc.inventory(); }
   @Get('batches') batches() { return this.svc.inventoryBatches(); }
+  @Post('trend') trend(@Body() dto: TrendDto) { return this.svc.inventoryTrend(dto.name, dto.marks ?? [], dto.until); }
   @Post('import-file') @UseInterceptors(UPLOAD) async importFile(@UploadedFile() file: Upload, @Req() req: Request, @Headers(KEY) key?: string) { return this.svc.importInventory(this.svc.parseUpload(file), await this.svc.actor(req.userContext as any), key); }
   @Post('import') async import(@Body() dto: ImportDto, @Req() req: Request, @Headers(KEY) key?: string) { return this.svc.importInventory(dto, await this.svc.actor(req.userContext as any), key); }
 }

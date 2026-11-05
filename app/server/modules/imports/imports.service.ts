@@ -11,6 +11,8 @@ import { canImport } from '../../domain/permissions';
 import { HEADER_ALIASES, normalizeBerthPlan } from '../../importers/imipPlan';
 import { buildInventory } from '../../importers/inventory';
 import { readXlsx } from '../../lib/xlsx';
+import { dn } from '../../lib/dates';
+import { project, stockout } from '../../engine/stock';
 
 type Source = '飞书云空间' | '手动上传';
 export interface ImportInput { fileName: string; rows: Array<Record<string, unknown>>; planDate?: string; source?: Source; fileToken?: string }
@@ -110,4 +112,20 @@ export class ImportsService {
     };
   }
   inventoryBatches() { return this.store.inventoryBatches(); }
+
+  /**
+   * 库存趋势（P02 的库存图和明细表用）：从今天到 until 的模拟库存，以及「加入某几船到货后」的走势。
+   * 日期都用引擎的日序号（和预测结果里的 s、e、so 同一口径）。数值全部来自引擎的 project，前端不重算。
+   */
+  async inventoryTrend(name: string, marks: Array<{ d: number; tons: number }>, until?: number) {
+    const cur = await this.store.currentInventory(), it = cur.items.find((x) => x.name === name);
+    if (!it) throw fail(ResponseCode.NOT_FOUND, '库存里没有这个物料：' + name, HttpStatus.NOT_FOUND);
+    const today = dn(this.today()), end = Math.min(until ?? today + 100, today + 100);
+    const series = it.series.filter((x) => x[0] >= today && x[0] <= end);
+    return {
+      today, until: end, so: stockout(it), series,
+      base: project(it, [], end, today),
+      lines: (marks || []).slice(0, 2).map((m) => ({ d: m.d, tons: m.tons, pts: project(it, [{ d: m.d, tons: m.tons }], end, today) })),
+    };
+  }
 }

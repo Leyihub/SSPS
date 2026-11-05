@@ -119,3 +119,14 @@ test('上传 .xlsx：解析成行再导入；非 xlsx、空文件、损坏文件
   assert.throws(() => svc.parseUpload(undefined), (e: any) => e.httpStatus === 422);
   assert.throws(() => svc.parseUpload({ originalname: 'a.xlsx', buffer: Buffer.from('not a zip file at all, just text') }), (e: any) => e.httpStatus === 422 && /读取 Excel 失败/.test(e.message));
 });
+
+test('库存趋势：基准曲线与加入方案到货后的曲线都来自引擎；未知物料 404', async () => {
+  const { svc } = mk();
+  const rows = [inv('焦煤', '2026-11-05', 5000, { 日耗: 1000 }), inv('焦煤', '2026-11-06', 4000, { 日耗: 1000 }), inv('焦煤', '2026-11-07', 3000, { 日耗: 1000 }), inv('焦煤', '2026-11-08', 2000, { 日耗: 1000 }), inv('焦煤', '2026-11-09', 1000, { 日耗: 1000 }), inv('焦煤', '2026-11-10', 0, { 日耗: 1000 })];
+  await svc.importInventory({ fileName: 'i', rows }, logi);
+  const today = Math.floor(Date.UTC(2026, 10, 5) / 86400000);
+  const r = await svc.inventoryTrend('焦煤', [{ d: today + 3, tons: 30000 }], today + 8);
+  assert.equal(r.today, today); assert.equal(r.so, today + 5); assert.equal(r.base[0][0], today); assert.equal(r.base.length, 9);
+  assert.ok(r.lines[0].pts.find((p) => p[0] === today + 3)![1] > r.base.find((p) => p[0] === today + 3)![1], '到货后库存更高');
+  await err(svc.inventoryTrend('没有', [], today + 3), 404);
+});

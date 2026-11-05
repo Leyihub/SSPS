@@ -32,7 +32,8 @@ export class CapacityService {
       const capable = b.status === '启用' && tons > 0 && b.capacity >= tons;
       const row = le && det.state === 'ok' ? c.rows.find((r: any) => r.inPool && r.berth === b.code && r.s <= d && d <= r.e) : null;
       const state = !capable ? 'off' : !le ? 'cap' : det.state !== 'ok' ? 'nodata' : row ? 'occ' : 'free';
-      return { code: b.code, terminal: b.terminal, capacity: b.capacity, state, vessel: row ? row.vessel : null };
+      return { code: b.code, terminal: b.terminal, capacity: b.capacity, status: b.status, category: b.category ?? null, basis: b.basis ?? null, note: b.note ?? null, state,
+        vessel: row ? row.vessel : null, cargo: row ? row.cargo : null, tons: row ? row.tons : null, from: row ? row.s : null, to: row ? row.e : null };
     });
     return { date, tons, detail: toApiResult(det), berths };
   }
