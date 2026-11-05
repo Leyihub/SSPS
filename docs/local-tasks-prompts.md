@@ -39,7 +39,7 @@ $env:BITABLE_APP_TOKEN="N8uWby7joa1SrOspxYQcoCTzn4b"
 
 【第 1 步：环境检查】
 1. 确认 C:\Users\董金\ssps-app\package.json 存在，读取其中的 name 和 version。
-2. 确认 D:\AI Project\Project\SSPS 是 git 仓库；执行 git status，应当没有未提交的改动；执行 git branch --show-current，应为 main。执行 git pull，确认已是最新，并确认 docs\scaffold-integration.md 存在。
+2. 确认 D:\AI Project\Project\SSPS 是 git 仓库；执行 git status：app/ 以外的未跟踪文件（比如根目录旧的 review-pack-*.md 副本）可以忽略，不要提交也不要删除；只有已被跟踪的文件被修改了才停下来报告。执行 git branch --show-current，应为 main。执行 git pull，确认已是最新，并确认 docs\scaffold-integration.md 存在。
 3. 记录 ssps-app 里有没有 .agent 目录（只回答有或没有）。
 
 【第 2 步：补齐 .agent 目录（平台规范文档，里面没有密钥）】
@@ -48,18 +48,18 @@ $env:BITABLE_APP_TOKEN="N8uWby7joa1SrOspxYQcoCTzn4b"
 - 如果不存在：
   a. 在 C:\Users\董金 和 D:\AI Project 下搜索名为 .agent 的隐藏文件夹（用 Get-ChildItem -Force -Recurse -Directory -Filter .agent，忽略权限错误），找出其中包含 skills\lark-apps-db\SKILL.md 的那一个。如果找到多个，选最近修改的，并告诉我路径。
   b. 找到了：用 robocopy "<找到的 .agent 路径>" "C:\Users\董金\ssps-app\.agent" /E 复制进来。
-  c. 没找到：在 C:\Users\董金\ssps-app 里依次执行 npm install、npm run upgrade（这是平台提供的同步命令），把输出摘要告诉我，然后再检查 .agent\skills\lark-apps-db\SKILL.md 是否出现。
-  d. 仍然没有：停下来，告诉我搜索过哪些位置、命令输出是什么，不要继续第 3 步。
+  c. 没找到：在 C:\Users\董金\ssps-app 里依次执行 npm install、npm run upgrade（这是平台提供的同步命令，会修改 ssps-app 里平台自己的文件）。注意 Node 版本：如果 npm run upgrade 报 ERR_UNSUPPORTED_ESM_URL_SCHEME（Received protocol 'c:'），说明 npx 用了 PATH 里较旧的 Node 22.x，而不是系统的 Node 24。处理办法仅限当前 PowerShell 会话：用 where.exe node 找到 v24 的 node.exe 所在目录，临时放到 $env:Path 最前面（不要改系统或用户 PATH，不要安装或卸载 Node，不要改 nvm 设置），确认 node -v 是 v24 后重试一次。运行前后各看一次 git status --short（ssps-app 不是 git 仓库就列顶层文件），把 upgrade 带来的改动文件列表告诉我。重试仍失败，贴出最后 30 行报错，不要重试第三次。
+  d. 仍然没有 .agent：不要停，继续第 3 步（跳过其中确认 .agent 存在的检查，也跳过第 4 步里的 git add -f app/.agent），并在最后的报告里明确写「.agent 缺失」，同时写清楚搜索过哪些位置、命令输出是什么。
 
 【第 3 步：复制到仓库 app/ 目录】
 在 D:\AI Project\Project\SSPS 执行：
   robocopy "C:\Users\董金\ssps-app" ".\app" /E /XD node_modules .git dist .swc logs tmp temp .playwright-cli /XF .env .env.local ".env.*"
 robocopy 返回码小于 8 都算成功。复制完后确认：
-- app\package.json、app\server\main.ts、app\client、app\shared、app\.agent\skills\lark-apps-db\SKILL.md 都存在；
+- app\package.json、app\server\main.ts、app\client、app\shared 都存在；app\.agent\skills\lark-apps-db\SKILL.md 存在则更好，不存在也继续；
 - app 下没有 .env 开头的文件，没有 node_modules，没有 .git 目录。
 
 【第 4 步：提交前的安全检查（必须全部通过才能提交）】
-1. 执行 git add app 与 git add -f app/.agent（脚手架的 .gitignore 排除了 .agent，所以要强制添加）。
+1. 执行 git add app；如果 app\.agent 存在，再执行 git add -f app/.agent（脚手架的 .gitignore 排除了 .agent，所以要强制添加）。
 2. 执行 git status --short，统计要提交的文件数；检查暂存区里是否有路径匹配这些模式的文件，有就停下来报告：.env、.env.*、node_modules/、.git/、*.pem、*.key、*.p12、id_rsa。
 3. 在暂存区的文本文件里搜索疑似密钥的赋值：形如 APP_SECRET / app_secret / SECRET / PASSWORD / TOKEN / API_KEY 后面跟 = 或 : 再跟 12 个以上字母数字的长字符串。逐条列出「文件:行号」和命中的变量名，值只显示前 3 个字符加星号。AGENTS.md、.agent 里文档里出现的变量名或示例占位符（如 xxx、your_、<…>）不算。有真实值的命中就停下来报告，不要提交。
 4. 检查单个文件大小，超过 5 MB 的列出来问我。
@@ -71,7 +71,7 @@ robocopy 返回码小于 8 都算成功。复制完后确认：
 如果 push 被拒绝（远端有新提交）：先 git pull --rebase origin main，解决不了冲突就停下来报告；成功后再 push。不要 force push。
 
 【第 6 步：报告】
-告诉我：提交号、提交的文件数、app/ 下第一层的目录和文件列表、.agent 是否进了提交、第 4 步安全检查的结果（有没有命中、命中了什么）、ssps-app 里是否还有未提交的改动。不得包含任何密钥内容。
+告诉我：提交号、提交的文件数、app/ 下第一层的目录和文件列表、.agent 是否进了提交（缺失要明说）、第 4 步安全检查的结果（有没有命中、命中了什么）、ssps-app 里是否还有未提交的改动。不得包含任何密钥内容。
 ```
 
 ## 事项 2：手工建 4 个查找引用（你自己做）
