@@ -27,9 +27,9 @@
 ### 3.1 现在就卡着后面工作的（越早越好）
 
 1. **多维表格建表**：已建好 11 张表（报告与核对见 `docs/schema/base-build-report-2026-11-05.md`）。剩余：手工建 T04 的 4 个查找引用，再用 `docs/schema/base-verify-agent-prompt.md` 跑一次核对和公式自检，并回答报告里第 2、4 两个问题。
-2. **创建妙搭应用并生成脚手架**：在本机执行 `lark-cli apps +create --app-type full_stack`、`+feature-enable --feature database`、`+init`，把生成的**目录结构**（`tree -L 3`，不含 `node_modules`）发给我，或把脚手架提交到仓库的 `scaffold` 分支。阻塞：阶段 C。这一步我无法代劳。
-3. **《泊位容量表》（2026-10-08）原件**：T02 的 23 行容量吨级要用它。没有它，预测只能用示例容量，结果不能当真。
-4. **常用航线经验航程表（30–50 条）**：大宗采购部提供，写入 T08。没有它，大宗预测会被拦截（提示先补经验航程）。
+2. **脚手架**：Leyinet 已生成（2026-11-05）。剩余：把它放进仓库的 `app/` 目录并补齐 `.agent` 规范目录，步骤见 `docs/scaffold-integration.md`。阻塞：阶段 C。
+3. **《泊位容量表》**：已收到（2026-11-05），已整理成 T02 的录入数据 `docs/schema/seed/T02-berths.json`。剩余：用 `docs/schema/base-seed-agent-prompt.md` 让本机 agent 录入。
+4. **常用航线经验航程表**：没有历史样本，已整理 10 条估算版（`docs/schema/seed/T08-routes.json`，同一个提示词录入）。剩余：大宗采购部校对并补到 30–50 条。
 
 ### 3.2 需要你拍板或提供（阶段 E 之前）
 
@@ -65,6 +65,7 @@
 
 | 模块 | 状态 |
 | --- | --- |
+| 脚手架 | 已生成（本机 `ssps-app`），待放入仓库 `app/` 并补齐 `.agent`，见 `docs/scaffold-integration.md` |
 | 工程底座 | 已写好，测试通过（`server/`，Node 22，零依赖） |
 | domain/ | 已写好，测试通过：状态推导、时序校验、航程规则 |
 | engine/ | 已写好，测试通过：容量、库存断料、Plan A/B、宣船文案、S1 溯源与 D05/D06 记录转换 |

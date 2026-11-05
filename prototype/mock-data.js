@@ -13,7 +13,7 @@
 
   // ---------- T01 港口主档（子集） ----------
   const ports = [
-    { code: '001', cn: '巴浩多比（IMIP）', en: 'BAHODOPI', country: '印度尼西亚', nature: '内港', isLocal: true },
+    { code: '001', cn: 'IMIP港口', en: 'BAHODOPI', country: '印度尼西亚', nature: '内港', isLocal: true },
     { code: '014', cn: '苏里高', en: 'SURIGAO', country: '菲律宾', nature: '外港', isLocal: false },
     { code: '015', cn: '塔加尼托', en: 'TAGANITO', country: '菲律宾', nature: '外港', isLocal: false },
     { code: '037', cn: '雅加达', en: 'JAKARTA', country: '印度尼西亚', nature: '内港', isLocal: false },
@@ -199,7 +199,7 @@
     { code: '065', cn: '新村港', en: 'XINCUN', country: '中国', nature: '外港', isLocal: false },
   ];
   extraPorts.forEach((p) => M.ports.push(p));
-  const alias = { BAHODOPI: ['IMIP', 'BAHODOPI(IMIP)', 'BAHODOPI PORT', '巴浩多比港'], SURIGAO: ['SURIGAO PORT', 'Surigao', '苏里高港'], TAGANITO: ['TAGANITO PORT', 'Taganito', '塔加尼托港'],
+  const alias = { BAHODOPI: ['IMIP', 'BAHODOPI(IMIP)', 'BAHODOPI PORT', '巴浩多比', '巴浩多比港', '莫罗瓦利'], SURIGAO: ['SURIGAO PORT', 'Surigao', '苏里高港'], TAGANITO: ['TAGANITO PORT', 'Taganito', '塔加尼托港'],
     JAKARTA: ['JKT', 'JAKARTA PORT', '雅加达港', 'TANJUNG PRIOK'], SURABAYA: ['SBY', 'SURABAYA PORT', '泗水港'], HAIPHONG: ['HAI PHONG', 'HAIPHONG PORT', '海防港'],
     QINGDAO: ['QINGDAO PORT', 'Tsingtao'], TIANJIN: ['TIANJIN XINGANG', '天津新港'], SINGAPORE: ['SIN', 'SINGAPORE PORT'], KENDARI: ['KENDARI PORT'], QINHUANGDAO: ['QHD', '秦皇岛港', 'QINHUANGDAO PORT'], TANGSHAN: ['京唐港', '曹妃甸', 'TANGSHAN PORT'], XINCUN: ['新村', 'XINCUN PORT'] };
   const region = { BAHODOPI: '中苏拉威西', SURIGAO: '棉兰老', TAGANITO: '棉兰老', JAKARTA: '爪哇', SURABAYA: '爪哇', HAIPHONG: '越南北部', QINGDAO: '山东', TIANJIN: '天津', SINGAPORE: '—', KENDARI: '东南苏拉威西', QINHUANGDAO: '河北', TANGSHAN: '河北', XINCUN: '浙江' };

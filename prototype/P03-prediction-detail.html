@@ -269,7 +269,7 @@ table.tb th{background:#f7f9fb;color:var(--muted);font-weight:500;font-size:12px
     h += step(nx(), '输入与可用泊位', '只统计容量不小于货量的启用泊位，它们是泊位余量率的基数。容量以《泊位容量表》为准，不按历史靠泊记录调整。', '',
       kvTable([
         ['货量', fmt(i.tons) + ' 吨', '本次预测输入'],
-        ['航线', zh(i.load) + ' → ' + zh(i.disch), '本次预测输入；本港侧 = ' + (prod ? '装港' : '卸港') + '（巴浩多比）'],
+        ['航线', zh(i.load) + ' → ' + zh(i.disch), '本次预测输入；本港侧 = ' + (prod ? '装港' : '卸港') + '（IMIP港口）'],
         [prod ? '受载期' : '期望到港窗口', md(E.dn(i.winStart)) + ' – ' + md(E.dn(i.winEnd)), '本次预测输入' + (prod ? '；最晚装船日 = 受载期最后一天' : '')],
         ['能装下的泊位', P.n + ' / ' + M.berths.length + ' 个', '泊位主档 · ' + M.berths[0].basis + '（容量 ≥ ' + fmt(i.tons) + ' 吨）：' + P.list.map((b) => b.code).join('、')],
       ]));

@@ -283,7 +283,7 @@ button,input,textarea{font:inherit;color:inherit}
     let h = '<span class="k">我理解为：</span>';
     h += chip(p.biz || '船型待确认', !p.biz) + chip(p.tons ? fmt(p.tons) + ' 吨' : '货量待补充', !p.tons);
     if (p.biz === '成品销售船') h += chip('本港装货 → ' + (p.disch ? zh(p.disch) : '客户港未说明'), !p.disch);
-    else h += chip((p.load ? zh(p.load) : '装港未说明') + ' → 巴浩多比', !p.load);
+    else h += chip((p.load ? zh(p.load) : '装港未说明') + ' → IMIP港口', !p.load);
     h += p.hasWin ? chip((p.biz === '成品销售船' ? '装船 ' : '到港 ') + md(p.a) + ' – ' + md(p.b)) : chip('未说明时间，默认看未来 15 天', true);
     $('understood').innerHTML = '<div class="understood">' + h + '</div>';
   }
