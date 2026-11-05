@@ -19,7 +19,7 @@
 
 ## 当前阶段：产品原型（先原型、后代码）
 
-先完成 P01–P10 的可点击原型，由 Leyinet 评审确认后再进入妙搭开发。原型阶段不需要妙搭、不需要 lark-cli、不连飞书。
+先完成 P01–P11 的可点击原型，由 Leyinet 评审确认后再进入妙搭开发。原型阶段不需要妙搭、不需要 lark-cli、不连飞书。
 
 1. 位置：`prototype/`。每个页面一个独立 HTML 文件（如 `prototype/P02-prediction.html`），原生 HTML/CSS/JS，不用构建工具；另有 `prototype/index.html` 作为导航入口。
 2. 页面范围与内容以 `docs/implementation-plan.md` 第 9 节为准，字段以 `docs/schema/` 为准，状态以 `docs/schema/status-rules.md` 为准，不得自创字段或状态。
