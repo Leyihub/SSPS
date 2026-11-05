@@ -6,43 +6,70 @@
 <title>P06 港口容量日历 · SSPS 原型</title>
 <link rel="stylesheet" href="assets/app.css">
 <style>
-.layout{display:grid;grid-template-columns:minmax(0,1fr) 470px;gap:16px;align-items:start}
-.side{position:sticky;top:64px}
+/* 2026-11-05 参考效果图重排；口径仍是锁定规则：只用泊位余量率（CMR），15 天后只看同期船数 */
+.nw{white-space:nowrap}
+.hero{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;padding:16px 20px;margin-bottom:14px;background:linear-gradient(100deg,#f3f8ff 0%,#eaf3ff 55%,#dfeeff 100%);border:1px solid #d6e6fb}
+.hero .ht{display:flex;align-items:center;gap:14px;min-width:0}
+.hero .av{width:48px;height:48px;border-radius:12px;background:#fff;display:grid;place-items:center;box-shadow:0 1px 4px rgba(22,119,255,.18);flex:none}
+.hero h1{margin:0;font-size:22px;color:#17365d}
+.hero p{margin:2px 0 0;color:#4a596b}
 .ctl{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .ctl .lab{color:var(--muted);font-size:13px;display:flex;align-items:center;white-space:nowrap}
 .seg button{white-space:nowrap;padding:6px 14px}
+/* 指标条 */
+.kpi{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));margin-bottom:14px;padding:14px 4px}
+.kpi > div{padding:2px 18px;border-left:1px solid var(--line-2);min-width:0}
+.kpi > div:first-child{border-left:0}
+.kpi .k{color:var(--muted);font-size:13px;display:flex;align-items:center;white-space:nowrap}
+.kpi .v{font-size:26px;font-weight:700;line-height:1.3;white-space:nowrap}
+.kpi .v small{font-size:13px;font-weight:500;color:var(--muted);margin-left:4px}
+.kpi .n{font-size:12px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi .k1{color:#237804}.kpi .k2{color:#ad6800}.kpi .k3{color:#d4380d}.kpi .k4{color:#a8071a}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 470px;gap:16px;align-items:start}
+.side{position:sticky;top:64px}
+/* 日历 */
 .calh{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 16px 8px}
+.calh h2{margin:0;font-size:17px;display:flex;align-items:center;gap:8px;white-space:nowrap}
 .phase{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12.5px;color:#3b4a5c}
 .phase i{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:5px;border:1px solid #95de64;background:var(--c1-bg)}
-.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;padding:4px 16px 8px}
-.wd{text-align:center;font-size:12px;color:var(--muted);padding:2px 0}.wd.we{color:#cf1322}
-.dc{position:relative;min-height:86px;border:1px solid;border-radius:8px;padding:5px 8px;display:flex;flex-direction:column;justify-content:space-between;cursor:pointer;background:#fff;text-align:left;white-space:nowrap;overflow:hidden}
-.dc .dt{font-size:12px;opacity:.75;display:flex;justify-content:space-between}
-.dc .dt b{font-weight:600}
-.dc .big{font-size:20px;font-weight:700;line-height:1.2}
-.dc .sm{font-size:11.5px;opacity:.85}
-.dc .bar{display:block;height:4px;border-radius:3px;background:rgba(0,0,0,.1);overflow:hidden;margin-top:3px}
-.dc .bar i{display:block;height:100%;background:currentColor;opacity:.75}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;padding:4px 16px 8px}
+.wd{text-align:center;font-size:13px;color:#3b4a5c;font-weight:600;padding:4px 0}.wd.we{color:#cf1322}
+.dc{position:relative;min-height:92px;border:1px solid;border-radius:10px;padding:6px 10px;display:flex;flex-direction:column;justify-content:space-between;cursor:pointer;text-align:left;white-space:nowrap;overflow:hidden;font:inherit}
+.dc:not(.c1):not(.c2):not(.c3):not(.c4):not(.nd):not(.past):not(.out){background:#fff;color:inherit}
+.dc .dt{font-size:13px;display:flex;justify-content:space-between;align-items:center;gap:4px}
+.dc .dt b{font-weight:700;font-size:14px}
+.dc .dt .td{font-size:11px;font-weight:600;color:#fff;background:var(--primary);border-radius:4px;padding:0 5px}
+.dc .big{font-size:22px;font-weight:700;line-height:1.2}
+.dc .sm{font-size:12px;opacity:.9}
 .dc.far{border-style:dashed}
 .dc.nd{background:var(--stripe);border-color:#c4cad3;color:#7b8696}
 .dc.firstfar{box-shadow:-4px 0 0 #9254de}
-.dc.past{background:#f7f8fa;color:#c0c8d2;border-color:#eceff3;cursor:default}
-.dc.today .dt b{color:var(--primary)}
+.dc.past,.dc.out{background:#f7f8fa;color:#c0c8d2;border-color:#eceff3;cursor:default}
+.dc.today{border-width:2px;border-color:var(--primary)}
 .dc.sel{outline:3px solid #26394f;outline-offset:1px;z-index:2}
 .dc.nd .big{display:none}
 .dc.nd .sm{background:rgba(255,255,255,.85);border-radius:4px;padding:0 5px;align-self:flex-start}
-.mtag{position:absolute;right:6px;top:4px;font-size:10px;color:#531dab;background:#f4ebff;border-radius:3px;padding:0 4px}
-.legend{display:flex;flex-wrap:wrap;gap:6px 20px;padding:6px 16px 14px;font-size:12px;color:var(--muted);align-items:center}
+.mtag{position:absolute;right:6px;top:6px;font-size:10px;color:#531dab;background:#f4ebff;border-radius:3px;padding:0 4px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 20px;padding:8px 16px 14px;font-size:12px;color:var(--muted);align-items:center;border-top:1px solid var(--line-2)}
 .legend .g{display:flex;align-items:center;gap:5px;white-space:nowrap}
 .sw{display:inline-block;min-width:34px;padding:0 5px;text-align:center;border:1px solid;border-radius:4px;font-size:10.5px;line-height:16px;white-space:nowrap}
 /* 右侧当日详情 */
-.dh{padding:14px 16px;border-bottom:1px solid var(--line-2)}
-.dh h2{margin:0;font-size:18px;white-space:nowrap}
-.dh .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-.bm{padding:12px 16px 4px}
-.bm-t{font-size:12px;color:var(--muted);margin-bottom:5px;white-space:nowrap}
-.bm-r{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
-.bt{width:54px;height:46px;border:1px solid;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.25;cursor:help;flex:none;white-space:nowrap}
+.dh{padding:14px 16px 4px}
+.dh h2{margin:0;font-size:18px;white-space:nowrap;display:flex;align-items:center;gap:8px}
+.st3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:10px 16px 6px;border:1px solid var(--line-2);border-radius:10px;background:#fbfcfe}
+.st3 > div{padding:8px 12px;text-align:center;border-left:1px solid var(--line-2)}
+.st3 > div:first-child{border-left:0}
+.st3 .k{font-size:12.5px;color:var(--muted);white-space:nowrap}
+.st3 .v{font-size:22px;font-weight:700;white-space:nowrap}
+.st3 .v small{font-size:12px;font-weight:500;color:var(--muted);margin-left:3px}
+.sec{margin:10px 16px 0;font-weight:600;font-size:14px;display:flex;align-items:center;gap:6px}
+.tg{margin:8px 16px 0;border:1px solid var(--line-2);border-radius:10px;overflow:hidden}
+.tg-h{display:flex;align-items:center;gap:6px;padding:7px 12px;background:#f5f8fc;cursor:pointer;font-weight:600;font-size:13.5px;user-select:none}
+.tg-h .ar{color:#6b7a8c;transition:transform .15s}.tg.closed .ar{transform:rotate(-90deg)}
+.tg-h .sp{flex:1}.tg-h small{font-weight:400;color:var(--muted)}
+.tg.closed .bm-r{display:none}
+.bm-r{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;padding:8px 10px 10px}
+.bt{height:46px;border:1px solid;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.25;cursor:help;white-space:nowrap}
 .bt b{font-size:13px}.bt small{font-size:11px;opacity:.85}
 .bt.free{background:var(--c1-bg);color:var(--c1-fg);border-color:var(--c1-bd)}
 .bt.occ{background:var(--c3-bg);color:var(--c3-fg);border-color:var(--c3-bd)}
@@ -50,30 +77,34 @@
 .bt.nd2{background:var(--stripe);color:#5b6878;border-color:#c4cad3}
 .bt.off{background:#eef0f3;color:#a7b0bc;border-color:#dfe3e8}
 .bt:hover{outline:2px solid var(--primary);z-index:2}
-.bl{display:flex;flex-wrap:wrap;gap:4px 14px;padding:0 16px 12px;font-size:12px;color:var(--muted)}
+.bl{display:flex;flex-wrap:wrap;gap:4px 14px;padding:8px 16px 4px;font-size:12px;color:var(--muted)}
 .bl .g{display:flex;align-items:center;gap:4px;white-space:nowrap}
 .ships{padding:0 16px 16px}
-.ships h3{margin:6px 0 8px;font-size:14px;display:flex;align-items:center}
-.sh{border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin-bottom:8px}
-.sh .n{display:flex;align-items:center;gap:8px;font-weight:600;flex-wrap:wrap}
-.sh .n a{color:inherit;text-decoration:none}.sh .n a:hover{color:var(--primary);text-decoration:underline}
-.sh .t{font-size:11px;font-weight:500;border-radius:4px;padding:0 6px;line-height:18px}
-.t.arr{background:#e6f4ff;color:#0958d9}.t.in{background:#f2f4f7;color:#5b6878}
-.sh .kv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 12px;margin-top:5px;font-size:12.5px;color:#3b4a5c}
-.sh .kv span em{font-style:normal;color:var(--muted);margin-right:4px}
-.sh .kv span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.none{padding:18px 4px;color:var(--muted)}
+table.stb{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:8px}
+.stb th{text-align:left;color:var(--muted);font-weight:500;padding:6px 6px;border-bottom:1px solid var(--line);white-space:nowrap;background:#f7f9fb}
+.stb td{padding:6px 6px;border-bottom:1px solid var(--line-2);white-space:nowrap}
+.stb td.r,.stb th.r{text-align:right}
+.stb a{color:inherit;text-decoration:none}.stb a:hover{color:var(--primary);text-decoration:underline}
+.t{font-size:11px;font-weight:500;border-radius:4px;padding:0 6px;line-height:18px;margin-left:4px}
+.t.arr{background:#e6f4ff;color:#0958d9}
+.none{padding:14px 4px;color:var(--muted)}
 </style>
 </head>
 <body>
 <div class="app"><aside id="nav"></aside>
   <div class="main"><header id="topbar"></header>
     <main class="page">
-      <div class="ptitle"><div><h1>港口容量日历</h1><p>全员可看。近 15 天看每日泊位余量，15 天后看同期船数；点任意一天看当天在港和预抵的船。</p></div>
-        <div class="ctl"><span class="lab">货量档<span class="i" data-tip="按这个货量算「能装下的泊位」作为基数，默认 5 万吨。\n吨级档的划分还没有确认，原型先按泊位容量档位列出。">i</span></span><div class="seg" id="tons"></div></div></div>
+      <div class="card hero">
+        <div class="ht"><div class="av"><svg width="28" height="28" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2.5" fill="none" stroke="#1677ff" stroke-width="2"/><path d="M3 10h18M8 3v4M16 3v4" stroke="#1677ff" stroke-width="2" stroke-linecap="round"/><rect x="7" y="13" width="3" height="3" rx=".6" fill="#69b1ff"/><rect x="14" y="13" width="3" height="3" rx=".6" fill="#69b1ff"/></svg></div>
+          <div><h1>港口容量日历</h1><p>全员可看。近 15 天看每日泊位余量，15 天后看同期船数；点任意一天看当天的泊位分布和在港、预抵的船。</p></div></div>
+        <div class="ctl"><span class="lab">货量档<span class="i" data-tip="按这个货量算「能装下的泊位」作为基数，默认 5 万吨。\n吨级档的划分还没有确认，原型先按泊位容量档位列出。">i</span></span><div class="seg" id="tons"></div>
+          <span class="lab">显示范围</span><div class="seg" id="range"></div></div>
+      </div>
+      <section class="card kpi" id="kpi"></section>
       <div class="layout">
         <section class="card">
-          <div class="calh"><div class="phase"><span><i></i>近 15 天：泊位余量（靠船计划）</span><span><i style="border-style:dashed;border-color:#b37feb;background:#f4ebff"></i>15 天后：同期船数（航次计划，估算）</span></div><span class="muted nw" id="meta" style="font-size:12px"></span></div>
+          <div class="calh"><h2><svg width="18" height="18" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2.5" fill="none" stroke="#1677ff" stroke-width="2"/><path d="M3 10h18" stroke="#1677ff" stroke-width="2"/></svg><span id="rangeTitle"></span></h2>
+            <div class="phase"><span><i></i>近 15 天：泊位余量（靠船计划）</span><span><i style="border-style:dashed;border-color:#b37feb;background:#f4ebff"></i>15 天后：同期船数（航次计划，估算）</span></div></div>
           <div class="cal" id="cal"></div>
           <div class="legend" id="legend"></div>
         </section>
@@ -88,78 +119,116 @@
   SHELL.mount({ active: 'P06', title: '港口容量日历' });
   const M = window.MOCK, E = window.ENGINE, C = window.C, $ = (id) => document.getElementById(id);
   const TONS = [[10000, '1 万吨'], [20000, '2 万吨'], [30000, '3 万吨'], [50000, '5 万吨'], [70000, '7 万吨']];
-  let tons = 50000, sel = C.TODAY;
-  const fmt = C.fmt, pct = C.pct;
+  const RANGES = [[15, '近 15 天'], [30, '近 30 天'], [60, '近 60 天']];
+  let tons = 50000, sel = C.TODAY, range = 30;
+  const closed = {};
+  const fmt = C.fmt;
   const cmrCls = (v) => (v >= .5 ? 'c1' : v >= .3 ? 'c2' : v >= .1 ? 'c3' : 'c4');
   const cmrLab = (v) => (v >= .5 ? '充裕' : v >= .3 ? '适中' : v >= .1 ? '偏紧' : '紧张');
   const denCls = (c, n) => { const r = c / n; return r <= .5 ? 'c1' : r <= .7 ? 'c2' : r <= .9 ? 'c3' : 'c4'; };
   const denLab = (c, n) => { const r = c / n; return r <= .5 ? '宽松' : r <= .7 ? '适中' : r <= .9 ? '偏密' : '拥挤'; };
   const dstr = (n) => C.iso(n);
   const md = (n) => C.md(dstr(n)), mdCn = (n) => C.mdCn(dstr(n)), wk = (n) => C.wk(dstr(n));
+  const last = () => C.TODAY + range - 1;
 
-  // 42 天（6 周），周一开头
-  const dow0 = (new Date(C.TODAY * 86400000).getUTCDay() + 6) % 7, start = C.TODAY - dow0, N = 42;
   function dayInfo(d) {
     if (d < C.TODAY) return { state: 'past' };
+    if (d > last()) return { state: 'out' };
     const P = E.poolFor(tons), mode = E.modeOf(d);
     if (!P.n) return { state: 'nodata', mode };
-    const x = mode === 'cmr' ? E.dayDetail(d, tons) : E.dayDetail(d, tons);
+    const x = E.dayDetail(d, tons);
     return x.state === 'nodata' ? { state: 'nodata', mode } : Object.assign({ state: 'ok', mode, P }, x);
   }
+
+  // ---------- 顶部指标：全部按锁定口径（泊位余量率 / 同期船数），不用「占用率」「平均值」 ----------
+  function drawKpi() {
+    const P = E.poolFor(tons), t = E.dayDetail(C.TODAY, tons);
+    const near = []; for (let d = C.TODAY; d <= C.TODAY + E.PATH_LIMIT; d++) { const x = E.dayDetail(d, tons); if (x.state === 'ok' && x.mode === 'cmr') near.push(x); }
+    const mn = near.length ? near.reduce((a, b) => (b.cmr < a.cmr ? b : a)) : null;
+    const ok = t.state === 'ok';
+    const cell = (k, v, n, tip) => '<div><div class="k">' + k + (tip ? '<span class="i" data-tip="' + tip + '">i</span>' : '') + '</div><div class="v">' + v + '</div><div class="n">' + n + '</div></div>';
+    $('kpi').innerHTML =
+      cell('能装下的泊位', P.n + '<small>/ ' + M.berths.length + ' 个</small>', '货量 ' + fmt(tons) + ' 吨 · 容量 ≥ 货量的启用泊位', '泊位余量率的基数：只计容量不小于货量的启用泊位，随货量档变化。') +
+      cell('今日空闲泊位', ok ? (P.n - t.occ) + '<small>个</small>' : '—', ok ? '占用 ' + t.occ + ' 个' : '靠船计划暂无数据') +
+      cell('今日在港船舶', ok ? t.list.length + '<small>艘</small>' : '—', '只计占用能装下泊位的船') +
+      cell('今日泊位余量', ok ? '<span class="' + cmrCls(t.cmr).replace('c', 'k') + '">' + Math.round(t.cmr * 100) + '%</span>' : '—', ok ? cmrLab(t.cmr) + ' · 空闲 ÷ 能装下的泊位' : '无数据（不是 0%）', '唯一的容量口径：泊位余量率 = 空闲泊位 ÷ 能装下的泊位，越高越宽松。') +
+      cell('近 15 天最低泊位余量', mn ? '<span class="' + cmrCls(mn.cmr).replace('c', 'k') + '">' + Math.round(mn.cmr * 100) + '%</span>' : '—', mn ? '出现在 ' + mdCn(mn.d) + ' ' + wk(mn.d) + (near.length < E.PATH_LIMIT + 1 ? ' · 有数据 ' + near.length + ' 天' : '') : '无数据', '预测排序用的就是窗口内的最低泊位余量；这里看近 15 天里最紧的一天。');
+  }
+
   function drawCal() {
     const P = E.poolFor(tons);
-    $('meta').textContent = '货量 ' + fmt(tons) + ' 吨 · 能装下的泊位 ' + P.n + ' / ' + M.berths.length + ' 个';
+    $('rangeTitle').textContent = mdCn(C.TODAY) + ' – ' + mdCn(last()) + ' · 能装下的泊位 ' + P.n + ' / ' + M.berths.length + ' 个';
+    const dow0 = (new Date(C.TODAY * 86400000).getUTCDay() + 6) % 7, start = C.TODAY - dow0, weeks = Math.ceil((dow0 + range) / 7);
     let h = ['一', '二', '三', '四', '五', '六', '日'].map((x, i) => '<div class="wd' + (i > 4 ? ' we' : '') + '">周' + x + '</div>').join('');
     const firstFar = C.TODAY + E.PATH_LIMIT + 1;
-    for (let i = 0; i < N; i++) {
+    for (let i = 0; i < weeks * 7; i++) {
       const d = start + i, info = dayInfo(d), label = (new Date(d * 86400000).getUTCDate() === 1 ? md(d) : String(Number(dstr(d).slice(8))));
+      const head = (extra) => '<div class="dt"><b>' + label + '</b>' + (d === C.TODAY ? '<span class="td">今天</span>' : '') + (extra || '') + '</div>';
       let cls = 'dc', body = '';
-      if (info.state === 'past') { cls += ' past'; body = '<div class="dt"><b>' + label + '</b></div>'; }
+      if (info.state === 'past' || info.state === 'out') { cls += ' ' + info.state; body = head(); }
       else {
         const far = info.mode === 'density'; if (far) cls += ' far' + (d === firstFar ? ' firstfar' : '');
         if (d === C.TODAY) cls += ' today';
-        if (info.state !== 'ok') { cls += ' nd'; body = '<div class="dt"><b>' + (d === C.TODAY ? '今天' : label) + '</b></div><div class="big">—</div><span class="sm">无数据</span>'; }
-        else if (info.mode === 'cmr') { cls += ' ' + cmrCls(info.cmr); body = '<div class="dt"><b>' + (d === C.TODAY ? '今天' : label) + '</b><span>' + info.list.length + ' 艘</span></div><div><div class="big">' + Math.round(info.cmr * 100) + '%</div><span class="bar"><i style="width:' + info.cmr * 100 + '%"></i></span></div><span class="sm">余量 · ' + cmrLab(info.cmr) + '</span>'; }
-        else { cls += ' ' + denCls(info.count, info.P.n); body = '<div class="dt"><b>' + label + '</b></div><div class="big">' + info.count + ' 艘</div><span class="sm">估算 · ' + denLab(info.count, info.P.n) + '</span>'; }
+        if (info.state !== 'ok') { cls += ' nd'; body = head() + '<div class="big">—</div><span class="sm">无数据</span>'; }
+        else if (info.mode === 'cmr') { cls += ' ' + cmrCls(info.cmr); body = head() + '<div class="big">' + Math.round(info.cmr * 100) + '%</div><span class="sm">空闲 ' + (info.P.n - info.occ) + ' | 占用 ' + info.occ + '</span>'; }
+        else { cls += ' ' + denCls(info.count, info.P.n); body = head() + '<div class="big">' + info.count + ' 艘</div><span class="sm">估算 · ' + denLab(info.count, info.P.n) + '</span>'; }
       }
       if (d === sel) cls += ' sel';
-      h += '<button class="' + cls + '" data-d="' + d + '"' + (info.state === 'past' ? ' disabled' : '') + '>' + body + (d === firstFar ? '<span class="mtag">15 天后</span>' : '') + '</button>';
+      const dis = info.state === 'past' || info.state === 'out';
+      h += '<button class="' + cls + '" data-d="' + d + '"' + (dis ? ' disabled' : '') + '>' + body + (d === firstFar && !dis ? '<span class="mtag">15 天后</span>' : '') + '</button>';
     }
     $('cal').innerHTML = h;
-    $('cal').querySelectorAll('.dc:not(.past)').forEach((b) => b.onclick = () => { sel = +b.dataset.d; drawCal(); drawSide(); });
+    $('cal').querySelectorAll('.dc:not(.past):not(.out)').forEach((b) => b.onclick = () => { sel = +b.dataset.d; drawCal(); drawSide(); });
     $('legend').innerHTML = '<div class="g"><b style="color:var(--text)">近 15 天泊位余量</b><span class="sw c1">≥50%</span>充裕<span class="sw c2">30–50%</span>适中<span class="sw c3">10–30%</span>偏紧<span class="sw c4">&lt;10%</span>紧张</div>' +
       '<div class="g"><b style="color:var(--text)">15 天后同期船数</b><span class="sw c1">≤50%</span><span class="sw c2">≤70%</span><span class="sw c3">≤90%</span><span class="sw c4">&gt;90%</span>占能装下的泊位数</div>' +
       '<div class="g"><span class="sw nd">&nbsp;&nbsp;</span><b style="color:var(--text)">无数据</b>灰色斜线，不是 0</div>';
   }
+
   function drawSide() {
     const d = sel, det = E.dayDetail(d, tons), P = E.poolFor(tons), le = E.modeOf(d) === 'cmr', nodata = det.state === 'nodata';
     const items = M.berths.map((b) => {
       const capable = tons > 0 && b.capacity >= tons;
       const row = le && !nodata ? E.rows.find((r) => r.inPool && r.berth === b.code && r.s <= d && d <= r.e) : null;
       const state = !capable ? 'off' : !le ? 'cap' : nodata ? 'nd2' : row ? 'occ' : 'free';
-      const L = ['<b>' + b.code + ' · ' + b.terminal + '</b>', '容量 ' + (b.capacity / 10000) + ' 万吨 · ' + b.category + ' · ' + b.status, '依据：' + b.basis + (b.note ? '（' + b.note + '）' : ''), '货量 ' + fmt(tons) + ' 吨：' + (capable ? '能装下，计入基数' : '装不下，不计入基数')];
-      if (!le) L.push(mdCn(d) + '：15 天后没有逐泊位数据'); else if (nodata) L.push(mdCn(d) + '：靠船计划暂无数据'); else if (row) L.push(mdCn(d) + ' 占用：' + row.vessel, row.cargo + ' ' + fmt(row.tons) + ' 吨', '预计靠泊 ' + C.md(C.iso(row.s)) + ' · 在港至 ' + C.md(C.iso(row.e))); else L.push(mdCn(d) + '：空闲');
+      const L = [b.code + ' · ' + b.terminal, '容量 ' + (b.capacity / 10000) + ' 万吨 · ' + b.category + ' · ' + b.status, '依据：' + b.basis + (b.note ? '（' + b.note + '）' : ''), '货量 ' + fmt(tons) + ' 吨：' + (capable ? '能装下，计入余量基数' : '装不下，不计入余量基数')];
+      if (!le) L.push(mdCn(d) + '：15 天后没有逐泊位数据'); else if (nodata) L.push(mdCn(d) + '：靠船计划暂无数据'); else if (row) L.push(mdCn(d) + ' 占用：' + row.vessel, row.cargo + ' ' + fmt(row.tons) + ' 吨', '预计靠泊 ' + md(row.s) + ' · 在港至 ' + md(row.e)); else L.push(mdCn(d) + '：空闲');
       return { b, state, tip: L.join('\n') };
     });
-    const cnt = (s) => items.filter((x) => x.state === s).length, n = items.filter((x) => x.state !== 'off').length;
-    const chips = nodata ? '<span class="tag blue">能装下 ' + n + ' 个</span><span class="tag nodata">暂无数据</span>' : !le ? '<span class="tag blue">能装下 ' + n + ' 个</span><span class="tag" style="background:#f9f0ff;color:#531dab;border-color:#d3adf7">同期 ' + det.count + ' 艘 · ' + denLab(det.count, P.n) + '</span>' :
-      '<span class="tag blue">能装下 ' + n + ' 个</span><span class="tag green">空闲 ' + cnt('free') + '</span><span class="tag amber">占用 ' + cnt('occ') + '</span><span class="tag ' + (det.cmr >= .5 ? 'green' : det.cmr >= .3 ? 'amber' : 'red') + '">泊位余量 ' + pct(det.cmr) + ' · ' + cmrLab(det.cmr) + '</span>';
-    const grp = (name) => '<div class="bm-t">' + name + ' · ' + items.filter((x) => x.b.terminal === name).length + ' 个</div><div class="bm-r">' + items.filter((x) => x.b.terminal === name).map((x) => '<div class="bt ' + x.state + '" data-tip="' + C.esc(x.tip) + '"><b>' + x.b.code + '</b><small>' + (x.b.capacity / 10000) + '万</small></div>').join('') + '</div>';
+    const label = { free: '空闲', occ: '占用', off: '装不下', cap: '能装下', nd2: '无数据' };
+    const grp = (name) => { const g = items.filter((x) => x.b.terminal === name), c = (s) => g.filter((x) => x.state === s).length;
+      const sum = !le ? '能装下 ' + (g.length - c('off')) : nodata ? '无数据' : '占用 ' + c('occ') + ' | 空闲 ' + c('free');
+      return '<div class="tg' + (closed[name] ? ' closed' : '') + '"><div class="tg-h" data-t="' + name + '"><span class="ar">▾</span>' + name + '（' + g.length + ' 个）<span class="sp"></span><small>' + sum + '</small></div>' +
+        '<div class="bm-r">' + g.map((x) => '<div class="bt ' + x.state + '" data-tip="' + C.esc(x.tip) + '"><b>' + x.b.code + '</b><small>' + label[x.state] + '</small></div>').join('') + '</div></div>'; };
+    const n = items.filter((x) => x.state !== 'off').length, free = items.filter((x) => x.state === 'free').length;
+    const st3 = le
+      ? '<div><div class="k">在港船舶</div><div class="v">' + (nodata ? '—' : det.list.length) + '<small>艘</small></div></div><div><div class="k">空闲泊位</div><div class="v">' + (nodata ? '—' : free) + '<small>/ ' + n + ' 个</small></div></div>' +
+        '<div><div class="k">泊位余量</div><div class="v">' + (nodata ? '<span style="color:var(--muted)">无数据</span>' : '<span style="color:' + (det.cmr >= .5 ? '#237804' : det.cmr >= .3 ? '#ad6800' : det.cmr >= .1 ? '#d4380d' : '#a8071a') + '">' + Math.round(det.cmr * 100) + '%</span>') + '</div></div>'
+      : '<div><div class="k">同期船数</div><div class="v">' + (nodata ? '—' : det.count) + '<small>艘</small></div></div><div><div class="k">能装下的泊位</div><div class="v">' + n + '<small>个</small></div></div>' +
+        '<div><div class="k">拥挤程度</div><div class="v" style="font-size:18px">' + (nodata ? '无数据' : denLab(det.count, P.n)) + '</div></div>';
     const link = (name, berth) => { const r = E.rows.find((q) => q.vessel === name && q.berth === berth); return r && r.matchVoyage ? '<a href="P05-voyage-detail.html?id=' + r.matchVoyage + '" data-tip="查看这条航次">' + name + '</a>' : name; };
     let list;
     if (nodata) list = '<div class="none">这一天还没有数据（灰色斜线，不是 0 艘）。' + (le ? '靠船计划目前只到 ' + md(E.planCoverTo) + '。' : '航次计划目前只到 ' + md(E.voyHorizon) + '。') + '</div>';
     else if (!det.list.length) list = '<div class="none">这一天没有占用同吨级泊位的船。</div>';
-    else if (le) list = det.list.map((s) => '<div class="sh"><div class="n">' + link(s.vessel, s.berth) + '<span class="t ' + (s.arriving || s.berthing ? 'arr' : 'in') + '">' + (s.arriving ? '今日预抵' : s.berthing ? '今日靠泊' : '在泊') + '</span></div><div class="kv"><span><em>泊位</em>' + s.berth + '</span><span><em>货种</em>' + s.cargo + '</span><span><em>货量</em>' + fmt(s.tons) + ' 吨</span><span><em>预计到港</em>' + md(s.eta) + '</span><span><em>靠泊</em>' + md(s.start) + '</span><span><em>在港至</em>' + md(s.end) + '</span></div></div>').join('');
-    else list = det.list.map((s) => '<div class="sh"><div class="n"><a href="P05-voyage-detail.html?id=' + s.id + '">' + (s.vessel || '待宣船') + '</a><span class="t ' + (s.arriving ? 'arr' : 'in') + '">' + (s.arriving ? '计划到达' : '窗口内') + '</span></div><div class="kv"><span><em>航线</em>' + C.zh(s.load) + ' → ' + C.zh(s.disch) + '</span><span><em>状态</em>' + s.status + '</span><span><em>货量</em>' + fmt(s.tons) + ' 吨</span><span><em>' + (s.side === '装' ? '受载期' : '计划到港') + '</em>' + md(s.start) + ' – ' + md(s.end) + '</span></div></div>').join('');
-    $('side').innerHTML = '<div class="dh"><h2>' + mdCn(d) + ' ' + wk(d) + '</h2><div class="chips">' + chips + '</div></div>' +
-      '<div class="bm">' + grp('北区码头') + grp('拉博塔码头') + '</div>' +
-      '<div class="bl"><span class="g"><span class="sw c1">空闲</span></span><span class="g"><span class="sw c3">占用</span></span><span class="g"><span class="sw" style="background:#eef0f3;color:#a7b0bc;border-color:#dfe3e8">灰色</span>装不下本次货量</span><span class="g"><span class="sw nd">&nbsp;</span>无数据</span><span class="g"><span class="sw" style="background:#e6f4ff;color:#0958d9;border-color:#91caff">能装下</span>15 天后</span></div>' +
-      '<div class="ships"><h3>' + (le ? '当天在港和预抵的船' : '当天同期的船') + '（' + (nodata ? 0 : det.list.length) + '）<span class="i" data-tip="只列出会占用同吨级泊位的船。">i</span></h3>' + list + '</div>';
+    else if (le) list = '<table class="stb"><thead><tr><th>船名</th><th>泊位</th><th>货种</th><th class="r">货量</th><th>预计卸完</th></tr></thead><tbody>' +
+      det.list.map((s) => '<tr><td>' + link(s.vessel, s.berth) + (s.arriving ? '<span class="t arr">今日预抵</span>' : s.berthing ? '<span class="t arr">今日靠泊</span>' : '') + '</td><td>' + s.berth + '</td><td>' + s.cargo + '</td><td class="r">' + fmt(s.tons) + ' 吨</td><td>' + md(s.end) + '</td></tr>').join('') + '</tbody></table>';
+    else list = '<table class="stb"><thead><tr><th>船名</th><th>航线</th><th class="r">货量</th><th>计划窗口</th></tr></thead><tbody>' +
+      det.list.map((s) => '<tr><td><a href="P05-voyage-detail.html?id=' + s.id + '">' + (s.vessel || '待宣船') + '</a>' + (s.arriving ? '<span class="t arr">计划到达</span>' : '') + '</td><td>' + C.zh(s.load) + ' → ' + C.zh(s.disch) + '</td><td class="r">' + fmt(s.tons) + ' 吨</td><td>' + md(s.start) + ' – ' + md(s.end) + '</td></tr>').join('') + '</tbody></table>';
+    $('side').innerHTML = '<div class="dh"><h2>' + mdCn(d) + '（' + wk(d) + '）' + (le ? '<span class="tag blue">近 15 天 · 靠船计划</span>' : '<span class="tag" style="background:#f9f0ff;color:#531dab;border-color:#d3adf7">15 天后 · 航次计划</span>') + '</h2></div>' +
+      '<div class="st3">' + st3 + '</div>' +
+      '<div class="sec">泊位分布<span class="i" data-tip="23 个德信泊位。货量档 ' + fmt(tons) + ' 吨：灰色表示装不下，不计入余量基数。' + (le ? '' : '\n15 天后没有逐泊位数据，只判断能否装下。') + '">i</span></div>' + grp('北区码头') + grp('拉博塔码头') +
+      '<div class="bl"><span class="g"><span class="sw c1">空闲</span></span><span class="g"><span class="sw c3">占用</span></span><span class="g"><span class="sw" style="background:#eef0f3;color:#a7b0bc;border-color:#dfe3e8">装不下</span>不计入基数</span><span class="g"><span class="sw nd">&nbsp;&nbsp;</span>无数据</span></div>' +
+      '<div class="ships"><div class="sec" style="margin:12px 0 0">' + (le ? '当日在港和预抵的船' : '当日同期的船') + '（' + (nodata ? 0 : det.list.length) + ' 艘）<span class="i" data-tip="只列出会占用同吨级泊位的船。">i</span></div>' + list + '</div>';
+    $('side').querySelectorAll('.tg-h').forEach((h) => h.onclick = () => { closed[h.dataset.t] = !closed[h.dataset.t]; h.parentNode.classList.toggle('closed', closed[h.dataset.t]); });
   }
-  $('tons').innerHTML = TONS.map((t) => '<button data-t="' + t[0] + '" class="' + (t[0] === tons ? 'on' : '') + '">' + t[1] + '</button>').join('');
-  $('tons').querySelectorAll('button').forEach((b) => b.onclick = () => { tons = +b.dataset.t; $('tons').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); drawCal(); drawSide(); });
-  drawCal(); drawSide();
-  window.__P06 = { pick(d, t) { if (t) { tons = t; } sel = C.dayNum(d); $('tons').querySelectorAll('button').forEach((x) => x.classList.toggle('on', +x.dataset.t === tons)); drawCal(); drawSide(); } };
+  const segs = () => {
+    $('tons').innerHTML = TONS.map((t) => '<button data-t="' + t[0] + '" class="' + (t[0] === tons ? 'on' : '') + '">' + t[1] + '</button>').join('');
+    $('range').innerHTML = RANGES.map((r) => '<button data-r="' + r[0] + '" class="' + (r[0] === range ? 'on' : '') + '">' + r[1] + '</button>').join('');
+    $('tons').querySelectorAll('button').forEach((b) => b.onclick = () => { tons = +b.dataset.t; all(); });
+    $('range').querySelectorAll('button').forEach((b) => b.onclick = () => { range = +b.dataset.r; if (sel > last()) sel = C.TODAY; all(); });
+  };
+  const all = () => { segs(); drawKpi(); drawCal(); drawSide(); };
+  all();
+  window.__P06 = { pick(d, t) { if (t) { tons = t; } sel = C.dayNum(d); if (sel > last()) range = 60; all(); } };
 })();
 </script>
 </body>
