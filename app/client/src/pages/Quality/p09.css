@@ -1,0 +1,19 @@
+/* 由 scripts/extract-page-css.cjs 从原型页面抽出，选择器已加前缀 .pg-p09 */
+.pg-p09 .tiles{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin-bottom:14px}
+.pg-p09 .tile{padding:12px 16px;cursor:pointer;border:1px solid transparent}
+.pg-p09 .tile:hover{border-color:var(--primary)}
+.pg-p09 .tile.on{border-color:var(--primary);background:var(--primary-bg)}
+.pg-p09 .tile b{font-size:24px;line-height:1.2;display:block}
+.pg-p09 .tile span{color:var(--muted);font-size:13px;display:flex;align-items:center;white-space:nowrap}
+.pg-p09 .tile.hot b{color:#d4380d}
+.pg-p09 .fbar{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line-2)}
+.pg-p09 .fbar .inp{width:auto}
+.pg-p09 .fbar .lab{color:var(--muted);font-size:12px;white-space:nowrap}
+.pg-p09 .fbar .grp{display:flex;gap:6px;flex-wrap:wrap}
+.pg-p09 .tbl td,.pg-p09 .tbl th{white-space:nowrap}
+.pg-p09 .tbl td.wrap{white-space:normal;min-width:300px;max-width:520px}
+.pg-p09 .obj a{color:var(--primary);text-decoration:none;font-weight:600}
+.pg-p09 .obj a:hover{text-decoration:underline}
+.pg-p09 .obj small{display:block;color:var(--muted);font-size:12px;font-weight:400}
+.pg-p09 .viewer{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:12px;white-space:nowrap}
+.pg-p09 .viewer select{height:28px;padding:0 6px;border:1px solid #d3d9e1;border-radius:6px;background:#fff}

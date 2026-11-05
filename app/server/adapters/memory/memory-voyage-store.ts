@@ -66,5 +66,6 @@ export class MemoryVoyageStore implements VoyageStorePort {
     }
   }
   async issues() { return this.issueList; }
+  async setIssueStatus(id: string, status: '处理中' | '已关闭', by: string, at: string) { const i = this.issueList.find((x) => x.id === id); if (i) { i.status = status; if (status === '已关闭') { i.closedBy = by; i.closedAt = at; } } }
   async closeIssue(id: string, by: string, at: string) { const i = this.issueList.find((x) => x.id === id); if (i) { i.status = '已关闭'; i.closedBy = by; i.closedAt = at; } }
 }

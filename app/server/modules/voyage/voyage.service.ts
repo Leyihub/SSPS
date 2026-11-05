@@ -351,6 +351,17 @@ export class VoyageService {
   async issues(q: { status?: string; owner?: string; type?: string } = {}) {
     return (await this.store.issues()).filter((i) => (!q.status || i.status === q.status) && (!q.owner || i.owner === q.owner) && (!q.type || i.type === q.type));
   }
+  /** 开始处理 / 关闭：需责任人本人或系统管理员 */
+  async updateIssue(id: string, status: string, a: Actor) {
+    if (status === '已关闭') return this.closeIssue(id, a);
+    if (status !== '处理中') throw invalid('问题状态只能改为「处理中」或「已关闭」');
+    const i = (await this.store.issues()).find((x) => x.id === id);
+    if (!i) throw fail(ResponseCode.NOT_FOUND, '找不到问题：' + id, HttpStatus.NOT_FOUND);
+    if (i.status === '已关闭') throw invalid('问题已经关闭');
+    if (i.owner !== a.name && a.role !== '系统管理员') throw forbidden('只有责任人或系统管理员可以操作');
+    await this.store.setIssueStatus(id, '处理中', a.name, this.now());
+    return (await this.store.issues()).find((x) => x.id === id);
+  }
   /** 关闭需责任人本人或系统管理员 */
   async closeIssue(id: string, a: Actor) {
     const i = (await this.store.issues()).find((x) => x.id === id);

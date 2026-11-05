@@ -29,4 +29,6 @@ export interface VoyageStorePort {
   addIssues(issues: DataIssue[]): Promise<void>;
   issues(): Promise<Array<DataIssue & { id: string; status: string; closedBy?: string | null; closedAt?: string | null }>>;
   closeIssue(id: string, by: string, at: string): Promise<void>;
+  /** 改问题状态（处理中 / 已关闭）；关闭时记关闭人和时间 */
+  setIssueStatus(id: string, status: '处理中' | '已关闭', by: string, at: string): Promise<void>;
 }

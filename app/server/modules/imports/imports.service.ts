@@ -1,7 +1,8 @@
-import { HttpStatus, Inject, Injectable } from '@nestjs/common';
+import { HttpStatus, Inject, Injectable, Optional } from '@nestjs/common';
 import { BusinessException } from '../../common/interfaces/exception.interface';
 import { ResponseCode } from '../../common/constants/api_response_code';
-import { DIRECTORY_PORT, IMPORT_STORE, MASTER_STORE, VOYAGE_STORE } from '../../ports/tokens';
+import { DIRECTORY_PORT, IMPORT_STORE, MASTER_STORE, SYNC_LOG, VOYAGE_STORE } from '../../ports/tokens';
+import type { SyncLogPort } from '../../ports/sync-log.port';
 import type { DirectoryPort } from '../../ports/directory.port';
 import type { ImportStorePort, BerthRow } from '../../ports/import-store.port';
 import type { MasterStorePort } from '../../ports/master-store.port';
@@ -31,7 +32,15 @@ export class ImportsService {
     @Inject(MASTER_STORE) private readonly master: MasterStorePort,
     @Inject(VOYAGE_STORE) private readonly voyages: VoyageStorePort,
     @Inject(DIRECTORY_PORT) private readonly dir: DirectoryPort,
+    @Optional() @Inject(SYNC_LOG) private readonly log?: SyncLogPort,
   ) {}
+
+  /** 把一次导入的结果记进运行日志（成功和失败都记），异常照常抛出 */
+  private async logged<T extends { summary: any }>(type: string, n: (r: T) => number, fn: () => Promise<T>): Promise<T> {
+    const start = this.now();
+    try { const r = await fn(); await this.log?.add({ type, start, end: this.now(), n: n(r), ok: '成功', err: '' }); return r; }
+    catch (e: any) { await this.log?.add({ type, start, end: this.now(), n: 0, ok: '失败', err: String(e?.message ?? e) }); throw e; }
+  }
 
   /** 测试里替换 */
   clock: () => Date = () => new Date();
@@ -52,7 +61,10 @@ export class ImportsService {
   // ---------------- 靠船计划 ----------------
 
   /** A17：导入一份 IMIP 靠船计划。a 为 null 表示系统内部（A18 云空间拉取）。整批校验通过才切当前批次 */
-  async importBerthPlan(inp: ImportInput, a: Actor | null, key?: string) {
+  importBerthPlan(inp: ImportInput, a: Actor | null, key?: string) {
+    return this.logged(inp.source === '飞书云空间' ? '拉取云空间靠船计划' : '手动上传靠船计划', (r: any) => r.summary.total, () => this.doImportBerthPlan(inp, a, key));
+  }
+  private async doImportBerthPlan(inp: ImportInput, a: Actor | null, key?: string) {
     this.guard(a);
     if (!inp.rows?.length) throw invalid('文件里没有数据行');
     const have = this.headersOf(inp.rows), missing = REQUIRED_PLAN.filter(([k]) => !HEADER_ALIASES[k].some((h) => have.has(h))).map(([, label]) => label);
@@ -87,7 +99,10 @@ export class ImportsService {
   // ---------------- 库存消耗模拟表 ----------------
 
   /** A30：导入一期库存。错误值行单独存，不参与断料计算 */
-  async importInventory(inp: ImportInput, a: Actor | null, key?: string) {
+  importInventory(inp: ImportInput, a: Actor | null, key?: string) {
+    return this.logged('导入库存消耗模拟表', (r: any) => r.summary.rows, () => this.doImportInventory(inp, a, key));
+  }
+  private async doImportInventory(inp: ImportInput, a: Actor | null, key?: string) {
     this.guard(a);
     if (!inp.rows?.length) throw invalid('文件里没有数据行');
     const have = this.headersOf(inp.rows), missing = REQUIRED_INV.filter((h) => !have.has(h));

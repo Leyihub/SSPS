@@ -1,0 +1,23 @@
+/* 由 scripts/extract-page-css.cjs 从原型页面抽出，选择器已加前缀 .pg-p10 */
+.pg-p10 .btns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pg-p10 .viewer{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:12px;white-space:nowrap}
+.pg-p10 .viewer select{height:28px;padding:0 6px;border:1px solid #d3d9e1;border-radius:6px;background:#fff}
+.pg-p10 .tbl td,.pg-p10 .tbl th{white-space:nowrap}
+.pg-p10 .tbl td.wrap{white-space:normal;min-width:280px}
+.pg-p10 .fbar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line-2)}
+.pg-p10 .pad{padding:14px 16px}
+.pg-p10 .cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.pg-p10 .cc{padding:16px}
+.pg-p10 .cc h3{margin:0 0 4px;font-size:16px;display:flex;align-items:center;gap:8px}
+.pg-p10 .cc .sub{color:var(--muted);font-size:13px;margin-bottom:10px}
+.pg-p10 .kv{display:grid;grid-template-columns:110px 1fr;gap:6px 10px;font-size:13px;margin-bottom:12px}
+.pg-p10 .kv span:nth-child(odd){color:var(--muted)}
+.pg-p10 .prog{height:6px;border-radius:3px;background:#e8ebef;overflow:hidden;margin:8px 0}
+.pg-p10 .prog i{display:block;height:100%;width:0;background:var(--primary);transition:width .9s}
+.pg-p10 .hc{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid var(--line-2)}
+.pg-p10 .hc:first-child{border-top:0}
+.pg-p10 .hc .n{flex:1}
+.pg-p10 .hc .n b{display:block}
+.pg-p10 .hc .n span{color:var(--muted);font-size:12.5px}
+.pg-p10 .denied{padding:48px 16px;text-align:center;color:var(--muted)}
+.pg-p10 .warnbox{margin:12px 16px 0;border-radius:8px;padding:8px 12px;font-size:13px;background:#fffbe6;border:1px solid #ffe58f;color:#ad6800}

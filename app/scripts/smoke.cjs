@@ -8,7 +8,7 @@ const { Module, ValidationPipe } = require('@nestjs/common');
 const d = path.join(__dirname, '../dist/server/'), pick = (p, n) => require(d + p)[n];
 
 class Root {}
-Module({ imports: ['ports/ports', 'prediction/prediction', 'capacity/capacity', 'voyage/voyage', 'master/master', 'imports/imports'].map((m) => pick(`modules/${m.split('/')[0]}/${m.split('/')[1]}.module.js`, m.split('/')[1][0].toUpperCase() + m.split('/')[1].slice(1) + 'Module')) })(Root);
+Module({ imports: ['ports/ports', 'prediction/prediction', 'capacity/capacity', 'voyage/voyage', 'master/master', 'imports/imports', 'admin/admin'].map((m) => pick(`modules/${m.split('/')[0]}/${m.split('/')[1]}.module.js`, m.split('/')[1][0].toUpperCase() + m.split('/')[1].slice(1) + 'Module')) })(Root);
 
 (async () => {
   const app = await NestFactory.create(Root, { logger: ['error'] });
@@ -35,6 +35,7 @@ Module({ imports: ['ports/ports', 'prediction/prediction', 'capacity/capacity', 
   assert.equal((await call('POST', `/api/predictions/${p.body.runNo}/announcement`, { label: 'A' })).status, 201); step('生成宣船文案');
   assert.equal((await call('GET', '/api/capacity/calendar')).status, 200); step('容量日历');
   assert.equal((await call('POST', '/api/route-rules/recompute')).status, 403); step('非系统管理员不能重算航程规则');
+  assert.equal((await call('GET', '/api/health')).status, 403); step('连通性自检只对系统管理员开放');
   await app.close();
   console.log('冒烟通过');
 })().catch((e) => { console.error('冒烟失败：', e); process.exit(1); });

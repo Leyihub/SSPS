@@ -36,7 +36,7 @@ export class DataIssueController {
   constructor(private readonly svc: VoyageService) {}
   @Get() list(@Query('status') status?: string, @Query('owner') owner?: string, @Query('type') type?: string) { return this.svc.issues({ status, owner, type }); }
   @Patch(':id') async close(@Param('id') id: string, @Body() b: { status?: string }, @Req() req: Request) {
-    if (b?.status !== '已关闭') throw new BusinessException(ResponseCode.VALIDATION_ERROR, '目前只支持把问题关闭（status: 已关闭）', HttpStatus.UNPROCESSABLE_ENTITY);
-    return this.svc.closeIssue(id, await this.svc.actor(req.userContext as any));
+    if (b?.status !== '已关闭' && b?.status !== '处理中') throw new BusinessException(ResponseCode.VALIDATION_ERROR, '问题状态只能改为「处理中」或「已关闭」', HttpStatus.UNPROCESSABLE_ENTITY);
+    return this.svc.updateIssue(id, b.status, await this.svc.actor(req.userContext as any));
   }
 }

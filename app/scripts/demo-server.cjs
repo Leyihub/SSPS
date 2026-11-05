@@ -15,7 +15,7 @@ const M = ctx.window.MOCK;
 const NOW = new Date(M.today + 'T09:42:00Z');
 
 class Root {}
-Module({ imports: ['ports', 'prediction', 'capacity', 'voyage', 'master', 'imports'].map((m) => pick(`modules/${m}/${m}.module.js`, m[0].toUpperCase() + m.slice(1) + 'Module')) })(Root);
+Module({ imports: ['ports', 'prediction', 'capacity', 'voyage', 'master', 'imports', 'admin'].map((m) => pick(`modules/${m}/${m}.module.js`, m[0].toUpperCase() + m.slice(1) + 'Module')) })(Root);
 
 (async () => {
   const app = await NestFactory.create(Root, { logger: ['error'] });
@@ -52,6 +52,8 @@ Module({ imports: ['ports', 'prediction', 'capacity', 'voyage', 'master', 'impor
   const DAY = 86400000, iso = (n) => new Date(n * DAY).toISOString().slice(0, 10), inv = [];
   for (const it of M.inventory.items) for (const [dn, stock, daily] of it.series) inv.push({ 导入日期: M.today, 库存日期: iso(dn), 品名: it.name, 物料类型: it.type, 日耗: daily, 库存: stock, 可用天数: dn === it.series[0][0] ? it.days : null });
   await isvc.importInventory({ fileName: '库存消耗模拟（示例）.xlsx', rows: inv }, null);
+
+  for (const l of [...M.syncLogs].reverse()) await app.get(T.SYNC_LOG).add({ type: l.type, start: l.start, end: l.end, n: l.n, ok: l.ok, err: l.err });   // 原型里的示例运行日志
 
   const port = Number(process.argv[2] || process.env.PORT || 3100), dist = path.join(root, fs.existsSync(path.join(root, 'dist/preview')) ? 'dist/preview' : 'dist/client');   // 优先托管不依赖平台的预览构建（npm run preview:build）
   if (fs.existsSync(dist)) {                                   // 有前端构建产物就一起托管（单端口预览）

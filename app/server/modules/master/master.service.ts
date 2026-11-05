@@ -1,7 +1,8 @@
-import { HttpStatus, Inject, Injectable } from '@nestjs/common';
+import { HttpStatus, Inject, Injectable, Optional } from '@nestjs/common';
 import { BusinessException } from '../../common/interfaces/exception.interface';
 import { ResponseCode } from '../../common/constants/api_response_code';
-import { DIRECTORY_PORT, MASTER_STORE, VOYAGE_STORE } from '../../ports/tokens';
+import { DIRECTORY_PORT, MASTER_STORE, SYNC_LOG, VOYAGE_STORE } from '../../ports/tokens';
+import type { SyncLogPort } from '../../ports/sync-log.port';
 import type { DirectoryPort } from '../../ports/directory.port';
 import type { MasterStorePort } from '../../ports/master-store.port';
 import type { VoyageStorePort } from '../../ports/voyage-store.port';
@@ -34,6 +35,7 @@ export class MasterService {
     @Inject(MASTER_STORE) private readonly store: MasterStorePort,
     @Inject(VOYAGE_STORE) private readonly voyages: VoyageStorePort,
     @Inject(DIRECTORY_PORT) private readonly dir: DirectoryPort,
+    @Optional() @Inject(SYNC_LOG) private readonly log?: SyncLogPort,
   ) {}
 
   actor(ctx: { userId?: string; userName?: string; roles?: string[] }) { return this.dir.resolve(ctx || {}); }
@@ -190,6 +192,8 @@ export class MasterService {
     const stats = next.map((r) => ({ id: r.id, samples: r.samples, p50: r.p50, p80: r.p80 }));
     const changed = stats.filter((s) => { const o = rules.find((x) => x.id === s.id)!; return o.samples !== s.samples || o.p50 !== s.p50 || o.p80 !== s.p80; });
     await this.store.saveRouteStats(stats);
+    const now = this.clock().toISOString().slice(0, 16).replace('T', ' ');
+    await this.log?.add({ type: a ? '航程重算 · 手动' : '航程重算 · 定时', start: now, end: now, n: next.length, ok: '成功', err: '' });
     return { rules: next.length, changed: changed.length, switched: next.filter((r) => r.basis === '统计值').map((r) => r.id) };
   }
 }

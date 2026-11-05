@@ -9,6 +9,7 @@ import { PredictionModule } from './modules/prediction/prediction.module';
 import { CapacityModule } from './modules/capacity/capacity.module';
 import { VoyageModule } from './modules/voyage/voyage.module';
 import { MasterModule } from './modules/master/master.module';
+import { AdminModule } from './modules/admin/admin.module';
 import { ImportsModule } from './modules/imports/imports.module';
 
 @Module({
@@ -23,6 +24,7 @@ import { ImportsModule } from './modules/imports/imports.module';
     VoyageModule,
     MasterModule,
     ImportsModule,
+    AdminModule,
     // ====== @route-section: business-modules END ======
 
     // ⚠️ @route-order: last

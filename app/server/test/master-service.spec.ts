@@ -138,3 +138,15 @@ test('数据质量：缺离装港会进清单；责任人或系统管理员能�
   await voyages.update(voyage.id, { remark: '再存' }, biz);                              // 问题关闭后同类问题再次出现 → 新开一条
   assert.equal((await voyages.issues({ status: '待处理' })).length, 1);
 });
+
+test('数据质量：责任人可以开始处理再关闭；别人不行；已关闭的不能再改处理中', async () => {
+  const { voyages } = mk();
+  const { voyage } = await voyages.create({ biz: '大宗采购船', load: 'SURIGAO', disch: 'BAHODOPI', cargo: [{ name: '镍矿', tons: 1 }] } as any, biz);
+  await voyages.milestone(voyage.id, 'actDischArr', '2026-11-04 08:00', biz);
+  const [i] = await voyages.issues({ status: '待处理' });
+  await err(voyages.updateIssue(i.id, '处理中', A('别人', '业务员')), 403);
+  await err(voyages.updateIssue(i.id, '乱来', biz), 422);
+  assert.equal(((await voyages.updateIssue(i.id, '处理中', biz)) as any).status, '处理中');
+  assert.equal(((await voyages.updateIssue(i.id, '已关闭', biz)) as any).status, '已关闭');
+  await err(voyages.updateIssue(i.id, '处理中', biz), 422, /已经关闭/);
+});

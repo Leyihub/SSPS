@@ -33,7 +33,7 @@ W2（前端）只依赖已有的内存版后端，可以和 W0、W1 并行；W3 
 | W15 | 真实身份目录与权限联调 | Codex | W04、W12 | 1 天 |
 | W16 | 补偿重放与同步防覆盖 | Codex | W12 | 1 天 |
 | W17 | 适配器契约测试 | Codex | W11–W14 | 1 天（与上面穿插） |
-| W20–W29 | 前端 9 个页面 + 收口 | Codex | 可立即开始 | 约 8–12 天 |
+| W20–W29 | 前端页面：**已完成**，剩真实平台验证与收口（见 W29） | Codex | W15 之后 | 1–2 天 |
 | W30 | A18 云空间拉取靠船计划 | Codex | W13、W04 | 1–2 天 |
 | W31 | 定时任务（自动化触发器） | Codex | W16、W30 | 1 天 |
 | W32 | A26 兼容表 T09a/T09b 刷新 | Codex | W12 | 2 天 |
@@ -253,7 +253,7 @@ Leyinet 提供，Codex 记录到 `docs/handoff/env-checklist.md`（只记状态�
 
 ---
 
-## W2 前端剩余页面
+## W2 前端页面（状态：P01–P11 已于 2026-11-05 在云端全部完成，下面保留规格作验收依据；Codex 的工作是在真实平台里验证、修正和收口）
 
 通用做法（README 第 6 节第 4 条）：对照 `prototype/Pxx-*.html`，用 `scripts/extract-page-css.cjs` 抽样式，页面根节点加 `pg-pxx`；用 `client/src/ssps/` 里的 api/format/ui；路由在 `client/src/app.tsx` 注册（当前只注册了 `/` 和 `/voyages`；导航在 `components/Layout.tsx`，路径已预留 `/ask /predict /predictions /calendar /voyages /voyage /berth-plans /master /data-quality /admin`，P04 里跳转用 `/voyages/:id`，实现 P05 时在路由里加 `voyages/:id`）。
 
@@ -313,7 +313,11 @@ Leyinet 提供，Codex 记录到 `docs/handoff/env-checklist.md`（只记状态�
 
 原型 `P09-data-quality.html`。清单按责任人、问题类型筛选；点击直达 P05 对应字段（`?focus=`）；关闭按钮仅责任人或系统管理员（后端已校验）。
 
-### W29 收口
+### W29 收口（Codex 待做）
+
+已完成：全部 11 页、路由、导航、示例页清理。待做：在真实妙搭平台（AppContainer、真实登录）里逐页走一遍；按 `/api/me` 角色隐藏无权入口（目前导航对所有角色显示，靠页面内的禁用和后端 403 兜底）；手机适配复核（P01、P04、P05）；P05 的「查看船位」船讯网深链格式；P07 的云空间拉取按钮在 W30 完成后启用；P10 兼容表与迁移页签在 W32、W40 完成后接真实数据。
+
+原清单：
 
 导航分组与权限显隐（按 `/api/me` 的角色隐藏无权入口，后端仍是最终裁判）；统一加载、空、错误态；404；手机适配（P01、P04、P05）；去掉无用的示例页（`ExamplePage`、`Home`、`hooks/use-example.ts`）；首页路由 `/` 改为 P01；全部页面截图基线提交。
 

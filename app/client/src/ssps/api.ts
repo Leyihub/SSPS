@@ -27,6 +27,8 @@ export const useInventory = () => useQuery({ queryKey: ['inventory'], queryFn: (
 export const useCalendar = (tons: number, days = 30) => useQuery({ queryKey: ['calendar', tons, days], queryFn: () => get<any>('/api/capacity/calendar', { tons, days }) });
 export const useDayDetail = (date: string | null, tons: number) => useQuery({ queryKey: ['cal-day', date, tons], queryFn: () => get<any>('/api/capacity/day', { date, tons }), enabled: !!date });
 export const useTrend = (name: string | null, marks: Array<{ d: number; tons: number }>, until?: number) => useQuery({ queryKey: ['trend', name, marks, until], queryFn: () => send<any>('post', '/api/inventory/trend', { name, marks, until }), enabled: !!name });
+export const useSyncLogs = (failOnly: boolean, enabled: boolean) => useQuery({ queryKey: ['sync-logs', failOnly], queryFn: () => get<Array<{ type: string; start: string; end: string; n: number; ok: string; err: string }>>('/api/admin/sync-logs', failOnly ? { failOnly: 1 } : {}), enabled });
+export const useHealth = (enabled: boolean) => useQuery({ queryKey: ['health'], queryFn: () => get<{ at: string; checks: Array<{ name: string; status: string; detail: string }> }>('/api/health'), enabled });
 export const usePrediction = (runNo?: string) => useQuery({ queryKey: ['prediction', runNo], queryFn: () => get<any>('/api/predictions/' + runNo), enabled: !!runNo });
 
 type Inval = string[][];
@@ -58,7 +60,7 @@ export const api = {
   parse: (text: string, overrides?: unknown) => send<any>('post', '/api/predictions/parse', { text, overrides }),
   adopt: (runNo: string, label: string, voyageId?: string, key?: string) => send<any>('post', `/api/predictions/${runNo}/adopt`, { label, voyageId }, key),
   announce: (runNo: string, label: string) => send<any>('post', `/api/predictions/${runNo}/announcement`, { label }),
-  closeIssue: (id: string) => send('patch', `/api/data-issues/${id}`, { status: '已关闭' }),
+  setIssue: (id: string, status: '处理中' | '已关闭') => send('patch', `/api/data-issues/${id}`, { status }),
   importBerthFile: (file: File, planDate?: string) => { const f = new FormData(); f.append('file', file); if (planDate) f.append('planDate', planDate); return axiosForBackend.post('/api/berth-plans/import-file', f, { headers: { 'x-idempotency-key': uid() } }).then((r) => r.data); },
   importInventoryFile: (file: File) => { const f = new FormData(); f.append('file', file); return axiosForBackend.post('/api/inventory/import-file', f, { headers: { 'x-idempotency-key': uid() } }).then((r) => r.data); },
   addPort: (b: unknown) => send('post', '/api/ports', b), patchPort: (en: string, b: unknown) => send('patch', `/api/ports/${en}`, b),

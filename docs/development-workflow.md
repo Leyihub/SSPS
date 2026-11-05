@@ -80,6 +80,6 @@
 | 云空间拉取 A18、系统管理 A26–A28 | `app/server/modules/` | 计划中（依赖飞书客户端接入） |
 | 飞书仓储层（先写飞书再回写镜像）与定时任务 | `app/server/` | 计划中（客户端、写队列、幂等、补偿已有） |
 | 迁移脚本（读 Excel） | — | 计划中（清洗规则已有） |
-| 前端 React 重写（P01–P11） | `app/client/src/{ssps,pages,components}` | 进行中：底座（样式、接口钩子、通用组件、导航外壳）和 P04 航次列表已完成并在云端渲染截图验证；P05 样式已抽出、页面未写；其余未开始。云端用 `npm run preview:build` + `scripts/demo-server.cjs`（原型示例数据 + 内存后端）预览 |
+| 前端 React 重写（P01–P11） | `app/client/src/{ssps,pages,components}` | **11 个页面已全部用 React 重写**（P01 工作台、P02 预测、P03 预测详情、P04 航次列表、P05 航次详情、P06 容量日历、P07 靠船计划、P08 主数据、P09 数据质量、P10 系统管理、P11 智能提问），全部接后端 `/api/*`，在云端用演示服务 + Playwright 截图验证（截图 `prototype/screenshots/react-P*.png`）。P10 的兼容表与迁移页签只是说明，对应后端（A26、A27）未开发；云空间拉取（A18）也未开发。没有连过真实飞书和数据库 |
 
-冒烟（真起 Nest，走完整条 HTTP 主线）：`cd app && npm run smoke`；运行测试：`cd app && npm test`（91 个）；类型检查：`npm run type:check:server`；代码检查：`npx eslint server --quiet`。
+冒烟（真起 Nest，走完整条 HTTP 主线）：`cd app && npm run smoke`；运行测试：`cd app && npm test`（95 个）；类型检查：`npm run type:check:server`；代码检查：`npx eslint server --quiet`。
