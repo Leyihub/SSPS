@@ -8,7 +8,17 @@
 <style>
 /* —— 整体：所有短文本一律不换行，放不下就整块换到下一行，而不是在文字中间断开 —— */
 .nw{white-space:nowrap}
-.work{display:grid;grid-template-columns:340px minmax(0,1fr);gap:16px;align-items:start}
+/* 预测输入：横向一行（2026-11-05 按效果图重排，业务逻辑不变） */
+.inbar{margin-bottom:16px}
+.frow{display:flex;flex-wrap:wrap;gap:12px 14px;align-items:flex-end;padding:6px 16px 8px}
+.fc{min-width:0}
+.fc .seg{width:300px}.fc .seg button{padding:7px 4px;white-space:nowrap}
+.win{display:flex;align-items:center;gap:6px}.win .inp{width:150px}.win span{color:var(--muted)}
+.fbtn{display:flex;gap:8px;margin-left:auto}.fbtn .btn{height:34px;padding:0 22px;white-space:nowrap}
+.hints{display:flex;flex-wrap:wrap;gap:6px 22px;align-items:center;padding:0 16px 10px}
+.hints .mini{margin:0}.hints .pathbox{margin:0}.hints .err{margin:0}
+#sumbar:empty{display:none}
+#sumbar{border-top:1px solid var(--line-2);background:#fafbfd;border-radius:0 0 12px 12px}
 /* 示例场景 */
 .pbar{display:grid;grid-template-columns:repeat(auto-fit,minmax(196px,1fr));gap:8px;padding:10px 16px 12px}
 .preset{display:flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:8px;background:#fafbfc;padding:6px 10px;cursor:pointer;text-align:left;min-width:0}
@@ -43,6 +53,17 @@
 .link{border:0;background:none;color:var(--primary);cursor:pointer;padding:0;font-size:13px;white-space:nowrap}
 /* 方案卡片 */
 .plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(580px,1fr));gap:16px;margin-top:16px}
+/* 发船方案建议 */
+.pcard{margin-bottom:16px}
+.pcard .plans{margin:0;padding:4px 16px 16px}
+.pcard .plan{box-shadow:none;border:1px solid #e3e8ef}
+.pcard .plan:before{display:none}
+.pcard .plan.A{background:linear-gradient(180deg,#f3f8ff 0,#fff 120px);border-color:#91caff}
+.pcard .plan.B{background:linear-gradient(180deg,#f2fbfa 0,#fff 120px);border-color:#87e8de}
+.pcard .plan.low{border:1.5px dashed #ff9c6e}
+.pcard .plan.noplan{border:1.5px dashed #c4cad3}
+.pcard .mgrid .m+.m{border-left:1px solid #e6ebf2;padding-left:14px}
+.pcard .kvs{margin:10px 16px 0;padding:8px 12px;background:#f7f9fc;border-radius:8px}
 .plan{position:relative;overflow:hidden;min-width:0}
 .plan:before{content:"";position:absolute;left:0;right:0;top:0;height:4px;background:var(--primary)}
 .plan.B:before{background:#08979c}
@@ -122,7 +143,29 @@
 .bm-l .g{display:flex;align-items:center;gap:5px;white-space:nowrap}
 .bm-l .sw{min-width:26px}
 /* 库存保障 */
-.stk{margin-top:16px}
+.stk{margin-top:0}
+.stk-b{display:grid;grid-template-columns:270px minmax(0,1fr);gap:16px;padding:6px 16px 12px}
+.stk-l{display:flex;flex-direction:column;gap:8px}
+.sr{display:flex;align-items:center;justify-content:space-between;gap:8px;border:1px solid #e6ebf2;border-radius:8px;padding:9px 12px;background:#fbfcfe;white-space:nowrap}
+.sr .k{color:var(--muted);font-size:13px}.sr .v{font-weight:700;font-size:16px}.sr .v small{font-size:12px;font-weight:500;color:var(--muted);margin-left:3px}
+.sr.red{background:#fff1f0;border-color:#ffccc7}.sr.red .v{color:#cf1322}
+.sr.grn{background:#f6ffed;border-color:#d9f7be}.sr.grn .v{color:#237804}
+.stk-r{border:1px solid #e6ebf2;border-radius:10px;min-width:0}
+.tabs2{display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid var(--line-2)}
+.tabs2 .tb{border:0;background:none;padding:8px 6px;font-size:14px;color:#5b6878;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.tabs2 .tb.on{color:#0958d9;border-bottom-color:#1677ff;font-weight:600}
+.tabs2 .sp{flex:1}
+.rseg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.rseg button{border:0;background:#fff;padding:3px 12px;font-size:13px;cursor:pointer;color:#3b4a5c;border-left:1px solid var(--line);white-space:nowrap}
+.rseg button:first-child{border-left:0}.rseg button.on{background:#1677ff;color:#fff}
+.lgd{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;font-size:12px;color:#5b6878;padding:8px 12px 0}
+.lgd i{display:inline-block;width:22px;height:0;border-top:2.4px solid;vertical-align:middle;margin-right:5px}
+.dtw{max-height:300px;overflow:auto;margin:10px 12px}
+.dt{width:100%;border-collapse:collapse;font-size:13px}
+.dt th{text-align:left;color:var(--muted);font-weight:500;padding:6px 8px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff}
+.dt td{padding:5px 8px;border-bottom:1px solid var(--line-2);white-space:nowrap}
+.dt .r{text-align:right}.dt tr.k td{background:#fffbe6}.dt tr.so td{background:#fff1f0;color:#a8071a}
+@media(max-width:1100px){.stk-b{grid-template-columns:1fr}.fbtn{margin-left:0}}
 .stk .facts{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px 16px;padding:10px 16px 2px}
 .stk .facts .k{font-size:12px;color:var(--muted);white-space:nowrap}
 .stk .facts .v{font-size:18px;font-weight:700;white-space:nowrap}
@@ -132,7 +175,7 @@
 .stk .bn{margin:8px 16px 0;border-radius:8px;padding:8px 12px;font-size:13px;line-height:1.7}
 .stk .bn.red{background:#fff1f0;border:1px solid #ffa39e;color:#a8071a}
 .stk .bn.blu{background:#f0f7ff;border:1px solid #b7d8ff;color:#0958d9}
-.stk svg{padding:0 8px 8px}
+.stk-r > div > svg{padding:0 8px 8px}
 .mk.lt{background:#fa8c16}.mk.so{background:#cf1322}
 /* 弹窗 */
 .annc{background:#f7f9fc;border:1px solid var(--line);border-radius:8px;padding:12px 14px;line-height:2;font-size:13.5px}
@@ -159,29 +202,21 @@
         <div class="pbar" id="presets"></div>
       </section>
 
-      <div class="work">
-        <section class="card">
-          <div class="card-h"><h2>预测输入</h2></div>
-          <div class="card-b">
-            <div class="field"><div class="f-lab">业务类型</div><div class="seg" id="biz"></div></div>
-            <div class="field"><div class="f-lab">货量（吨）</div>
-              <input class="inp" id="tons" type="number" min="1000" step="1000">
-              <div class="mini" id="poolHint"></div></div>
-            <div class="field"><div class="f-lab">物料库存<span class="i" data-tip="选一个物料，预测会按库存消耗模拟表保证不断料：到港窗口必须早于「断料日 − 缓冲天数」。\n只对大宗采购船有效；选「不关联库存」就只按港口容量预测。">i</span></div>
-              <select class="inp" id="item"></select><div class="mini" id="itemHint"></div></div>
-            <div class="row2">
-              <div class="field"><div class="f-lab">装港</div><div id="loadBox"></div></div>
-              <div class="field"><div class="f-lab">卸港</div><div id="dischBox"></div></div>
-            </div>
-            <div class="field"><div class="f-lab" id="winLabel">期望到港窗口</div>
-              <div class="row2"><input class="inp" id="ws" type="date"><input class="inp" id="we" type="date"></div>
-              <div class="err" id="formErr"></div></div>
-            <div class="pathbox le" id="pathbox"></div>
-            <div style="display:flex;gap:8px"><button class="btn primary lg" id="go" style="flex:1">预测</button><button class="btn lg" id="reset">重置</button></div>
-          </div>
-        </section>
-        <section id="result"></section>
-      </div>
+      <section class="card inbar">
+        <div class="card-h"><h2 class="nw"><svg width="16" height="16" viewBox="0 0 24 24" style="margin-right:6px"><path d="M4 6h16M4 12h16M4 18h10" stroke="#1677ff" stroke-width="2.2" stroke-linecap="round"/></svg>预测输入</h2></div>
+        <div class="frow">
+          <div class="fc"><div class="f-lab">业务类型</div><div class="seg" id="biz"></div></div>
+          <div class="fc" style="width:130px"><div class="f-lab">货量（吨）</div><input class="inp" id="tons" type="number" min="1000" step="1000"></div>
+          <div class="fc" style="width:240px"><div class="f-lab">物料库存<span class="i" data-tip="选一个物料，预测会按库存消耗模拟表保证不断料：到港窗口必须早于「断料日 − 缓冲天数」。\n只对大宗采购船有效；选「不关联库存」就只按港口容量预测。">i</span></div><select class="inp" id="item"></select></div>
+          <div class="fc" style="width:160px"><div class="f-lab">装港</div><div id="loadBox"></div></div>
+          <div class="fc" style="width:160px"><div class="f-lab">卸港</div><div id="dischBox"></div></div>
+          <div class="fc"><div class="f-lab" id="winLabel">期望到港窗口</div><div class="win"><input class="inp" id="ws" type="date"><span>–</span><input class="inp" id="we" type="date"></div></div>
+          <div class="fc fbtn"><button class="btn primary" id="go">▶ 预测</button><button class="btn" id="reset">↻ 重置</button></div>
+        </div>
+        <div class="hints"><span class="mini" id="poolHint"></span><span class="mini" id="itemHint"></span><span class="pathbox le" id="pathbox"></span><span class="err" id="formErr"></span></div>
+        <div id="sumbar"></div>
+      </section>
+      <section id="result"></section>
 
       <section class="card" style="margin-top:16px">
         <div class="card-h"><h2 class="nw">未来 30 天港口容量<span class="i" data-tip="泊位余量率是唯一的容量指标：空闲泊位 ÷ 能装下该货量的泊位总数，越高越宽松。\n30% 是备选方案的底线；其余色阶分界为原型暂定值。\n灰色斜线表示暂无数据，不是 0%。">i</span></h2><span class="muted nw" id="calMeta"></span></div>
@@ -240,7 +275,7 @@
     { label: '缺少这条航线的航程', tip: '泗水 → 巴浩多比 还没有维护航程。',
       v: { biz: '大宗采购船', tons: 30000, load: 'SURABAYA', disch: LOCAL, ws: '2026-11-10', we: '2026-11-18' } },
   ];
-  let cur = 0, last = null, showCands = false, selDay = null, curTons = 50000, bufDays = 3;
+  let cur = 0, last = null, showCands = false, selDay = null, curTons = 50000, bufDays = 3, stkView = 'trend', stkRange = 0;
 
   // ---------- 小工具 ----------
   const fmt = (n) => Number(n).toLocaleString('en-US');
@@ -411,13 +446,35 @@
       note += '<div class="bn red"><b>按最快航程也赶不上断料日。</b>' + (e ? '最早 ' + mdCn(e) + ' 到港' + (so != null ? '，比断料日（' + mdCn(so) + '）晚 ' + (e - so) + ' 天，预计断料约 ' + gap + ' 天' : '') + '。' : '') + '已改为「最快到港」优先，不再要求港口余量；请同时联系供应商或调拨，别只等这一船。</div>';
     } else if (so == null) note += '<div class="bn blu">模拟期内这个物料不会断料，预测只按港口容量安排。</div>';
     else note += '<div class="bn blu">所有候选都已排除到港晚于 <b>' + mdCn(st.latest) + '</b>（断料日 ' + mdCn(so) + ' 前 ' + st.buffer + ' 天）的时间；在剩下的时间里，按港口容量选最宽松的。这是硬约束，不参与任何评分。</div>';
-    return '<div class="card stk"><div class="card-h"><h2>库存保障 · ' + it.name + '<span class="lvl ' + l[0] + '">' + l[1] + '</span>' + ic('断料日来自库存消耗模拟表（已包含已排定的到货）。预测要求到港窗口的最后一天不晚于「断料日 − 缓冲天数」，否则判为断料。方案到港后库存按虚线回升。') + '</h2><span class="muted nw">' + M.inventory.source + ' · 更新于 ' + M.inventory.updated.slice(0, 10) + '</span></div>' +
-      '<div class="facts"><div><div class="k">当前库存</div><div class="v">' + fmt(it.stock) + '<small>吨</small></div></div><div><div class="k">日耗</div><div class="v">' + fmt(it.daily) + '<small>吨/天</small></div></div><div><div class="k">可用天数</div><div class="v">' + it.days + '<small>天</small></div></div>' +
-      '<div><div class="k">断料日</div><div class="v">' + (so != null ? mdCn(so) : '不断料') + '<small>' + (so != null ? (so <= E.TODAY ? '已断料' : '距今 ' + (so - E.TODAY) + ' 天') : '') + '</small></div></div><div><div class="k">最晚到港日（缓冲 ' + st.buffer + ' 天）</div><div class="v">' + (st.latest != null ? mdCn(st.latest) : '—') + '<small>' + (st.latest != null && st.latest < E.TODAY ? '已错过' : '') + '</small></div></div></div>' +
-      note + '<div>' + window.StockChart.html(it, { latest: st.latest, so: st.so, gap: st.gap, marks, warnDays: 15, width: Math.max(560, ($('result').clientWidth || 1000) - 30) }) + '</div></div>';
+    const sr = (k, v, cls) => '<div class="sr ' + (cls || '') + '"><span class="k">' + k + '</span><span class="v">' + v + '</span></div>';
+    const left = sr('当前库存', fmt(it.stock) + '<small>吨</small>') + sr('日耗', fmt(it.daily) + '<small>吨/天</small>') + sr('可用天数', it.days + '<small>天</small><span class="lvl ' + l[0] + '">' + l[1] + '</span>') +
+      sr('断料日', so != null ? mdCn(so) + '<small>' + (so <= E.TODAY ? '已断料' : '距今 ' + (so - E.TODAY) + ' 天') + '</small>' : '不断料<small>模拟期内</small>', so != null ? 'red' : 'grn') +
+      (st.gap ? sr('近期短缺口', E.md(st.gap.from) + (st.gap.to > st.gap.from ? '–' + E.md(st.gap.to) : '') + '<small>已被补回</small>') : '') +
+      sr('最晚到港日', (st.latest != null ? mdCn(st.latest) : '—') + '<small>' + (st.latest != null && st.latest < E.TODAY ? '已错过' : '缓冲 ' + st.buffer + ' 天') + '</small>');
+    const until = stkRange ? E.TODAY + stkRange : Math.min(Math.max(E.TODAY + 45, (so || 0) + 14, (st.latest || 0) + 14, ...marks.map((m) => m.d + 14)), E.TODAY + 100);
+    const tabs = '<div class="tabs2"><button class="tb' + (stkView === 'trend' ? ' on' : '') + '" data-sv="trend">库存趋势预测</button><button class="tb' + (stkView === 'detail' ? ' on' : '') + '" data-sv="detail">库存明细</button><span class="sp"></span>' +
+      '<span class="rseg">' + [[7, '7天'], [15, '15天'], [30, '30天'], [0, '全部']].map(([n, t]) => '<button data-sr="' + n + '" class="' + (stkRange === n ? 'on' : '') + '">' + t + '</button>').join('') + '</span>' +
+      ic('只改变显示范围，不改变计算。断料日、最晚到港日或方案到港日超出所选范围时不画出来，选「全部」可以看到。') + '</div>';
+    let body;
+    if (stkView === 'trend') {
+      body = '<div class="lgd"><span><i style="border-color:#1677ff"></i>模拟库存</span>' + (A ? '<span><i style="border-color:#1677ff;border-top-style:dashed"></i>加入推荐方案后</span>' : '') + (B ? '<span><i style="border-color:#08979c;border-top-style:dashed"></i>加入备选方案后</span>' : '') +
+        '<span><i style="border-color:#fa8c16;border-top-style:dashed"></i>危险线（15 天用量）</span></div>' +
+        '<div>' + window.StockChart.html(it, { latest: st.latest, so: st.so, gap: st.gap, marks, warnDays: 15, until: stkRange ? until : undefined, width: Math.max(520, ($('result').clientWidth || 1200) - 340) }) + '</div>';
+    } else {
+      let prev = null;
+      const rows = it.series.filter((x) => x[0] >= E.TODAY && x[0] <= until).map((x) => { const [d, s0, dl] = x, tg = [];
+        if (d === E.TODAY) tg.push('今天'); if (st.gap && d === st.gap.from) tg.push('短缺口开始'); if (d === st.latest) tg.push('最晚到港'); if (d === so) tg.push('断料日');
+        marks.forEach((m) => { if (m.d === d) tg.push((m.label === 'A' ? '推荐' : '备选') + '方案到港'); });
+        if (prev != null && s0 > prev) tg.push('到货 +' + fmt(s0 - prev + dl)); prev = s0;
+        return '<tr class="' + (d === so ? 'so' : tg.length ? 'k' : '') + '"><td>' + E.md(d) + '</td><td>' + wk(d) + '</td><td class="r">' + fmt(dl) + '</td><td class="r">' + fmt(s0) + '</td><td class="r">' + (dl ? Math.floor(s0 / dl) : '—') + '</td><td>' + tg.join('、') + '</td></tr>'; }).join('');
+      body = '<div class="dtw"><table class="dt"><thead><tr><th>日期</th><th>星期</th><th class="r">日耗（吨）</th><th class="r">模拟库存（吨）</th><th class="r">可用天数</th><th>标记</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+    }
+    return '<div class="card stk"><div class="card-h"><h2 class="nw"><svg width="18" height="18" viewBox="0 0 24 24" style="margin-right:6px"><path d="M4 20V10h4v10zM10 20V4h4v16zM16 20v-7h4v7z" fill="#1677ff"/></svg>库存保障与趋势 · ' + it.name + ic('断料日来自库存消耗模拟表（已包含已排定的到货）。预测要求到港窗口的最后一天不晚于「断料日 − 缓冲天数」，否则判为断料。方案到港后库存按虚线回升。') + '</h2><span class="muted nw">' + M.inventory.source + ' · 更新于 ' + M.inventory.updated.slice(0, 10) + '</span></div>' +
+      '<div class="stk-b"><div class="stk-l">' + left + '</div><div class="stk-r">' + tabs + body + '</div></div>' + note + '<div style="height:12px"></div></div>';
   }
   function renderResult(res) {
     const el = $('result');
+    $('sumbar').innerHTML = '';
     if (res.errors.length) { el.innerHTML = '<div class="card banner err"><div class="ico">!</div><div><h3>暂时无法预测</h3><p>' + res.errors.join('；') + '</p></div></div>'; return; }
     if (res.noRule) {
       el.innerHTML = '<div class="card banner err"><div class="ico">!</div><div><h3>没有找到「' + zh(res.input.load) + ' → ' + zh(res.input.disch) + '」的航程</h3><p>没有航程就推不出发船日。请先在主数据里补一条这条航线的估算航程；同航线实际航次累计到 5 个后，系统会改用历史统计。</p></div></div>'; return;
@@ -431,18 +488,21 @@
       return '<span class="cand ' + k + (c.complete ? '' : ' sp') + '">' + (mark ? '<i class="' + (mark === 'B' ? 'b' : '') + '">' + (mark === 'A' ? '推荐' : '备选') + '</i>' : '') +
         E.md(c.s) + '–' + E.md(c.e).slice(3) + ' ' + txt + (c.complete || c.none ? '' : '*') + '</span>';
     }).join('');
-    let h = '<div class="card sum"><div class="sum-t"><h2>预测结果</h2><span>' + res.input.biz + ' · ' + fmt(res.input.tons) + ' 吨 · ' + zh(res.input.load) + ' → ' + zh(res.input.disch) + '</span></div>' +
+    let h = '<div class="sum"><div class="sum-t"><h2>预测结果</h2><span>' + res.input.biz + ' · ' + fmt(res.input.tons) + ' 吨 · ' + zh(res.input.load) + ' → ' + zh(res.input.disch) + '</span></div>' +
       '<div class="sum-m"><span class="nw">目标到港日 ' + mdCn(r.target) + '（距今 ' + r.dist + ' 天）</span>' +
       '<span class="tag ' + (le || mixed ? 'blue' : '') + ' nw"' + (le || mixed ? '' : ' style="background:#f9f0ff;color:#531dab;border-color:#d3adf7"') + '>' + (mixed ? '各候选日期分别计算' : le ? '按近 15 天靠船计划' : '按 15 天后航次计划') + '</span>' +
       '<span class="sp"></span><button class="link" id="togCand">系统比对过的 ' + (res.candidates || []).length + ' 个时间 ' + (showCands ? '▴' : '▾') + '</button>' +
       ic('把期望窗口切成每 3 天一档、每次挪一天，逐档计算后挑出推荐和备选。\\n框里是该档的' + (mixed ? '最低泊位余量（近 15 天）或同期最多船数（15 天后）' : le ? '最低泊位余量' : '同期最多船数') + '；带星号表示窗口里有没数据的日子，只按有数据的天数算。') + '</div>' +
       (showCands ? '<div class="cands"><div class="ct">候选窗口（3 天一档，' + (mixed ? '近 15 天按最低泊位余量、15 天后按同期最多船数，各自排序' : '按' + (le ? '最低泊位余量从高到低' : '同期最多船数从少到多')) + '，不使用综合评分）：</div>' + cands + (res.excluded.pastDepart ? '<span class="muted nw">另有 ' + res.excluded.pastDepart + ' 个时间的发船日已早于今天，已排除</span>' : '') + '</div>' : '') + '</div>';
+    $('sumbar').innerHTML = h; h = '';
     if (res.noCandidate) {
       h += '<div class="card banner"><div class="ico"></div><div><h3>窗口内没有可以推荐的时间</h3><p>' + (le ? '靠船计划只到 ' + mdCn(E.planCoverTo) : '航次计划只到 ' + mdCn(E.voyHorizon)) + '，这个窗口全部没有数据（灰色斜线，不是 0%）。系统不会因为没有数据而改用另一条计算路径，建议把窗口提前，或等下一期靠船计划。</p></div></div>';
-    } else h += '<div class="plans">' + planCard(res.plans[0], res) + planCard(res.plans[1] || null, res) + '</div>';
+    } else h += '<div class="card pcard"><div class="card-h"><h2 class="nw"><svg width="18" height="18" viewBox="0 0 24 24" style="margin-right:6px"><path d="M3 15h18l-3 5H6z" fill="#1677ff"/><path d="M6 14V8h8l3 6z" fill="#69b1ff"/></svg>发船方案建议</h2></div><div class="plans">' + planCard(res.plans[0], res) + planCard(res.plans[1] || null, res) + '</div></div>';
     h += stockCard(res);                                             // 方案在上、库存模拟图在下（2026-11-05 Leyinet）
     el.innerHTML = h;
     const tg = $('togCand'); if (tg) tg.onclick = () => { showCands = !showCands; renderResult(last); };
+    el.querySelectorAll('[data-sv]').forEach((b) => b.onclick = () => { stkView = b.dataset.sv; renderResult(last); });
+    el.querySelectorAll('[data-sr]').forEach((b) => b.onclick = () => { stkRange = +b.dataset.sr; renderResult(last); });
     el.querySelectorAll('[data-detail]').forEach((a) => a.onclick = () => {
       const i = last.input, pl = a.closest('.plan').dataset.plan;
       if (!i.item) location.href = 'P03-prediction-detail.html?' + new URLSearchParams({ biz: i.biz, tons: i.tons, load: i.load, disch: i.disch, ws: i.winStart, we: i.winEnd, plan: pl }); if (i.item) { const q = new URLSearchParams({ biz: i.biz, tons: i.tons, load: i.load, disch: i.disch, ws: i.winStart, we: i.winEnd, plan: pl, item: i.item.name, buf: bufDays, pb: 'end' }); location.href = 'P03-prediction-detail.html?' + q; return; }
