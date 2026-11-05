@@ -12,3 +12,6 @@ server/node_modules/
 # 迁移 dry-run 输出（含待确认清单原文）
 migration-out/
 app/migration-out/
+
+# 本机 WorkBuddy 工具目录
+.workbuddy/
