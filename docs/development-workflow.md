@@ -77,11 +77,15 @@
 | 航次与货物 A07–A16 | `app/server/modules/voyage` | 已写好并测试：列表、详情（金额按权限裁剪）、新建、改字段、录节点（时序校验）、ETA 修订、异常标记、货物明细增改删、卸船结算分组鉴权、销售扩展；变更日志、数据质量问题、幂等键；14 个服务测试 + 权限测试通过。写飞书的真实仓储待建库后接入 |
 | 主数据 A01–A06、数据质量 A25、采纳写回 A23 | `app/server/modules/{master,voyage,prediction}` | 已写好并测试：当前用户、港口（别名模糊匹配）、泊位、船舶（重名 / IMO / MMSI 查重）、航程规则（唯一性、统计列只读）、每日重算 P50/P80、数据质量清单与关闭、采纳方案新建或写回待宣船航次；动态快照让航次和主数据的修改立刻进入预测。80 个测试通过 |
 | **真实仓储（应用库）**：预测、靠船计划与库存导入、运行日志、自检、写队列持久化 | `app/server/adapters/drizzle/`、`server/lark/outbox-store.ts` | 已写好并用 PGlite（内存 Postgres + 真实建库 SQL）做契约测试；`SSPS_STORE=real` 时装配。幂等键落 write_queue；整批导入在事务里；当前批次指针事务切换。**还没连过真实库**。主数据、航次的真实仓储（读 m_* 镜像表、经写队列写飞书、写回镜像）**已写好**，用 PGlite + 假飞书多维表格测试（与内存实现跑同一套用例）；身份目录与用户对照（W15）还是占位实现 |
-| 云空间拉取 A18 | `server/lark/drive.ts`、`ImportsService.pullBerthPlans` | 客户端和拉取逻辑已写好并用假 fetch 测试；`POST /api/berth-plans/pull`（系统管理员或内部令牌）；没配凭证时返回 503。**没连过真实云空间** |
+| 云空间拉取 A18 | `server/lark/drive.ts`、`ImportsService.pullBerthPlans` | 客户端和拉取逻辑已写好并用假 fetch 测试；`POST /api/berth-plans/pull`（系统管理员手动触发；定时由平台触发器调用）；没配凭证时返回 503。**没连过真实云空间** |
 | 靠船计划 A17、A19、库存 A30 | `app/server/modules/imports`、`server/lib/xlsx.ts` | 已写好并测试：直接上传 .xlsx（零依赖读取器）或上传解析好的行；缺列 / 空文件整批拒绝；90 天过滤与分类计数；异常行进数据质量清单；新批次整体写完才切当前批次；文件 token 去重；按船名关联航次；库存错误值行单独存。导入后日历和预测立即用上新批次 |
-| 云空间拉取 A18、系统管理 A26–A28 | `app/server/modules/` | 计划中（依赖飞书客户端接入） |
-| 飞书仓储层（先写飞书再回写镜像）与定时任务 | `app/server/` | 计划中（客户端、写队列、幂等、补偿已有） |
-| 迁移脚本（读 Excel） | — | 计划中（清洗规则已有） |
+| 系统管理 A26–A29：运行日志、连通性自检、补偿重放、兼容表刷新 | `app/server/modules/admin` | 已写好并测试：运行日志与自检（仅系统管理员）；补偿重放 `POST /api/admin/replay`；兼容表 T09a/T09b 全量就地重写 `POST /api/admin/compat/refresh`（列对应见 `docs/schema/compat-mapping.md`，旧表列口径待你核对）。**没连过真实飞书** |
+| 飞书仓储层（主数据、航次：读镜像、先写飞书再回写镜像） | `app/server/adapters/drizzle/` | 已写好，用 PGlite + 假飞书多维表格测试（同一套服务用例对内存版和真实版各跑一遍）；`SSPS_STORE=real` 时装配。**没连过真实飞书和库** |
+| 定时任务 | `app/server/modules/admin/jobs.automation.ts` | 已写好：6 个平台自动化触发器（云空间拉取、补偿、兼容表增量/全量、航程重算、数据质量扫描），清单见 `docs/handoff/scheduled-jobs.md`。**没在真实平台上注册过，cron 时区待确认** |
+| 数据质量扫描、库存过期提醒 | `modules/voyage/issue-scan.service.ts`、`modules/imports` | 已写好并测试：缺 MMSI、ETA 超期未更新自动生成与关闭；靠船计划泊位未匹配；库存导入后相关航次改到港时间则提示重新导入（物料与货物的对应口径待你确认） |
+| 真实身份目录 | `app/server/adapters/platform/` | 已写好并用假平台 SDK 测试：平台角色 `ssps_*` → 业务角色，飞书部门 → 部门，没角色的用户 403；权限矩阵由代码生成（`docs/handoff/permission-matrix.md`）。**没在真实平台验证过，需本机核对（提示词 9）** |
+| 迁移 dry-run（读 Excel，只出统计和待确认清单） | `server/importers/migrate-plan.ts`、`scripts/migrate-dryrun.ts` | 已写好并用虚构样本测试；待你在本机用真实 Excel 跑（提示词 7）。正式写入、港口信息表→T01、靠船计划首批次、人员映射**还没做** |
+| 安全与性能检查 | `docs/handoff/{security-review,performance-notes}.md` | 云端部分已做（堆栈不外泄、CSV 注入、压缩炸弹上限、航次批量读）；真实环境验证待做 |
 | 前端 React 重写（P01–P11） | `app/client/src/{ssps,pages,components}` | **11 个页面已全部用 React 重写**（P01 工作台、P02 预测、P03 预测详情、P04 航次列表、P05 航次详情、P06 容量日历、P07 靠船计划、P08 主数据、P09 数据质量、P10 系统管理、P11 智能提问），全部接后端 `/api/*`，在云端用演示服务 + Playwright 截图验证（截图 `prototype/screenshots/react-P*.png`）。P10 的兼容表与迁移页签只是说明，对应后端（A26、A27）未开发；云空间拉取（A18）也未开发。没有连过真实飞书和数据库 |
 
-冒烟（真起 Nest，走完整条 HTTP 主线）：`cd app && npm run smoke`；运行测试：`cd app && npm test`（105 个）；类型检查：`npm run type:check:server`；代码检查：`npx eslint server --quiet`。
+冒烟（真起 Nest，走完整条 HTTP 主线）：`cd app && npm run smoke`；运行测试：`cd app && npm test`（168 个）；类型检查：`npm run type:check:server`；代码检查：`npx eslint server --quiet`。
