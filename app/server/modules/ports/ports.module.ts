@@ -49,6 +49,6 @@ const pick = (token: symbol, mem: () => unknown, drz: (d: any) => unknown) => ({
     pick(HEALTH_PORT, () => new MemoryHealth(), (d) => new DrizzleHealth(d)),
     { provide: SNAPSHOT_PORT, inject: [MASTER_STORE, VOYAGE_STORE, IMPORT_STORE], useFactory: (m: MasterStorePort, v: VoyageStorePort, i: ImportStorePort) => new LiveSnapshot(m, v, i) },
   ],
-  exports: [SNAPSHOT_PORT, PREDICTION_STORE, VOYAGE_STORE, DIRECTORY_PORT, MASTER_STORE, IMPORT_STORE, SYNC_LOG, HEALTH_PORT],
+  exports: ['SSPS_OUTBOX', SNAPSHOT_PORT, PREDICTION_STORE, VOYAGE_STORE, DIRECTORY_PORT, MASTER_STORE, IMPORT_STORE, SYNC_LOG, HEALTH_PORT],
 })
 export class PortsModule {}

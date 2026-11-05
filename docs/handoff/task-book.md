@@ -235,11 +235,13 @@ Leyinet 提供，Codex 记录到 `docs/handoff/env-checklist.md`（只记状态�
 
 验收：用 W04 的四个测试账号分别登录，按 `docs/handoff/permission-matrix.md`（本任务产出，列出每个接口 × 角色 × 允许/拒绝，起点是 `server/test/permissions.spec.ts`）逐项验证；金额字段对非大宗采购部不可见；物流管理员不能改航次。
 
-### W16 补偿重放与同步防覆盖（写队列持久化 `createDrizzleOutboxStore` 已完成并测试；补偿定时任务和「同步防覆盖」待做）
+### W16 补偿重放与同步防覆盖（写队列持久化、补偿接口 `POST /api/admin/replay`（A29）已完成并测试；定时触发归 W31；「同步防覆盖」的核对任务待做——见下方说明）
 
 目标：飞书写成功、回写镜像失败时能自愈；晚到的同步事件不覆盖更新的回写值。
 
 步骤：用 `lark/outbox.ts`；回写镜像带 `updatedAt` 版本；`shouldApplySync` 用于同步事件落地（streaming 同步是平台做的，所以实际做法是：回写后在 D10 记「待核对」，核对任务比对飞书与镜像，不一致则以飞书为准重写镜像）；补偿任务每分钟扫描 D10 失败项重放。
+
+说明（2026-11-05）：补偿已做——`DrizzleMasterStore/DrizzleVoyageStore.replayHandlers()` 提供各类写入的回写步骤，`AdminService.replay` 汇总重放；单条失败不影响其他条，留待下一轮；接口限系统管理员或内部令牌 `x-internal-token`，返回重放条数与 pending/failed/written 积压。W31 要把它挂成每分钟一次的定时任务。「同步防覆盖」后端无法拦截平台 streaming 同步，只能靠核对任务（飞书为准）兜底，尚未做。
 
 验收：注入「回写失败」，补偿后镜像与飞书一致；注入「旧同步事件晚到」，不覆盖新值。
 

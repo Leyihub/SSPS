@@ -1,6 +1,8 @@
 // 航次真实仓储（Drizzle + 假飞书）：除了和内存版同一套行为测试之外，这里测写飞书链路本身的性质。
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
+import { AdminService } from '../modules/admin/admin.service';
+import { MemoryHealth, MemorySyncLog } from '../adapters/memory/memory-sync-log';
 import { VoyageService } from '../modules/voyage/voyage.service';
 import { MemoryDirectory } from '../adapters/memory/memory-directory';
 import { mVoyage } from '../database/schema';
@@ -94,4 +96,22 @@ test('更新只写改动的字段；货物明细、结算、销售扩展落在�
   assert.equal(await store.settlement(b.id), null);
   await svc.patchSettlement(a.id, { allowDays: 7, rain: true }, lin);
   assert.equal(fake.count('T06'), 1, '第二次是更新，不是再建一行'); assert.equal((await store.settlement(a.id))!.allowDays, 7);
+});
+
+test('管理员补偿接口：主数据与航次一起补；积压数量如实汇报；飞书写失败的记录（failed）不在补偿范围', async () => {
+  const { svc, fake, db, outbox, store, master } = await mk();
+  const { sql } = await import('drizzle-orm');
+  const admin = new AdminService(new MemorySyncLog(), new MemoryHealth(), new MemoryDirectory(), outbox as any, master, store);
+  await db.execute(sql`alter table m_voyage rename to m_voyage_down`);
+  await assert.rejects(svc.create({ ...body, cargo: [] } as any, lin, 'k-v'));
+  await db.execute(sql`alter table m_vessel rename to m_vessel_down`);
+  await assert.rejects(master.saveVessel({ name: 'MV NEW', alias: [], mmsi: null, imo: null, type: '散货船', dwt: null, length: null, tier: null }, 'k-b'));
+  fake.failNext = '飞书错误 1254001'; await assert.rejects(master.savePort({ code: 'ZZZ', en: 'ZETA', cn: '泽塔', alias: [], country: '其他', region: '', kind: '外港', isLocal: false, status: '启用' } as any, 'k-p'));
+  assert.deepEqual(await outbox.backlog(), { pending: 0, failed: 1, written: 2 });
+  const during = await admin.replay({ userId: 'a', name: '管', role: '系统管理员', dept: null });
+  assert.equal(during.replayed, 0, '镜像表还坏着：补偿失败不抛错，留待下一轮');
+  await db.execute(sql`alter table m_voyage_down rename to m_voyage`); await db.execute(sql`alter table m_vessel_down rename to m_vessel`);
+  const n = fake.log.length, r = await admin.replay(null);
+  assert.deepEqual([r.replayed, r.backlog], [2, { pending: 0, failed: 1, written: 0 }]); assert.equal(fake.log.length, n, '补偿不写飞书');
+  assert.equal((await store.list()).length, 1); assert.ok((await master.vessels()).some((v) => v.name === 'MV NEW'));
 });

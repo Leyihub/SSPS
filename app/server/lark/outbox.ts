@@ -31,12 +31,19 @@ export function createOutbox(store) {
       rec.status = 'done'; await store.put(rec);
       return { result: rec.result, replayed: false };
     },
+    /** 各状态的积压数量（pending/failed 多半是飞书写失败，等用户重试；written 是等补偿的） */
+    async backlog() {
+      const out: Record<string, number> = {};
+      for (const st of ['pending', 'failed', 'written']) out[st] = (await store.list(st)).length;
+      return out;
+    },
     /** 后台补偿：把「飞书已写成功但后续步骤没做完」的记录补完（崩溃恢复） */
     async replayWritten(afterByKind) {
       let n = 0;
       for (const rec of await store.list('written')) {
         const after = afterByKind[rec.kind]; if (!after) continue;
-        await after(rec.result, rec.payload); rec.status = 'done'; await store.put(rec); n++;
+        try { await after(rec.result, rec.payload); } catch { continue; }     // 单条失败不影响其他，留待下一轮
+        rec.status = 'done'; await store.put(rec); n++;
       }
       return n;
     },

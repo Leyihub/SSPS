@@ -21,6 +21,27 @@ const refMissing = (what: string, name: string) => new BusinessException(Respons
 export class DrizzleMasterStore implements MasterStorePort {
   constructor(private readonly db: Db, private readonly lark: BaseGateway, private readonly outbox: Outbox) {}
 
+  /** 写飞书成功后回写镜像行。写成功但回写失败时由补偿任务（replayHandlers）重放，必须可重复执行 */
+  private after = {
+    'port.save': async (res: any, pl: any) => {
+      const v = { baseRecordId: res.rid, portCode: nul(pl.p.code), chineseName: pl.p.cn, englishStandardName: pl.p.en, alias: pl.p.alias.join('\n') || null, country: pl.p.country, region: nul(pl.p.region), nature: pl.p.kind, isLocalPort: pl.p.isLocal, status: pl.p.status };
+      await this.db.insert(mPort).values(v).onConflictDoUpdate({ target: mPort.baseRecordId, set: v });
+    },
+    'berth.save': async (res: any, pl: any) => {
+      const v = { baseRecordId: res.rid, berthCode: pl.b.code, wharf: pl.b.terminal, capacityTonnage: pl.b.capacity, berthCategory: nul(pl.b.category), status: pl.b.status, basisVersion: nul(pl.b.basis), remark: nul(pl.b.note) };
+      await this.db.insert(mBerth).values(v).onConflictDoUpdate({ target: mBerth.baseRecordId, set: v });
+    },
+    'vessel.save': async (res: any, pl: any) => {
+      const x = { baseRecordId: res.rid, shipNo: res.no, appMmsi: nul(pl.v.mmsi), appImo: nul(pl.v.imo), standardShipName: pl.v.name, shipNameAlias: pl.v.alias.join('\n') || null, shipType: pl.v.type, dwt: pl.v.dwt, shipLengthM: pl.v.length == null ? null : String(pl.v.length), tonnageClass: pl.v.tier };
+      await this.db.insert(mVessel).values(x).onConflictDoUpdate({ target: mVessel.baseRecordId, set: x });
+    },
+    'route.save': async (res: any, pl: any) => {
+      const x = { baseRecordId: res.rid, ruleNo: res.no, loadPort: pl.lr, dischargePort: pl.dr, applicableBusinessType: pl.r.biz as string[], experienceVoyageDay: pl.r.exp == null ? null : String(pl.r.exp), experienceVoyageMaxDay: pl.r.expMax == null ? null : String(pl.r.expMax), appStatus: pl.r.status ?? '启用' };
+      await this.db.insert(mRouteRule).values(x).onConflictDoUpdate({ target: mRouteRule.baseRecordId, set: x });
+    },
+  };
+  replayHandlers() { return this.after; }
+
   // ---------------- 港口 ----------------
   async ports(): Promise<PortRow[]> {
     const rows = await this.db.select().from(mPort).orderBy(mPort.portCode, mPort.englishStandardName);
@@ -32,10 +53,7 @@ export class DrizzleMasterStore implements MasterStorePort {
     await this.outbox.execute(key ?? randomUUID(), {
       kind: 'port.save', table: 'T01', operation: cur ? 'update' : 'create', payload: { p, rid: cur?.r ?? null, fields: stripNull(fields, !cur) },
       writeLark: async (pl) => (pl.rid ? (await this.lark.update('T01', [{ record_id: pl.rid, fields: pl.fields }]), { rid: pl.rid }) : { rid: (await this.lark.create('T01', [{ fields: pl.fields }]))[0].record_id }),
-      afterWrite: async (res, pl) => {
-        const v = { baseRecordId: res.rid, portCode: nul(pl.p.code), chineseName: pl.p.cn, englishStandardName: pl.p.en, alias: pl.p.alias.join('\n') || null, country: pl.p.country, region: nul(pl.p.region), nature: pl.p.kind, isLocalPort: pl.p.isLocal, status: pl.p.status };
-        await this.db.insert(mPort).values(v).onConflictDoUpdate({ target: mPort.baseRecordId, set: v });
-      },
+      afterWrite: this.after['port.save'],
     });
     return (await this.ports()).find((x) => x.en === p.en)!;
   }
@@ -51,10 +69,7 @@ export class DrizzleMasterStore implements MasterStorePort {
     await this.outbox.execute(key ?? randomUUID(), {
       kind: 'berth.save', table: 'T02', operation: cur ? 'update' : 'create', payload: { b, rid: cur?.r ?? null, fields: stripNull(fields, !cur) },
       writeLark: async (pl) => (pl.rid ? (await this.lark.update('T02', [{ record_id: pl.rid, fields: pl.fields }]), { rid: pl.rid }) : { rid: (await this.lark.create('T02', [{ fields: pl.fields }]))[0].record_id }),
-      afterWrite: async (res, pl) => {
-        const v = { baseRecordId: res.rid, berthCode: pl.b.code, wharf: pl.b.terminal, capacityTonnage: pl.b.capacity, berthCategory: nul(pl.b.category), status: pl.b.status, basisVersion: nul(pl.b.basis), remark: nul(pl.b.note) };
-        await this.db.insert(mBerth).values(v).onConflictDoUpdate({ target: mBerth.baseRecordId, set: v });
-      },
+      afterWrite: this.after['berth.save'],
     });
     return (await this.berths()).find((x) => x.code === b.code)!;
   }
@@ -72,10 +87,7 @@ export class DrizzleMasterStore implements MasterStorePort {
     const r = await this.outbox.execute(key ?? randomUUID(), {
       kind: 'vessel.save', table: 'T03', operation: cur ? 'update' : 'create', payload: { v, rid: cur?.r ?? null, fields: stripNull(fields, !cur) },
       writeLark: async (pl) => { if (pl.rid) { await this.lark.update('T03', [{ record_id: pl.rid, fields: pl.fields }]); return { rid: pl.rid, no }; } const rec = (await this.lark.create('T03', [{ fields: pl.fields }]))[0]; return { rid: rec.record_id, no: Number(rec.fields['船舶编号']) }; },
-      afterWrite: async (res, pl) => {
-        const x = { baseRecordId: res.rid, shipNo: res.no, appMmsi: nul(pl.v.mmsi), appImo: nul(pl.v.imo), standardShipName: pl.v.name, shipNameAlias: pl.v.alias.join('\n') || null, shipType: pl.v.type, dwt: pl.v.dwt, shipLengthM: pl.v.length == null ? null : String(pl.v.length), tonnageClass: pl.v.tier };
-        await this.db.insert(mVessel).values(x).onConflictDoUpdate({ target: mVessel.baseRecordId, set: x });
-      },
+      afterWrite: this.after['vessel.save'],
     });
     return (await this.vessels()).find((x) => x.id === 'V-' + pad(r.result.no))!;
   }
@@ -95,10 +107,7 @@ export class DrizzleMasterStore implements MasterStorePort {
     const out = await this.outbox.execute(key ?? randomUUID(), {
       kind: 'route.save', table: 'T08', operation: cur ? 'update' : 'create', payload: { r, lr, dr, rid: cur?.r ?? null, fields },
       writeLark: async (pl) => { if (pl.rid) { await this.lark.update('T08', [{ record_id: pl.rid, fields: pl.fields }]); return { rid: pl.rid, no }; } const rec = (await this.lark.create('T08', [{ fields: pl.fields }]))[0]; return { rid: rec.record_id, no: Number(rec.fields['规则编号']) }; },
-      afterWrite: async (res, pl) => {
-        const x = { baseRecordId: res.rid, ruleNo: res.no, loadPort: pl.lr, dischargePort: pl.dr, applicableBusinessType: pl.r.biz as string[], experienceVoyageDay: pl.r.exp == null ? null : String(pl.r.exp), experienceVoyageMaxDay: pl.r.expMax == null ? null : String(pl.r.expMax), appStatus: pl.r.status ?? '启用' };
-        await this.db.insert(mRouteRule).values(x).onConflictDoUpdate({ target: mRouteRule.baseRecordId, set: x });
-      },
+      afterWrite: this.after['route.save'],
     });
     return (await this.routeRules()).find((x) => x.id === 'R-' + pad(out.result.no, 3))!;
   }

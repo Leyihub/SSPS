@@ -15,7 +15,7 @@ const admin: Actor = { userId: 'a', name: '管理员', role: '系统管理员', 
 
 test('运行日志：导入成功、导入失败、航程重算都会记；只有系统管理员能看；失败可单独筛', async () => {
   const log = new MemorySyncLog(), dir = new MemoryDirectory(), master = new MemoryMasterStore(seedMaster()), v = new MemoryVoyageStore();
-  const imports = new ImportsService(new MemoryImportStore(), master, v, dir, log), ms = new MasterService(master, v, dir, log), svc = new AdminService(log, new MemoryHealth(), dir);
+  const imports = new ImportsService(new MemoryImportStore(), master, v, dir, log), ms = new MasterService(master, v, dir, log), svc = new AdminService(log, new MemoryHealth(), dir, null, master, v);
   imports.clock = () => new Date('2026-11-05T08:30:00Z'); ms.clock = () => new Date('2026-11-05T09:00:00Z');
   const row = { 码头: '北区', 泊位: 'F1', 船名: 'MV A', 船长: 190, 船舶类型: '散货船', 物资名称: '镍矿', 吨位: 50000, 从属单位: '德信', 预计到港日期: '2026-11-06 08:00', 预计靠泊时间: '2026-11-07 08:00', 预计卸完时间: '2026-11-10 08:00' };
   await imports.importBerthPlan({ fileName: 'a.xlsx', rows: [row] }, logi);
@@ -28,4 +28,11 @@ test('运行日志：导入成功、导入失败、航程重算都会记；只�
   await assert.rejects(svc.syncLogs(biz), (e: any) => e.httpStatus === 403);
   const h = await svc.healthCheck(admin); assert.ok(h.checks.length >= 4 && h.checks.every((c) => c.status !== '正常'), '内存模式不装作正常');
   await assert.rejects(svc.healthCheck(logi), (e: any) => e.httpStatus === 403);
+});
+
+test('补偿重放（内存模式）：没有写队列时明确返回未启用；非系统管理员不能触发；内部令牌调用（actor=null）放行', async () => {
+  const dir = new MemoryDirectory(), svc = new AdminService(new MemorySyncLog(), new MemoryHealth(), dir, null, new MemoryMasterStore(seedMaster()), new MemoryVoyageStore());
+  assert.deepEqual(await svc.replay(admin), { enabled: false, replayed: 0, backlog: {} });
+  assert.equal((await svc.replay(null)).enabled, false);
+  await assert.rejects(svc.replay(biz), (e: any) => e.httpStatus === 403);
 });
