@@ -1,0 +1,27 @@
+/* 由 scripts/extract-page-css.cjs 从原型页面抽出，选择器已加前缀 .pg-p07 */
+.pg-p07 .btns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pg-p07 .auto{display:flex;flex-wrap:wrap;gap:6px 22px;padding:10px 16px;font-size:13px;color:#3b4a5c;border-bottom:1px solid var(--line-2)}
+.pg-p07 .auto span{white-space:nowrap}
+.pg-p07 .auto em{font-style:normal;color:var(--muted);margin-right:4px}
+.pg-p07 .alerts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
+.pg-p07 .al{padding:12px 16px;border-left:4px solid #d9dee5;cursor:pointer}
+.pg-p07 .al b{font-size:24px;line-height:1.2;display:block}
+.pg-p07 .al span{color:var(--muted);font-size:13px;display:flex;align-items:center}
+.pg-p07 .al.warn{border-left-color:#faad14}
+.pg-p07 .al.err{border-left-color:#ff4d4f}
+.pg-p07 .al.ok{border-left-color:#52c41a}
+.pg-p07 .al:hover{box-shadow:0 2px 8px rgba(16,24,40,.12)}
+.pg-p07 .tbl tr.off td{color:#98a4b3;background:#fafbfc}
+.pg-p07 .tbl tr.focus td{background:#fffbe6}
+.pg-p07 .tbl td,.pg-p07 .tbl th{white-space:nowrap}
+.pg-p07 .vname a{color:var(--primary);text-decoration:none}
+.pg-p07 .vname a:hover{text-decoration:underline}
+.pg-p07 .raw{color:var(--muted);font-size:12px;display:block}
+.pg-p07 .fbar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line-2)}
+.pg-p07 .fbar .inp{width:auto}
+.pg-p07 .bt2 tr.sel td{background:#f0f7ff}
+.pg-p07 .viewer{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:12px;white-space:nowrap}
+.pg-p07 .viewer select{height:28px;padding:0 6px;border:1px solid #d3d9e1;border-radius:6px;background:#fff}
+.pg-p07 .rep{display:grid;gap:8px;margin-top:8px}
+.pg-p07 .rep div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--line-2);padding:5px 0}
+.pg-p07 .rep div span:first-child{color:var(--muted)}

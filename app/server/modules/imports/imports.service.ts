@@ -65,7 +65,7 @@ export class ImportsService {
     const res = normalizeBerthPlan(inp.rows, { importDate: planDate, poolCodes }) as any;
     const byVessel = new Map<string, string>();
     for (const v of await this.voyages.list()) if (v.vessel && !(v.flags || []).includes('取消')) byVessel.set(normName(v.vessel), v.id);
-    const rows: BerthRow[] = res.rows.map((r: any) => ({ line: r.line, status: r.status, terminal: r.terminal, berthRaw: r.berthRaw, berth: r.berth, inPool: r.inPool, vessel: r.vessel, shipType: r.shipType, cargo: r.cargo, tons: r.tons, owner: r.owner, eta: r.eta, start: r.start, end: r.end, matchVoyage: r.status === 'active' ? byVessel.get(normName(r.vessel)) ?? null : null, issue: r.issue, raw: r.raw }));
+    const rows: BerthRow[] = res.rows.map((r: any) => ({ line: r.line, status: r.status, terminal: r.terminal, berthRaw: r.berthRaw, berth: r.berth, inPool: r.inPool, vessel: r.vessel, loa: r.loa ?? null, shipType: r.shipType, cargo: r.cargo, tons: r.tons, owner: r.owner, eta: r.eta, start: r.start, end: r.end, matchVoyage: r.status === 'active' ? byVessel.get(normName(r.vessel)) ?? null : null, issue: r.issue, raw: r.raw }));
 
     const n = (await this.store.berthBatches()).filter((b) => b.planDate === planDate).length + 1, batchNo = 'BP-' + ymd(planDate) + '-' + String(n).padStart(2, '0');
     const by = a?.name || '系统', s = res.summary;

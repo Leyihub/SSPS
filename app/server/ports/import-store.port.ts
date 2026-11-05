@@ -7,7 +7,7 @@ export interface BerthBatch {
   total: number; active: number; history: number; anomaly: number; coverTo: string | null; validation: string | null;
   status: '成功' | '部分失败' | '失败'; isCurrent: boolean; importedBy: string; importedAt: string;
 }
-export interface BerthRow { line: number; status: 'active' | 'history' | 'anomaly'; terminal: string; berthRaw: string; berth: string | null; inPool: boolean; vessel: string; shipType: string; cargo: string; tons: number | null; owner: string; eta: string | null; start: string | null; end: string | null; matchVoyage: string | null; issue?: { code: string; text: string }; raw: Record<string, unknown> }
+export interface BerthRow { line: number; status: 'active' | 'history' | 'anomaly'; terminal: string; berthRaw: string; berth: string | null; inPool: boolean; vessel: string; loa: number | null; shipType: string; cargo: string; tons: number | null; owner: string; eta: string | null; start: string | null; end: string | null; matchVoyage: string | null; issue?: { code: string; text: string }; raw: Record<string, unknown> }
 
 export interface InventoryBatch {
   batchNo: string; importDate: string; source: '飞书云空间' | '手动上传'; fileName: string; fileToken: string | null;
