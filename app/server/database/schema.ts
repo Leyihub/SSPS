@@ -635,6 +635,9 @@ export const inventoryBatch = pgTable("inventory_batch", {
   status: text("status").notNull(),
   isCurrent: boolean("is_current").notNull().unique().default(false),
   importedBy: text("imported_by"),
+  /**
+   * 各物料导入时的摘要 [{name,type,stock,daily,days,daysEstimated,validUntil,errorCount}]；当前库存和可用天数以导入时为准，序列在 inventory_row
+   */
   itemsSummary: jsonb("items_summary"),
   // System field: Creation time (auto-filled, do not modify)
   createdAt: customTimestamptz("_created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
