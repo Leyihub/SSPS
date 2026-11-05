@@ -229,7 +229,7 @@ Leyinet 提供，Codex 记录到 `docs/handoff/env-checklist.md`（只记状态�
 
 验收：并发 20 个预测请求，运行编号不重复；详情接口能原样取回溯源；宣船文案只从已存溯源生成（`announceFromProvenance`），数值与方案一致。
 
-### W15 真实身份目录与权限联调（2026-11-05 云端已写完并用假 SDK 测试：`adapters/platform/`，角色约定 ssps_salesman / ssps_manager / ssps_logistics / ssps_admin，可用 ROLE_MAP、DEPT_MAP 覆盖；未验证项在本机用提示词 9 核对；未做：权限矩阵文档 permission-matrix.md、4 个测试账号逐项验证）
+### W15 真实身份目录与权限联调（2026-11-05 云端已写完并用假 SDK 测试：`adapters/platform/`，角色约定 ssps_salesman / ssps_manager / ssps_logistics / ssps_admin，可用 ROLE_MAP、DEPT_MAP 覆盖；未验证项在本机用提示词 9 核对；权限矩阵 docs/handoff/permission-matrix.md 已由代码生成并有测试核对；未做：4 个测试账号逐项验证）
 
 实现 `DirectoryPort`：从平台 `req.userContext` + 平台角色（4 个应用内角色，用 `+role-*` 管理）+ 组织架构得到 `{角色, 部门}`；业务员姓名 ↔ 飞书账号映射表（W04）用于把迁移来的航次的「负责业务员」姓名关联到账号（`ownerId`）。
 
