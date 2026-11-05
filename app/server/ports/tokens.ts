@@ -7,3 +7,5 @@ export const MASTER_STORE = Symbol('MASTER_STORE');
 export const IMPORT_STORE = Symbol('IMPORT_STORE');
 export const SYNC_LOG = Symbol('SYNC_LOG');
 export const HEALTH_PORT = Symbol('HEALTH_PORT');
+export const LARK_TOKEN = Symbol('LARK_TOKEN');
+export const LARK_DRIVE = Symbol('LARK_DRIVE');

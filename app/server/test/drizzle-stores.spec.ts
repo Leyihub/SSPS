@@ -133,3 +133,30 @@ test('自检（Drizzle）：数据库可连、镜像表不存在时报异常而�
   assert.equal(JSON.stringify(h2).includes('SECRET-VALUE'), false);
   await close();
 });
+
+import { createOutbox } from '../lark/outbox';
+import { createDrizzleOutboxStore } from '../lark/outbox-store';
+test('写队列持久化（Drizzle）：成功落 done；飞书失败记 failed 且可用同一个键重试；飞书写成功后续失败→written，补偿重放不再写飞书', async () => {
+  const { db, close } = await testDb();
+  const store = createDrizzleOutboxStore(db as any), outbox = createOutbox(store);
+  let lark = 0, after = 0;
+  const ok = await outbox.execute('k-ok', { kind: 'voyage.create', table: 'T04', payload: { a: 1 }, writeLark: async () => { lark++; return { recordId: 'rec1' }; }, afterWrite: async () => { after++; } });
+  assert.deepEqual([ok.result, ok.replayed, lark, after], [{ recordId: 'rec1' }, false, 1, 1]);
+  const again = await outbox.execute('k-ok', { kind: 'voyage.create', payload: { a: 1 }, writeLark: async () => { lark++; return null; } });
+  assert.deepEqual([again.replayed, lark], [true, 1], '重复提交不再写飞书');
+
+  let fail = true;
+  const w = { kind: 'voyage.update', table: 'T04', operation: 'update' as const, payload: { b: 2 }, writeLark: async () => { if (fail) throw new Error('飞书错误 1254001'); return { ok: true }; } };
+  await assert.rejects(outbox.execute('k-fail', w), /1254001/);
+  assert.equal((await store.get('k-fail'))!.status, 'failed'); assert.equal((await store.get('k-fail'))!.attempts, 1);
+  fail = false;
+  assert.equal((await outbox.execute('k-fail', w)).replayed, false); assert.equal((await store.get('k-fail'))!.status, 'done'); assert.equal((await store.get('k-fail'))!.attempts, 2);
+
+  await assert.rejects(outbox.execute('k-half', { kind: 'voyage.create', table: 'T04', payload: { c: 3 }, writeLark: async () => { lark++; return { recordId: 'rec9' }; }, afterWrite: async () => { throw new Error('回写镜像失败'); } }), /回写镜像失败/);
+  const half = await store.get('k-half'); assert.equal(half!.status, 'written'); assert.deepEqual(half!.result, { recordId: 'rec9' });
+  const before = lark; let replayed = 0;
+  const n = await outbox.replayWritten({ 'voyage.create': async (result: any) => { replayed++; assert.equal(result.recordId, 'rec9'); } });
+  assert.deepEqual([n, replayed, lark], [1, 1, before], '补偿只补后续步骤，不再写飞书');
+  assert.equal((await store.get('k-half'))!.status, 'done');
+  await close();
+});

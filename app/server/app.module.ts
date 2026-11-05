@@ -9,6 +9,7 @@ import { PredictionModule } from './modules/prediction/prediction.module';
 import { CapacityModule } from './modules/capacity/capacity.module';
 import { VoyageModule } from './modules/voyage/voyage.module';
 import { MasterModule } from './modules/master/master.module';
+import { LarkModule } from './lark/lark.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { ImportsModule } from './modules/imports/imports.module';
 
@@ -19,6 +20,7 @@ import { ImportsModule } from './modules/imports/imports.module';
     // ====== @route-section: business-modules START ======
     // Place all business modules here.Do NOT add fallback modules here.
     PortsModule,
+    LarkModule,
     PredictionModule,
     CapacityModule,
     VoyageModule,

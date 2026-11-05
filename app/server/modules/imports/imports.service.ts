@@ -12,6 +12,7 @@ import { canImport } from '../../domain/permissions';
 import { HEADER_ALIASES, normalizeBerthPlan } from '../../importers/imipPlan';
 import { buildInventory } from '../../importers/inventory';
 import { readXlsx } from '../../lib/xlsx';
+import type { DriveFile } from '../../lark/drive';
 import { dn } from '../../lib/dates';
 import { project, stockout } from '../../engine/stock';
 
@@ -94,6 +95,28 @@ export class ImportsService {
     const rows = await this.store.berthRows(batchNo);
     if (!rows) throw fail(ResponseCode.NOT_FOUND, '找不到批次：' + batchNo, HttpStatus.NOT_FOUND);
     return rows.filter((r) => !status || r.status === status).map(({ raw, ...r }) => r);
+  }
+
+  /**
+   * A18：从云空间文件夹拉取靠船计划。只处理还没导入过的文件（按文件 token 去重），从旧到新逐个导入；
+   * 一个文件失败不影响其他文件，失败原因写进运行日志。drive 由调用方注入（真实是飞书云空间客户端，测试里是假的）。
+   */
+  async pullBerthPlans(drive: { listFolder(token: string): Promise<DriveFile[]>; download(token: string): Promise<Buffer> }, folderToken: string, a: Actor | null) {
+    const files = (await drive.listFolder(folderToken)).filter((f) => /\.xlsx$/i.test(f.name)), out = { found: files.length, imported: [] as string[], skipped: 0, failed: [] as Array<{ name: string; error: string }> };
+    for (const f of files) {
+      if (await this.store.hasFileToken(f.token)) { out.skipped++; continue; }
+      let parsed = false;
+      try {
+        const up = this.parseUpload({ originalname: f.name, buffer: await drive.download(f.token) });
+        parsed = true;
+        const r = await this.importBerthPlan({ ...up, source: '飞书云空间', fileToken: f.token }, a);
+        out.imported.push(r.batch.batchNo);
+      } catch (e: any) {
+        out.failed.push({ name: f.name, error: String(e?.message ?? e).slice(0, 200) });
+        if (!parsed) { const t = this.now(); await this.log?.add({ type: '拉取云空间靠船计划', start: t, end: t, n: 0, ok: '失败', err: f.name + '：' + String(e?.message ?? e).slice(0, 300) }); }   // 导入阶段的失败已由 logged() 记过
+      }
+    }
+    return out;
   }
 
   // ---------------- 库存消耗模拟表 ----------------

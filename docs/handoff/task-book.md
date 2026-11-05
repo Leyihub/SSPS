@@ -209,7 +209,7 @@ Leyinet 提供，Codex 记录到 `docs/handoff/env-checklist.md`（只记状态�
 执行 W12：实现真实的 VoyageStore。T04 的公式列和查找引用列只读，状态仍由 domain/status.ts 推导。写链路按 docs/handoff/README.md 第 4 节。航次编号要并发安全。list() 不要 N+1，要支持现有全部筛选、counts 和分页，按 2000 条航次设计。需要新表（如幂等键）就走和 W02 一样的 DDL 流程。做完用契约测试 + 真实环境全流程验证，并故意制造一次飞书写失败，确认镜像不变。
 ```
 
-### W13 真实导入仓储（靠船计划、库存）
+### W13 真实导入仓储（靠船计划、库存）（**已完成**：`DrizzleImportStore`，需先执行 `app/db/004-import-columns.sql`；T10 同步写飞书未做）
 
 实现 `ImportStorePort`：D03/D04 靠船计划批次与全部原始行；有效行（active）同时写飞书 T10；D11/D12 库存批次与逐日行。
 
@@ -223,7 +223,7 @@ Leyinet 提供，Codex 记录到 `docs/handoff/env-checklist.md`（只记状态�
 执行 W13：实现真实的 ImportStore（D03/D04/D11/D12 + 写 T10）。切当前批次必须在整批写完且校验通过之后、用事务完成。D04 写入分批可续跑。currentPlanRows 要快。验证包括中途杀进程后预测仍用上一批。
 ```
 
-### W14 真实预测仓储
+### W14 真实预测仓储（**已完成**：`DrizzlePredictionStore`，PGlite 契约测试通过；剩真实库联调）
 
 实现 `PredictionStorePort`：D05 `prediction_run`、D06 `prediction_plan`（含 S1 溯源 JSON）、D07 `announcement`；`nextRunNo` 按日递增且并发安全（`PR-YYYYMMDD-NNNN`）；`adopt` 记录采纳到的航次编号。
 
@@ -235,7 +235,7 @@ Leyinet 提供，Codex 记录到 `docs/handoff/env-checklist.md`（只记状态�
 
 验收：用 W04 的四个测试账号分别登录，按 `docs/handoff/permission-matrix.md`（本任务产出，列出每个接口 × 角色 × 允许/拒绝，起点是 `server/test/permissions.spec.ts`）逐项验证；金额字段对非大宗采购部不可见；物流管理员不能改航次。
 
-### W16 补偿重放与同步防覆盖
+### W16 补偿重放与同步防覆盖（写队列持久化 `createDrizzleOutboxStore` 已完成并测试；补偿定时任务和「同步防覆盖」待做）
 
 目标：飞书写成功、回写镜像失败时能自愈；晚到的同步事件不覆盖更新的回写值。
 
@@ -329,7 +329,7 @@ Leyinet 提供，Codex 记录到 `docs/handoff/env-checklist.md`（只记状态�
 
 ## W3 后台任务与系统管理
 
-### W30 A18 云空间拉取靠船计划
+### W30 A18 云空间拉取靠船计划（**代码已完成**：客户端、拉取逻辑、接口、假 fetch 测试；待用真实云空间验证）
 
 实现飞书云空间客户端（列文件夹、下载文件，需「云空间读取与下载」权限）；`POST /api/berth-plans/pull`：列出指定文件夹新文件，按文件 token 去重（`ImportStore.hasFileToken`，已实现语义），逐个下载 → `readXlsx`（`server/lib/xlsx.ts`）→ `ImportsService.importBerthPlan({ source:'飞书云空间', fileToken })`；一个文件失败不影响其他，失败写 D09 并进数据质量。内网中间件上传的链路（K05、风险 R5）未打通前，手动上传是兜底。
 

@@ -17,10 +17,10 @@ export function createOutbox(store) {
      * @param writeLark 写飞书：返回结果（如新记录 ID）
      * @param afterWrite 后续步骤（回写镜像、写变更日志…），必须是可重复执行的
      */
-    async execute(key, { kind, payload, writeLark, afterWrite }) {
+    async execute(key, { kind, payload, writeLark, afterWrite, table = '', operation = 'create' }: { kind: string; payload: any; writeLark: (p: any) => Promise<any>; afterWrite?: (result: any, p: any) => Promise<unknown>; table?: string; operation?: 'create' | 'update' | 'delete' }) {
       let rec = await store.get(key);
       if (rec && rec.status === 'done') return { result: rec.result, replayed: true };              // 重复提交：直接返回上次结果
-      if (!rec) { rec = { key, kind, payload, status: 'pending', attempts: 0, result: null }; await store.put(rec); }
+      if (!rec) { rec = { key, kind, payload, table, operation, status: 'pending', attempts: 0, result: null }; await store.put(rec); }
       if (rec.status === 'pending' || rec.status === 'failed') {
         rec.attempts++;
         try { rec.result = await writeLark(payload); rec.status = 'written'; await store.put(rec); }
