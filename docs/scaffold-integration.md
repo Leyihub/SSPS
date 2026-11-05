@@ -13,8 +13,8 @@
 
 ## 2. 对我们已写代码的影响
 
-1. **领域层要改成 TypeScript，放进脚手架**：现在的 `server/`（Node 纯 JS、零依赖、`node:test`）是独立目录，和脚手架的 `server/` 同名。接入后我会把它们改成 TS，放到脚手架的 `server/domain`、`server/engine` 等目录（不放进 `modules/`，那里只放 Nest 模块），测试改用 Node 自带测试加 TS 运行。具体 tsconfig 看过之后再定。
-2. **`db/schema.sql` 要按平台规范重写**：主键改 uuid，审计列改名成 `_created_at` 等，加 4 条 policy；`bigserial`、通用触发器这些不适用。需要 `.agent/skills/lark-apps-db/SKILL.md`（建表 SQL 的完整写法）才能写对，见下面第 3 步。
+1. **领域层要改成 TypeScript，放进脚手架**：（已完成 2026-11-05）已改成 TS，放在 `app/server/{domain,engine,nlp,importers,lark,lib}`，测试在 `app/server/test/*.spec.ts`，用 `tsx` 运行（`cd app && npm test`）。
+2. **建库 SQL 已按平台规范重写**（`app/db/001-ssps-core.sql`，由 `scripts/build-ddl.mjs` 生成）：主键改 uuid，审计列改名成 `_created_at` 等，加 4 条 policy；`bigserial`、通用触发器这些不适用。需要 `.agent/skills/lark-apps-db/SKILL.md`（建表 SQL 的完整写法）才能写对，见下面第 3 步。
 3. **前端要用 React 重写**：现在的原型是原生 HTML，不能直接搬。页面按原型的布局和交互，用 shadcn/ui 组件和 Tailwind 重写，计算全部调后端接口。这是阶段 C 里工作量最大的一块，按页面逐个做。
 4. 飞书多维表格的读写继续用我们写好的客户端（`lark/`），镜像表 m_* 的创建用妙搭自带的 streaming 同步（`+db-sync-create`）。
 

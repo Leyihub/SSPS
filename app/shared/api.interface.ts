@@ -6,3 +6,9 @@
 // export const isRecordType = (v: string): v is RecordType =>
 //   (RECORD_TYPES as readonly string[]).includes(v);
 // export const RECORD_TYPE_LABELS: Record<RecordType, string> = { meeting: '会议', memo: '备忘' };
+
+// ---------- SSPS 业务取值（前后端共用，只在这里定义一次） ----------
+export const BIZ_TYPES = ['大宗采购船', '成品销售船', '物资备件船'] as const;
+export type BizType = (typeof BIZ_TYPES)[number];
+export const PLAN_LABELS = ['A', 'B'] as const;          // 只出 Plan A / Plan B（锁定规则 5）
+export type PlanLabel = (typeof PLAN_LABELS)[number];

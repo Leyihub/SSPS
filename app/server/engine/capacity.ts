@@ -10,10 +10,12 @@ import { dn } from '../lib/dates';
  *   planRows: [{ berth, inPool, start, end, eta, vessel, cargo, tons, matchVoyage? }]   T10 最新一期（start/end 为日期字符串）
  *   voyages: [{ id, flags[], winStart, winEnd, totalTons, vessel, load, disch, biz, localSide, status }]   航次表（本港侧窗口）
  */
-export function createCapacity(data) {
+export type DayInfo = { state: string; occ?: number; n?: number; cmr?: number; occBerths?: string[]; count?: number; ships?: any[] };
+
+export function createCapacity(data: any) {
   const today = dn(data.today), PATH_LIMIT = data.pathLimit ?? CONFIG.PATH_LIMIT;
   const enabled = data.berths.filter((b) => b.status === '启用');
-  const caps = [...new Set(enabled.map((b) => b.capacity))].sort((a, b) => a - b);
+  const caps: number[] = ([...new Set(enabled.map((b: any) => b.capacity))] as number[]).sort((a, b) => a - b);
   const needTier = (tons) => caps.find((c) => c >= tons) || null;           // 装得下该货量的最小泊位吨级
 
   function poolFor(tons) {
@@ -27,22 +29,22 @@ export function createCapacity(data) {
   const voyages = data.voyages.filter((v) => !(v.flags || []).includes('取消')).map((v) => Object.assign({}, v, { s: dn(v.winStart), e: dn(v.winEnd), tier: needTier(v.totalTons) }));
   const voyHorizon = voyages.length ? Math.max(...voyages.map((v) => v.e)) : -Infinity;   // 航次表计划覆盖到最晚窗口止
 
-  function cmrDay(d, P) {
+  function cmrDay(d: number, P: any): DayInfo {
     if (d > planCoverTo) return { state: 'nodata' };                         // 无数据 ≠ 0%
-    const occ = new Set();
+    const occ = new Set<string>();
     rows.forEach((r) => { if (r.inPool && P.ids.has(r.berth) && r.s <= d && d <= r.e) occ.add(r.berth); });
     return { state: 'ok', occ: occ.size, n: P.n, cmr: (P.n - occ.size) / P.n, occBerths: [...occ] };
   }
-  function densityDay(d, P) {
+  function densityDay(d: number, P: any): DayInfo {
     if (d > voyHorizon) return { state: 'nodata' };
     const ships = voyages.filter((v) => v.tier >= P.tier && v.s <= d && d <= v.e);   // 只计与该吨级泊位竞争的船
     return { state: 'ok', count: ships.length, n: P.n, ships };
   }
-  const dayFn = (mode) => (mode === 'cmr' ? cmrDay : densityDay);
+  const dayFn = (mode: string): ((d: number, P: any) => DayInfo) => (mode === 'cmr' ? cmrDay : densityDay);
   const modeOf = (d) => (d - today <= PATH_LIMIT ? 'cmr' : 'density');       // 只按日期分流，不看有没有数据
 
   /** 港口容量日历（A20） */
-  function calendar(tons, days = CONFIG.CAL_DAYS) {
+  function calendar(tons: number, days: number = CONFIG.CAL_DAYS) {
     const P = poolFor(tons), out = [];
     for (let i = 0; i < days; i++) {
       const d = today + i, mode = modeOf(d);
@@ -55,7 +57,7 @@ export function createCapacity(data) {
   function dayDetail(d, tons) {
     const P = poolFor(tons), mode = modeOf(d), info = dayFn(mode)(d, P);
     if (info.state !== 'ok') return { d, mode, state: 'nodata', P, list: [] };
-    let list;
+    let list: any[];
     if (mode === 'cmr') {
       list = rows.filter((r) => r.inPool && P.ids.has(r.berth) && r.s <= d && d <= r.e).map((r) => ({
         vessel: r.vessel, berth: r.berth, cargo: r.cargo, tons: r.tons, eta: dn(r.eta), start: r.s, end: r.e,
@@ -64,7 +66,7 @@ export function createCapacity(data) {
       list = info.ships.map((v) => ({ vessel: v.vessel, id: v.id, load: v.load, disch: v.disch, biz: v.biz, tons: v.totalTons,
         start: v.s, end: v.e, status: v.status, side: v.localSide, arriving: v.s === d }));
     }
-    list.sort((a, b) => (!!b.arriving - !!a.arriving) || (!!b.berthing - !!a.berthing) || (a.start - b.start));
+    list.sort((a: any, b: any) => (Number(!!b.arriving) - Number(!!a.arriving)) || (Number(!!b.berthing) - Number(!!a.berthing)) || (a.start - b.start));
     return Object.assign({ d, mode, state: 'ok', P, list }, mode === 'cmr' ? { cmr: info.cmr, occ: info.occ } : { count: info.count });
   }
 

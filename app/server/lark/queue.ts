@@ -1,7 +1,7 @@
 // 写飞书的单线程队列：同一个 Base 的写入必须串行（CLAUDE.md 平台约束）。
 // 任务失败且可重试时按 2、4、8、16 秒退避重试，最多 4 次；每个任务之间留出最小间隔，避免触发限流。
 export class RetryableError extends Error {
-  constructor(msg, cause) { super(msg); this.name = 'RetryableError'; this.cause = cause; }
+  constructor(msg: string, cause?: unknown) { super(msg); this.name = 'RetryableError'; this.cause = cause; }
 }
 
 export function createWriteQueue({ sleep = (ms) => new Promise((r) => setTimeout(r, ms)), minGapMs = 300, backoff = [2000, 4000, 8000, 16000] } = {}) {

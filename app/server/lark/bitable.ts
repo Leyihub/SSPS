@@ -10,7 +10,7 @@ const RATE_LIMIT_CODES = new Set([99991400, 1254290, 1254291]);   // 请求过�
  */
 export function createBitable({ getToken, appToken, tableIds, queue, fetchFn = fetch, base = BASE }) {
   const tid = (key) => { const id = tableIds[key]; if (!id) throw new Error('没有配置表 ' + key + ' 的 table_id'); return id; };
-  async function call(method, path, body) {
+  async function call(method: string, path: string, body?: unknown): Promise<any> {
     const token = await getToken();
     const res = await fetchFn(base + '/bitable/v1/apps/' + appToken + path, {
       method, headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined,

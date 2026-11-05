@@ -25,7 +25,7 @@ const pad = (n) => String(n).padStart(2, '0');
  *   items: 库存物料项 [{ name, type, ... }]（品名词表从库存表动态读取）
  *   horizonDays: 只看未来多少天，默认 60
  */
-export function createParser(ctx) {
+export function createParser(ctx: any) {
   const T = dn(ctx.today), HORIZON = T + (ctx.horizonDays ?? 60);
   const [TY, TM] = ctx.today.split('-').map(Number);
   const LOCAL = (ctx.ports.find((p) => p.isLocal) || { en: 'BAHODOPI' }).en;
@@ -99,10 +99,10 @@ export function createParser(ctx) {
   }
 
   /** @param ov 用户在解析结果里手工改的值：{ biz, item, tons, load, disch, b } */
-  function parse(text, ov = {}) {
+  function parse(text: string, ov: any = {}) {
     const t = String(text).replace(/[０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 65248));
     const f = detectItem(t);
-    const r = { text, item: ov.item !== undefined ? ov.item : f.item, alt: f.alt || [], ambiguous: !!f.ambiguous && ov.item === undefined, notes: [] };
+    const r: any = { text, item: ov.item !== undefined ? ov.item : f.item, alt: f.alt || [], ambiguous: !!f.ambiguous && ov.item === undefined, notes: [] };
     r.biz = ov.biz || detectBiz(t, !!r.item);
     r.tons = ov.tons || detectTons(t);
     const others = detectPorts(t).filter((p) => p !== LOCAL);

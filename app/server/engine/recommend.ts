@@ -11,7 +11,7 @@ import { BIZ } from '../domain/status';
  * 创建一个绑定了数据快照的引擎。
  * @param {object} data 见 createCapacity；另需 routeRules（已 buildRule）、batchNo、plannedRun? 
  */
-export function createEngine(data) {
+export function createEngine(data: any) {
   const cap = createCapacity(data);
   const { today: TODAY, PATH_LIMIT, poolFor } = cap;
   const WINDOW_LEN = data.windowLen ?? CONFIG.WINDOW_LEN, MIN_CMR = data.planBMinCmr ?? CONFIG.PLAN_B_MIN_CMR;
@@ -48,9 +48,9 @@ export function createEngine(data) {
    * @param {object} inp { biz, tons, load, disch, winStart, winEnd, item?, buffer?, pathBy? }
    *   item：库存物料项（带 series）；pathBy='end'：按截止日提问，候选日期各自按距今天数分流（库存流程）
    */
-  function predict(inp) {
+  function predict(inp: any) {
     const biz = inp.biz, tons = Number(inp.tons);
-    const res = { input: inp, errors: [], today: TODAY };
+    const res: any = { input: inp, errors: [] as string[], today: TODAY };
     if (!(tons > 0)) res.errors.push('请填写货量（吨）');
     if (!inp.winStart || !inp.winEnd) res.errors.push('请填写完整的时间窗口');
     const ws = inp.winStart ? dn(inp.winStart) : NaN, we = inp.winEnd ? dn(inp.winEnd) : NaN;
@@ -138,7 +138,7 @@ export function createEngine(data) {
       const pm = c.mode || mode, reasons = [];
       if (!c.complete) reasons.push('窗口内有 ' + c.missing.length + ' 天没有' + (pm === 'cmr' ? '靠船计划' : '航次计划') + '数据（' + c.missing.map(md).join('、') + '），只按有数据的 ' + c.okDays + ' 天计算');
       if (fallback && c.complete === false) reasons.push('没有数据完整且余量不低于 30% 的时间，已从数据不全的时间里选取');
-      const p = { label, c, mode: pm, trust: reasons.length ? '低可信' : '正常', reasons, qualifies: c.metric !== null && qualify(pm, c.metric, P.n) };
+      const p: any = { label, c, mode: pm, trust: reasons.length ? '低可信' : '正常', reasons, qualifies: c.metric !== null && qualify(pm, c.metric, P.n) };
       if (item) {                                                             // 到港时库存：到港前库存 + 本船货量，按到港日的日耗折算可用天数
         const before = stockAt(item, c.e), dl = dailyAt(item, c.e), after = before + tons;
         const state = c.e <= latest ? 'safe' : (so != null && c.e <= so ? 'tight' : 'out');
