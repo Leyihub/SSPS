@@ -241,7 +241,7 @@ Leyinet 提供，Codex 记录到 `docs/handoff/env-checklist.md`（只记状态�
 
 步骤：用 `lark/outbox.ts`；回写镜像带 `updatedAt` 版本；`shouldApplySync` 用于同步事件落地（streaming 同步是平台做的，所以实际做法是：回写后在 D10 记「待核对」，核对任务比对飞书与镜像，不一致则以飞书为准重写镜像）；补偿任务每分钟扫描 D10 失败项重放。
 
-说明（2026-11-05）：补偿已做——`DrizzleMasterStore/DrizzleVoyageStore.replayHandlers()` 提供各类写入的回写步骤，`AdminService.replay` 汇总重放；单条失败不影响其他条，留待下一轮；接口限系统管理员，返回重放条数与 pending/failed/written 积压；定时触发见 W31（每 5 分钟）。「同步防覆盖」后端无法拦截平台 streaming 同步，只能靠核对任务（飞书为准）兜底，尚未做。
+说明（2026-11-05）：补偿已做——`DrizzleMasterStore/DrizzleVoyageStore.replayHandlers()` 提供各类写入的回写步骤，`AdminService.replay` 汇总重放；单条失败不影响其他条，留待下一轮；接口限系统管理员，返回重放条数与 pending/failed/written 积压；定时触发见 W31（每 5 分钟）。「同步防覆盖」后端无法拦截平台 streaming 同步；但同步是最终一致的——飞书记录改了之后一定会再同步一次，镜像最终会和飞书一致，所以最坏情况只是回写后几秒内被一次延迟的旧同步覆盖又被新同步纠正。核对任务（定期比对飞书与镜像）作为可选的加固，联调时如果观察到不一致再做，目前不做。
 
 验收：注入「回写失败」，补偿后镜像与飞书一致；注入「旧同步事件晚到」，不覆盖新值。
 
