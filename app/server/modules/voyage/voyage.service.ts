@@ -8,7 +8,7 @@ import { deriveStatus } from '../../domain/status';
 import { validateChain } from '../../domain/validate';
 import { parseDateTime, parseNumber } from '../../importers/common';
 import {
-  Actor, CargoLine, ETA_BASIS, FLAGS, MILESTONE_FIELDS, MONEY_KEYS, MONEY_LABEL, OPS_KEYS, VOYAGE_EDITABLE, Voyage, isBulk, isProduct, localDate,
+  Actor, CargoLine, ETA_BASIS, FLAGS, SALES_WAYS, MILESTONE_FIELDS, MONEY_KEYS, MONEY_LABEL, OPS_KEYS, VOYAGE_EDITABLE, Voyage, isBulk, isProduct, localDate,
 } from '../../domain/voyage';
 import { canCreateVoyage, canEditMoney, canEditOps, canEditSales, canEditVoyage, canSeeMoney } from '../../domain/permissions';
 import type { CreateVoyageDto, ListQuery } from './voyage.dto';
@@ -20,7 +20,7 @@ const DATE_FIELDS = new Set(['laycanS', 'laycanE', 'planLoadArr', 'actLoadArr', 
 const LIST_FIELDS = new Set(['planBerths', 'actBerths']);
 const CARGO_EDITABLE = ['contract', 'ea', 'big', 'kind', 'name', 'alias', 'unit', 'dept2', 'party', 'tons', 'loadTons', 'dry', 'over', 'inspector', 'exec'];
 const CARGO_NUMBER = new Set(['tons', 'loadTons', 'dry']);
-const SALES_LABEL: Record<string, string> = { charter: '租船合同', seaContract: '海运合同' };
+const SALES_LABEL: Record<string, string> = { way: '租船方式', contract: '海运合同号' };
 const MONEY_SET = new Set<string>(MONEY_KEYS);
 const OPS_SET = new Set<string>(OPS_KEYS);
 const ISSUE_TYPE: Record<string, string> = { MISSING_NODE: '缺离装港时间', CHAIN_INVERTED: '节点时序倒置' };
@@ -309,6 +309,7 @@ export class VoyageService {
     if (bad.length) throw invalid('不能修改销售扩展字段：' + bad.join('、'));
     const old = (await this.store.salesExt(id)) || {}, patch: Bag = {};
     for (const k of Object.keys(body)) patch[k] = (body as any)[k] === '' ? null : (body as any)[k];
+    if (patch.way != null && !(SALES_WAYS as readonly string[]).includes(String(patch.way))) throw invalid('租船方式只能是 CFR 或 FOB');
     const saved = await this.store.saveSalesExt(id, patch as any, sub(key, 'sales'));
     await this.store.addChangeLog(this.diff(old as Bag, patch, SALES_LABEL, a.name, id, this.now()));
     return saved;

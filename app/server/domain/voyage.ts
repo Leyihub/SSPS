@@ -24,7 +24,8 @@ export interface CargoLine {
   tons: number; loadTons: number | null; dry: number | null; over: string; inspector?: string; exec: string;
 }
 export type Settlement = Record<string, string | number | boolean | null>;
-export interface SalesExt { charter: string | null; seaContract: string | null }
+export const SALES_WAYS = ['CFR', 'FOB'] as const;
+export interface SalesExt { way: string | null; contract: string | null }          // 租船方式（CFR / FOB）、海运合同号（T07）
 
 /** 航次基础字段里允许修改的（不含状态、负责人转移走单独规则、只读标记由系统写入） */
 export const VOYAGE_EDITABLE: Record<string, string> = {

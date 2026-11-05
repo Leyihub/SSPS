@@ -14,6 +14,15 @@ export class MemoryVoyageStore implements VoyageStorePort {
   private seq = 0;
 
   constructor(seed: Voyage[] = []) { seed.forEach((v) => { this.voyages.set(v.id, v); this.seq = Math.max(this.seq, Number(v.id.slice(-4)) || 0); }); }
+  /** 演示数据一次性灌入（只给本地演示服务用，不走幂等和日志） */
+  seed(d: { voyages: Voyage[]; cargo?: CargoLine[]; settlement?: Record<string, Settlement>; sales?: Record<string, SalesExt>; eta?: EtaRevision[]; log?: ChangeEntry[]; issues?: DataIssue[] }) {
+    for (const v of d.voyages) { this.voyages.set(v.id, v); this.seq = Math.max(this.seq, Number(v.id.slice(-4)) || 0); }
+    for (const c of d.cargo || []) this.lines.set(c.voyage, [...(this.lines.get(c.voyage) || []), c]);
+    for (const [k, v] of Object.entries(d.settlement || {})) this.settle.set(k, v);
+    for (const [k, v] of Object.entries(d.sales || {})) this.sales.set(k, v);
+    this.eta.push(...(d.eta || [])); this.log.push(...(d.log || []));
+    for (const i of d.issues || []) this.issueList.push({ ...i, id: (i as any).id || 'DQ-' + String(this.issueList.length + 1).padStart(4, '0'), status: (i as any).status || '待处理' });
+  }
   private once<T>(key: string | undefined, fn: () => T): T {
     if (key && this.done.has(key)) return this.done.get(key) as T;
     const r = fn(); if (key) this.done.set(key, r); return r;
@@ -45,7 +54,7 @@ export class MemoryVoyageStore implements VoyageStorePort {
   async settlement(id: string) { return this.settle.get(id) || null; }
   async saveSettlement(id: string, patch: Settlement, key?: string) { return this.once(key, () => { const s = { ...(this.settle.get(id) || {}), ...patch }; this.settle.set(id, s); return s; }); }
   async salesExt(id: string) { return this.sales.get(id) || null; }
-  async saveSalesExt(id: string, patch: Partial<SalesExt>, key?: string) { return this.once(key, () => { const s = { charter: null, seaContract: null, ...(this.sales.get(id) || {}), ...patch } as SalesExt; this.sales.set(id, s); return s; }); }
+  async saveSalesExt(id: string, patch: Partial<SalesExt>, key?: string) { return this.once(key, () => { const s = { way: null, contract: null, ...(this.sales.get(id) || {}), ...patch } as SalesExt; this.sales.set(id, s); return s; }); }
   async etaRevisions(id: string) { return this.eta.filter((r) => r.voyage === id); }
   async addEtaRevision(r: EtaRevision) { this.eta.push(r); }
   async changeLog(id: string) { return this.log.filter((e) => e.voyage === id); }

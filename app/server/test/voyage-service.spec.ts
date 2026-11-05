@@ -153,11 +153,12 @@ test('卸船结算分组鉴权：仓储物流部能改作业数据、不能改�
 test('成品销售扩展：只对成品船，商务海运部本人可改', async () => {
   const { svc } = mk();
   const prod = await svc.create({ biz: '成品销售船', load: 'BAHODOPI', disch: 'HAIPHONG', laycanS: '2026-11-08', cargo } as any, sale);
-  await err(svc.patchSalesExt(prod.voyage.id, { charter: 'X' }, lin), 403);
-  const r: any = await svc.patchSalesExt(prod.voyage.id, { charter: '租船合同-1', seaContract: '' }, sale);
-  assert.equal(r.charter, '租船合同-1'); assert.equal(r.seaContract, null);
+  await err(svc.patchSalesExt(prod.voyage.id, { way: 'FOB' }, lin), 403);
+  await err(svc.patchSalesExt(prod.voyage.id, { way: 'DAP' }, sale), 422, /CFR/);
+  const r: any = await svc.patchSalesExt(prod.voyage.id, { way: 'CFR', contract: '' }, sale);
+  assert.equal(r.way, 'CFR'); assert.equal(r.contract, null);
   const b = await svc.create({ ...bulk, cargo } as any, lin);
-  await err(svc.patchSalesExt(b.voyage.id, { charter: 'X' }, admin), 422, /成品销售船/);
+  await err(svc.patchSalesExt(b.voyage.id, { way: 'FOB' }, admin), 422, /成品销售船/);
   await err(svc.patchSettlement(prod.voyage.id, { allowDays: 1 }, admin), 422, /大宗/);
 });
 

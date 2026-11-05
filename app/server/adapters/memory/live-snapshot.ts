@@ -14,7 +14,7 @@ export class LiveSnapshot implements SnapshotPort {
     private master: MasterStorePort,
     private voyages: VoyageStorePort,
     private imports?: ImportStorePort,
-    private today: () => string = () => new Date().toISOString().slice(0, 10),
+    public today: () => string = () => new Date().toISOString().slice(0, 10),
   ) {}
 
   async load(): Promise<Snapshot> {
