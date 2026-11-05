@@ -42,9 +42,15 @@ export function createBitable({ getToken, appToken, tableIds, queue, fetchFn = f
       for (const part of chunk(records, BATCH)) ids.push(...((await call('POST', '/tables/' + tid(key) + '/records/batch_create', { records: part })).records || []).map((r) => r.record_id));
       return ids;
     }),
+    /** 批量新增并返回完整记录（含飞书生成的自动编号、公式等）：[{ record_id, fields }]。query 如 'user_id_type=user_id' */
+    createRecords: (key, records, query = '') => queue.enqueue(async () => {
+      const out = [];
+      for (const part of chunk(records, BATCH)) out.push(...((await call('POST', '/tables/' + tid(key) + '/records/batch_create' + (query ? '?' + query : ''), { records: part })).records || []));
+      return out;
+    }),
     /** 批量更新：records = [{ record_id, fields }] */
-    batchUpdate: (key, records) => queue.enqueue(async () => {
-      for (const part of chunk(records, BATCH)) await call('POST', '/tables/' + tid(key) + '/records/batch_update', { records: part });
+    batchUpdate: (key, records, query = '') => queue.enqueue(async () => {
+      for (const part of chunk(records, BATCH)) await call('POST', '/tables/' + tid(key) + '/records/batch_update' + (query ? '?' + query : ''), { records: part });
       return records.length;
     }),
     batchDelete: (key, recordIds) => queue.enqueue(async () => {

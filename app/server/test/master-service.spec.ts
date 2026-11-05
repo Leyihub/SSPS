@@ -11,23 +11,31 @@ import { MemoryPredictionStore } from '../adapters/memory/memory-prediction-stor
 import { LiveSnapshot } from '../adapters/memory/live-snapshot';
 import { seedMaster } from '../adapters/memory/seed';
 import type { Actor } from '../domain/voyage';
+import { after } from 'node:test';
+import { realMasterEnv } from './helpers/real-env';
 
 const A = (id: string, role: Actor['role'], dept: Actor['dept'] = '大宗采购部'): Actor => ({ userId: id, name: id, role, dept });
 const biz = A('业务甲', '业务员'), boss = A('主管甲', '部门主管'), logi = A('物流甲', '物流管理员', '仓储物流部'), admin = A('管理员', '系统管理员', null);
 
-const mk = () => {
-  const master = new MemoryMasterStore(seedMaster()), vstore = new MemoryVoyageStore(), dir = new MemoryDirectory();
+const closers: Array<() => Promise<unknown>> = [];
+after(async () => { for (const c of closers) await c(); });
+const MODES = ['memory', 'drizzle'] as const;
+const err = async (p: Promise<unknown>, http: number, re?: RegExp) => assert.rejects(p, (e: any) => { assert.equal(e.httpStatus, http, e.message); if (re) assert.match(e.message, re); return true; });
+
+for (const mode of MODES) {
+const mk = async () => {
+  const dir = new MemoryDirectory(), vstore = new MemoryVoyageStore();
+  let master: any;
+  if (mode === 'drizzle') { const env = await realMasterEnv(); master = env.master; closers.push(env.close); } else master = new MemoryMasterStore(seedMaster());
   const svc = new MasterService(master, vstore, dir), voyages = new VoyageService(vstore, dir);
   const snap = new LiveSnapshot(master, vstore, undefined, () => '2026-11-05');
   return { master, vstore, svc, voyages, snap };
 };
-const err = async (p: Promise<unknown>, http: number, re?: RegExp) => assert.rejects(p, (e: any) => { assert.equal(e.httpStatus, http, e.message); if (re) assert.match(e.message, re); return true; });
-
-test('A01 当前用户：角色和部门', () => { const { svc } = mk(); svc.clock = () => new Date('2026-11-05T01:00:00Z');
+test(`${mode} · A01 当前用户：角色和部门`, async () => { const { svc } = await mk(); svc.clock = () => new Date('2026-11-05T01:00:00Z');
   assert.deepEqual(svc.me(boss), { userId: '主管甲', name: '主管甲', role: '部门主管', dept: '大宗采购部', today: '2026-11-05' }); });
 
-test('港口：别名模糊匹配；物流管理员可增改；别名不能与其他港口重复；本港唯一且不能停用', async () => {
-  const { svc } = mk();
+test(`${mode} · 港口：别名模糊匹配；物流管理员可增改；别名不能与其他港口重复；本港唯一且不能停用`, async () => {
+  const { svc } = await mk();
   assert.deepEqual((await svc.ports('巴浩')).map((p) => p.en), ['BAHODOPI']);
   assert.deepEqual((await svc.ports('qinhuang dao')).map((p) => p.en), ['QINHUANGDAO']);
   await err(svc.addPort({ en: 'DALIAN', cn: '大连' }, biz), 403);
@@ -43,8 +51,8 @@ test('港口：别名模糊匹配；物流管理员可增改；别名不能与�
   await err(svc.patchPort('NOPE', { region: 'x' }, logi), 404);
 });
 
-test('泊位：23 个真实泊位；新增校验编码、码头、容量；容量改了立刻影响预测池', async () => {
-  const { svc, snap } = mk();
+test(`${mode} · 泊位：23 个真实泊位；新增校验编码、码头、容量；容量改了立刻影响预测池`, async () => {
+  const { svc, snap } = await mk();
   assert.equal((await svc.berths()).length, 23);
   await err(svc.addBerth({ code: 'F1', terminal: '北区码头', capacity: 1 }, logi), 409);
   await err(svc.addBerth({ code: '??', terminal: '南区', capacity: 0 }, logi), 422, /编码.*码头.*容量/);
@@ -55,8 +63,8 @@ test('泊位：23 个真实泊位；新增校验编码、码头、容量；容�
   await err(svc.patchBerth('F8', { code: 'F9' }, logi), 422);
 });
 
-test('船舶：业务员能新增，只有物流/系统能改；船名、别名、IMO、MMSI 不能重复；吨级档按载重吨推', async () => {
-  const { svc } = mk();
+test(`${mode} · 船舶：业务员能新增，只有物流/系统能改；船名、别名、IMO、MMSI 不能重复；吨级档按载重吨推`, async () => {
+  const { svc } = await mk();
   const v = await svc.addVessel({ name: 'mv star', alias: 'STAR ONE', dwt: 56000, imo: '9123456', mmsi: '412345678' }, biz);
   assert.deepEqual([v.name, v.tier, v.id], ['MV STAR', '5 万吨', 'V-0001']);
   await err(svc.addVessel({ name: 'Star One' }, biz), 409, /重复/);
@@ -68,8 +76,8 @@ test('船舶：业务员能新增，只有物流/系统能改；船名、别名�
   assert.deepEqual((await svc.vessels('412345')).map((x) => x.name), ['MV STAR']);
 });
 
-test('航程规则：主管可维护；校验港口存在、上限≥经验值；同航线同业务类型只能有一条启用；航线不可改', async () => {
-  const { svc } = mk();
+test(`${mode} · 航程规则：主管可维护；校验港口存在、上限≥经验值；同航线同业务类型只能有一条启用；航线不可改`, async () => {
+  const { svc } = await mk();
   assert.equal((await svc.routeRules())[0].basis, '经验值');
   await err(svc.addRouteRule({ load: 'TAGANITO', disch: 'HAIPHONG', biz: ['成品销售船'], exp: 5, expMax: 6 }, biz), 403);
   const r = await svc.addRouteRule({ load: 'TAGANITO', disch: 'SINGAPORE', biz: ['大宗采购船'], exp: 5, expMax: 6 }, boss);
@@ -83,8 +91,8 @@ test('航程规则：主管可维护；校验港口存在、上限≥经验值�
   await svc.addRouteRule({ load: 'TAGANITO', disch: 'SINGAPORE', biz: ['大宗采购船'], exp: 7, expMax: 8 }, boss);      // 停用后可以再建
 });
 
-test('重算航程规则：已完成航次进样本；样本≥5 切统计值；取消和异常航次不计；只有系统管理员手动触发', async () => {
-  const { svc, voyages, vstore, snap } = mk();
+test(`${mode} · 重算航程规则：已完成航次进样本；样本≥5 切统计值；取消和异常航次不计；只有系统管理员手动触发`, async () => {
+  const { svc, voyages, vstore, snap } = await mk();
   const mkv = async (dep: string, arr: string, extra: any = {}) => {
     const { voyage } = await voyages.create({ biz: '大宗采购船', load: 'SURIGAO', disch: 'BAHODOPI', vessel: 'MV X', cargo: [{ name: '镍矿', tons: 1 }] } as any, biz);
     await vstore.update(voyage.id, { actLoadDep: dep, actDischArr: arr, ...extra });
@@ -102,8 +110,8 @@ test('重算航程规则：已完成航次进样本；样本≥5 切统计值；
   assert.equal((await snap.load()).routeRules.find((x) => x.id === 'R-001')!.samples, 5, '预测用的是新规则');
 });
 
-test('动态快照：新建航次后进入重叠船数口径（取消的不算），端口停用后不再被解析', async () => {
-  const { svc, voyages, snap } = mk();
+test(`${mode} · 动态快照：新建航次后进入重叠船数口径（取消的不算），端口停用后不再被解析`, async () => {
+  const { svc, voyages, snap } = await mk();
   const { voyage } = await voyages.create({ biz: '大宗采购船', load: 'SURIGAO', disch: 'BAHODOPI', planDischS: '2026-12-01', planDischE: '2026-12-03', cargo: [{ name: '镍矿', tons: 40000 }, { name: '煤', tons: 10000 }] } as any, biz);
   let s = await snap.load();
   assert.deepEqual(s.voyages.map((v) => [v.id, v.winStart, v.winEnd, v.totalTons, v.localSide]), [[voyage.id, '2026-12-01', '2026-12-03', 50000, '卸']]);
@@ -113,8 +121,8 @@ test('动态快照：新建航次后进入重叠船数口径（取消的不算�
   assert.equal((await snap.load()).ports.some((p) => p.en === 'TIANJIN'), false);
 });
 
-test('端到端：业务员建航次 → 预测用上它 → 采纳新建待宣船航次，在列表里出现', async () => {
-  const { voyages, snap } = mk();
+test(`${mode} · 端到端：业务员建航次 → 预测用上它 → 采纳新建待宣船航次，在列表里出现`, async () => {
+  const { voyages, snap } = await mk();
   const pred = new PredictionService(snap, new MemoryPredictionStore(), voyages);
   const user = { userId: '业务甲', userName: '业务甲' };
   for (let i = 0; i < 3; i++) await voyages.create({ biz: '大宗采购船', load: 'SURIGAO', disch: 'BAHODOPI', planDischS: '2026-12-10', planDischE: '2026-12-12', cargo: [{ name: '镍矿', tons: 50000 }] } as any, biz);
@@ -125,8 +133,8 @@ test('端到端：业务员建航次 → 预测用上它 → 采纳新建待宣�
   assert.deepEqual([a.created, row.status, row.owner, row.tons], [true, '待宣船', '业务甲', 50000]);
 });
 
-test('数据质量：缺离装港会进清单；责任人或系统管理员能关闭，别人不行', async () => {
-  const { voyages } = mk();
+test(`${mode} · 数据质量：缺离装港会进清单；责任人或系统管理员能关闭，别人不行`, async () => {
+  const { voyages } = await mk();
   const { voyage } = await voyages.create({ biz: '大宗采购船', load: 'SURIGAO', disch: 'BAHODOPI', cargo: [{ name: '镍矿', tons: 1 }] } as any, biz);
   await voyages.milestone(voyage.id, 'actDischArr', '2026-11-04 08:00', biz);
   const [issue] = await voyages.issues({ status: '待处理' });
@@ -139,8 +147,8 @@ test('数据质量：缺离装港会进清单；责任人或系统管理员能�
   assert.equal((await voyages.issues({ status: '待处理' })).length, 1);
 });
 
-test('数据质量：责任人可以开始处理再关闭；别人不行；已关闭的不能再改处理中', async () => {
-  const { voyages } = mk();
+test(`${mode} · 数据质量：责任人可以开始处理再关闭；别人不行；已关闭的不能再改处理中`, async () => {
+  const { voyages } = await mk();
   const { voyage } = await voyages.create({ biz: '大宗采购船', load: 'SURIGAO', disch: 'BAHODOPI', cargo: [{ name: '镍矿', tons: 1 }] } as any, biz);
   await voyages.milestone(voyage.id, 'actDischArr', '2026-11-04 08:00', biz);
   const [i] = await voyages.issues({ status: '待处理' });
@@ -150,3 +158,5 @@ test('数据质量：责任人可以开始处理再关闭；别人不行；已�
   assert.equal(((await voyages.updateIssue(i.id, '已关闭', biz)) as any).status, '已关闭');
   await err(voyages.updateIssue(i.id, '处理中', biz), 422, /已经关闭/);
 });
+
+}
