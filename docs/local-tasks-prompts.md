@@ -250,6 +250,69 @@ T04 航次主表里有 4 个「查找引用」字段，飞书开放接口建不�
 
 做完把报告发给我。我会据此核对 RLS 差异、把 `mirror-columns.md` 对到后端的字段映射，然后开始写真实的仓储层（任务 W10–W14）。
 
+---
+
+## 提示词 6：004 迁移 + 取镜像样本并验证飞书写法（W11/W12 前置，2026-11-05）
+
+前提：已 `git pull` 到最新 `main`。这一条产出的是**真实数据长什么样**——后端写「读镜像、写飞书」的适配器前必须知道：关联列、人员列、自动编号在镜像表里的真实形状，以及往多维表格写关联、日期时间、人员字段的正确写法。拿不到就只能猜，猜错的代价是写错数据。
+
+```text
+你在接手 SSPS（智慧发船预测系统）。先读 AGENTS.md、docs/handoff/README.md、docs/handoff/task-book.md 的 W11、W12，以及 docs/schema/mirror-columns.md。
+
+铁律：回复用中文；不要出现任何密钥或 token 原值；不要提交 .env*；任何一步失败先停下来报告原文，不要绕过；
+这一步会在多维表格里**创建测试记录**，全部必须带统一标记（备注或原记录键写 "_SSPS_PROBE_"），做完**必须全部删除**，并核对 Base 里 T01–T10 的记录数回到测试前。
+
+【步骤 1：执行 004 迁移】
+执行 app/db/004-import-columns.sql（lark-cli apps +db-execute）。然后 npm run gen:db-schema:local，查看 git diff：schema.ts 只应多出
+berth_plan_batch.imported_by、inventory_batch.imported_by、inventory_batch.items_summary 三列（我已手工加过同样的三行，差异应为空或只是位置/顺序）。
+tsc 0 错误，提交推送：「chore: 004 迁移与 schema」。
+
+【步骤 2：取镜像样本（现有数据）】
+对 m_port、m_berth、m_route_rule 各取 2 行（SELECT *），原样给出每个列的值和 pg 类型；对 jsonb 列（如有）给出完整 JSON。
+特别回答：m_route_rule 的 装港/卸港 列里实际存的文本是什么（是 英文标准名 如 SURIGAO，还是 港口编码 如 002，还是中文名？）。
+
+【步骤 3：造一条完整测试航次并取样】
+在多维表格里用 API/lark-cli 创建（全部带 _SSPS_PROBE_ 标记）：
+ a. T03 船舶 1 条（标准船名 PROBE VESSEL，MMSI 999999999）；
+ b. T04 航次 1 条：业务类型=大宗采购船，船舶=上面那条，装港=SURIGAO 那条港口记录，卸港=BAHODOPI 那条，
+    计划抵卸港窗口始/止、受载期、实际抵装港等几个日期时间都填（用 2026-11-20 08:00 这种值），
+    计划泊位=T02 里的 F1 和 F2 两条（多选关联），负责业务员=当前登录用户，异常标记选两项（如 延期、移泊），重点关注=是；
+ c. T05 货物明细 2 条，关联到上面的航次；
+ d. T06 大宗卸船结算 1 条关联该航次（填几个数字和一个币种）；
+ e. 再建一条 成品销售船 航次 + T07 销售扩展 1 条（租船方式 CFR，海运合同号 PROBE-1）。
+等 15 秒让同步完成，然后取 m_vessel、m_voyage（2 行）、m_cargo、m_bulk_settle、m_sales_ext 的 SELECT *，
+原样给出所有列的值与类型。**重点回答**：
+ 1. m_voyage.voyage_no_1（航次编号）实际存的是什么？飞书里这条航次的「航次编号」显示成什么（是不是 VY-2026-0001 这种带前缀的格式）？
+ 2. m_voyage 的 vessel、load_port、discharge_port、second_discharge_port 文本里存的是什么（港口编码 / 英文名 / 中文名 / record_id）？
+ 3. planned_berth、actual_berth、goods_detail、bulk_unload_settlement、product_sales_extend 这些 jsonb 的完整 JSON 形状；
+ 4. responsible_salesman 这一列的值；
+ 5. abnormal_mark（text[]）的值；
+ 6. 日期时间列（如 laycan_start）取出来的值和你在飞书里填的值相差几个小时？写明数据库会话时区。
+
+【步骤 4：验证飞书写入格式】
+用 lark-cli api 或 +record 类命令（先看 --help）直接调用多维表格 records 接口，**新增并读回**下面几种写法，分别报告「成功/失败 + 读回的原样 JSON」：
+ 1. 关联字段：{"装港": ["<T01 里 SURIGAO 那条记录的 record_id>"]}；
+ 2. 日期时间：{"计划抵卸港窗口始": 1795305600000}（毫秒时间戳）以及字符串写法 "2026-11-20 08:00"，读回后飞书里显示什么、时区是否一致；
+ 3. 人员字段：{"负责业务员": [{"id": "<当前用户 open_id>"}]}；
+ 4. 多选：{"异常标记": ["延期","移泊"]}；
+ 5. 复选框、数字、币种单选；
+ 6. 更新一条记录的单个字段（batch_update），确认其他字段不被清空；
+ 7. 自动编号字段：新增一条航次后读回「航次编号」的原始值。
+同时回答：往 T04 新增记录时，哪些字段是只读/公式/查找引用导致不能写（写了会报什么错）。
+
+【步骤 5：清理与核对】
+删除所有 _SSPS_PROBE_ 记录（Base 里的 T03、T04、T05、T06、T07 测试记录），等同步后确认 m_vessel、m_voyage、m_cargo、m_bulk_settle、m_sales_ext 回到 0 行，
+T01、T02、T08 行数不变（10、23、10）。
+
+【步骤 6：写样本文档并提交】
+创建 docs/schema/mirror-samples.md：包含步骤 2、3 的样本（可以把明显的业务名换成 PROBE）、步骤 4 每种写法的结论（可用 / 不可用 / 注意点）、以及上面 6 个「重点回答」。
+提交推送：「docs: 镜像样本与飞书写入格式验证」。
+
+【最后：报告】步骤 1–6 每步的结果；所有失败；清理核对结果（各表行数前后对比）。不要贴密钥和真实业务数据。
+```
+
+做完把报告发给我。我用这些真实形状写 W11/W12 的适配器（读镜像、写飞书、回写镜像）。
+
 ## 做完之后
 
 把四份报告都发给我（报告里没有密钥）。我会：
