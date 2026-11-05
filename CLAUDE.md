@@ -64,6 +64,7 @@
 - `docs/schema/base-plan.json`：建表清单的机器可读版（`node scripts/build-base-plan.mjs` 生成）；`docs/schema/base-build-agent-prompt.md`：本机 agent 建表的步骤与提示词
 - `docs/development-workflow.md`：开发阶段的流程、环节衔接、Leyinet 需要推进的前置条件、开发进度表
 - `docs/scaffold-integration.md`：妙搭脚手架（NestJS + React + Drizzle）接入说明与 Leyinet 的操作步骤；`docs/schema/seed/` 与 `base-seed-agent-prompt.md`：T01/T02/T08 初始数据及录入提示词
+- `docs/local-tasks-prompts.md`：需要 Leyinet 本机 AI 完成的事的完整提示词合集（按顺序）
 - `docs/open-questions.md`：待 Leyinet 确认的事项，未确认项不要自行假定
 - `docs/data-profile/`：企微导出的列结构与填充统计（不含业务数据）
 
