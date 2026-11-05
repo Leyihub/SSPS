@@ -121,3 +121,15 @@ test('运行日志（Drizzle）：导入成功和失败都记，失败可筛，�
   assert.equal((await log.list({ failOnly: true })).find((x) => x.type === 't')!.err.length, 500);
   await close();
 });
+
+import { DrizzleHealth } from '../adapters/drizzle/drizzle-health';
+test('自检（Drizzle）：数据库可连、镜像表不存在时报异常而不是崩；环境变量未配置如实提醒，不泄露值', async () => {
+  const { db, close } = await testDb();
+  const h = await new DrizzleHealth(db as any, {}).checks();
+  assert.equal(h[0].status, '正常'); assert.equal(h[1].status, '异常', '测试库没有镜像表');
+  assert.ok(h.some((c) => c.name === '飞书应用凭证' && c.status === '提醒'));
+  const h2 = await new DrizzleHealth(db as any, { LARK_APP_ID: 'cli_x', LARK_APP_SECRET: 'SECRET-VALUE' }).checks();
+  assert.ok(h2.some((c) => c.name === '飞书应用凭证' && c.status === '正常'));
+  assert.equal(JSON.stringify(h2).includes('SECRET-VALUE'), false);
+  await close();
+});
