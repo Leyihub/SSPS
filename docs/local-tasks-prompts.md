@@ -174,6 +174,82 @@ T04 航次主表里有 4 个「查找引用」字段，飞书开放接口建不�
 给出：第 2 步每种写法的接口结果和读回值；第 3 步最终采用的 5 个公式的完整表达式（原文，便于我写回仓库）；第 4 步每项实际值 vs 期望值；清理确认。不得包含密钥和令牌。任何一项不一致，如实写进报告，不要继续改动其他字段。
 ```
 
+---
+
+## 提示词 5：生成应用库 schema，并建 8 个同步任务（W02 收尾 + W03，2026-11-05）
+
+前提：`app/db/001-ssps-core.sql` 已经用 `+db-execute` 执行成功；你已经 `git pull` 到最新 `main`；`lark-cli` 已登录（`--as user`）。
+这一条把「生成 schema」和「建同步任务」合在一起，发给你本机的 AI（Codex）整段执行。
+
+```text
+你在接手 SSPS（智慧发船预测系统）。先读仓库根目录的 AGENTS.md、docs/handoff/README.md，再读 docs/handoff/task-book.md 的 W02、W03，
+以及 app/AGENTS.md 的「数据库」章节和 docs/schema/D-app-db.md。
+
+铁律：
+- 回复用中文；不要在回复、日志、提交里出现任何密钥、App Secret、token 原值；
+- 不要提交任何 .env 开头的文件（提交前 git status 必须没有它们）；
+- 业务明细数据不要回传，只回传行数、延迟、表名、列名这类结构信息；
+- 不要手改 app/server/database/schema.ts，它只能由 gen:db-schema 生成；
+- 不要改 app/db/001-ssps-core.sql；如果它有问题，改 scripts/build-ddl.mjs 重新生成并说明；
+- 任何一步失败，先停下来，把报错原文（去掉密钥）和你的判断告诉我，不要绕过去。
+
+【第 1 步：找到妙搭应用 ID（不是 cli_ 开头的飞书 App ID）】
+1. 在 app 目录看 .spark/meta.json 里的 app_id（形如 app_xxxxxxxx）。没有这个文件，就用 lark-cli apps 的列表类子命令
+   （先跑 `lark-cli apps --help` 看有哪些）找到「智慧发船预测系统」，记下它的应用 ID。
+2. 在当前 PowerShell 窗口里设置：$env:app_id = "<应用 ID>"。这个变量只用于本窗口，不要写进任何会被提交的文件。
+
+【第 2 步：确认 12 张自有表都在库里】
+1. 用 `lark-cli apps +features --app-id "$env:app_id"` 确认 database.enabled 为 true。
+2. 用 app/AGENTS.md 里规定的方式查询应用库里已有的表（只列表名，不读数据），核对下面 12 张都存在：
+   eta_revision、milestone_log、berth_plan_batch、berth_plan_row、inventory_batch、inventory_row、
+   prediction_run、prediction_plan、announcement、data_issue、sync_log、write_queue。
+3. 缺任何一张，就报告缺哪张和 +db-execute 的报错，停下。
+
+【第 3 步：生成 schema 并提交】
+1. 在 app 目录执行 npm run gen:db-schema（需要第 1 步设置的 app_id）。
+2. 打开生成的 app/server/database/schema.ts，确认包含上面 12 张表；跑 `npx tsc --noEmit --project tsconfig.node.json`，必须 0 错误。
+3. git status 确认只有 schema.ts（和本次需要的文件）有改动、没有 .env* 文件。
+4. git add app/server/database/schema.ts，提交信息：「chore: 生成应用库 schema（D01–D12）」，git push origin main。
+
+【第 4 步：RLS 与审计列抽查（只读，不改库）】
+1. 随便选 2 张表（建议 prediction_run 和 data_issue），查询并告诉我：是否开启了 RLS、有几条策略、策略名字和适用的操作；
+   审计列 _created_at、_created_by、_updated_at、_updated_by 是否存在。
+2. 如果和 app/AGENTS.md 描述的「4 条默认策略」不一致，原样把差异写出来（不要改）。
+
+【第 5 步：建 8 个同步任务（W03）】
+目标：把多维表格 T01–T08 同步到应用库镜像表，一张 Base 表一个 streaming 同步任务：
+  T01 港口主档 → m_port；T02 泊位主档 → m_berth；T03 船舶主档 → m_vessel；T04 航次主表 → m_voyage；
+  T05 货物明细 → m_cargo；T06 大宗卸船结算扩展 → m_bulk_settle；T07 成品销售扩展 → m_sales_ext；T08 航程规则 → m_route_rule。
+1. Base 的 app_token 和 11 张表的 table_id 在 docs/schema/base-build-report-2026-11-05.md；
+   先跑 `lark-cli apps +db-sync-create --help` 看参数，再创建。每张镜像表必须有一列保存「Base 记录 ID」（见 docs/schema/D-app-db.md 第 5 节）。
+2. 一个一个创建，每建一个就查询该任务的状态，确认进入同步中/已完成；失败就报告原文。
+3. 全部建好后，再执行一次 npm run gen:db-schema，把新增的 m_* 表也生成进 schema.ts，tsc 0 错误，提交推送
+   （提交信息：「chore: 镜像表 schema（m_*）」）。
+
+【第 6 步：核对与测延迟】
+1. 对 8 张镜像表各查一次行数，与飞书 Base 里对应表的记录数对比（T01、T02、T08 已录入初始数据，T04–T07 应为 0 行或测试数据），
+   给出「表名 | 镜像行数 | Base 记录数」对照。
+2. 延迟测试：在 T01 港口主档里新增一条临时记录（港口编码 TMP-SYNC，中文名「同步测试」），
+   每 5 秒查一次 m_port，记录多久出现；再把这条记录改名，记录多久更新；最后删除这条临时记录，并确认 m_port 里也消失、
+   Base 里的 T01 恢复原样（行数回到测试前）。
+3. 如果同步很慢（超过 2 分钟）或不更新，报告现象，不要自行重建任务。
+
+【第 7 步：写列名对照并提交】
+创建 docs/schema/mirror-columns.md：每张镜像表一个小节，列出「镜像列名 | 类型 | 对应的飞书字段名」，
+特别标出：Base 记录 ID 列、公式列、查找引用列、人员列、关联列在镜像里分别是什么类型和列名。
+提交信息：「docs: 镜像表列名对照」，git push origin main。
+
+【最后：报告（不含密钥和业务明细）】
+1. 第 2 步：12 张表是否齐全；
+2. 第 3 步：schema.ts 是否已提交（提交号）；
+3. 第 4 步：RLS 与审计列抽查结果，与规范的差异；
+4. 第 5 步：8 个同步任务的创建结果（任务名 + 状态）；
+5. 第 6 步：行数对照表和延迟（秒）；
+6. 所有失败、警告、你没有完成或没有验证的事项。
+```
+
+做完把报告发给我。我会据此核对 RLS 差异、把 `mirror-columns.md` 对到后端的字段映射，然后开始写真实的仓储层（任务 W10–W14）。
+
 ## 做完之后
 
 把四份报告都发给我（报告里没有密钥）。我会：
