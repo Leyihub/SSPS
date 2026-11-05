@@ -6,17 +6,31 @@
 <title>P11 智能提问 · SSPS 原型</title>
 <link rel="stylesheet" href="assets/app.css">
 <style>
-.p11{display:grid;grid-template-columns:minmax(0,1fr) 540px;gap:20px;align-items:start}
-.hero{text-align:center;padding:26px 0 18px}
-.hero small{color:#1677ff;font-weight:600;font-size:14px;letter-spacing:1px}
-.hero h1{margin:6px 0 4px;font-size:38px;line-height:1.25;color:#17365d;letter-spacing:2px}
-.hero p{margin:0;color:#5b6878;font-size:15px;display:flex;align-items:center;justify-content:center;gap:14px}
-.hero p:before,.hero p:after{content:"";width:60px;height:1px;background:#c9d0d9}
+.p11{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:18px;align-items:start}
+.p11 > section > .card{margin-bottom:14px}
+/* 顶部：标题 + 四阶段 */
+.hd{padding:16px 20px 14px;background:linear-gradient(100deg,#f3f8ff 0%,#eaf3ff 55%,#dfeeff 100%);border:1px solid #d6e6fb}
+.hd-t{display:flex;align-items:center;gap:14px}
+.hd-ico{width:52px;height:52px;border-radius:12px;background:#fff;display:grid;place-items:center;box-shadow:0 1px 4px rgba(22,119,255,.18);flex:none}
+.hd-ico svg{width:34px;height:34px}
+.hd h1{margin:0;font-size:24px;color:#17365d;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.hd h1 small{font-size:12px;font-weight:600;color:#0958d9;background:#e6f4ff;border:1px solid #91caff;border-radius:6px;padding:0 8px;line-height:20px}
+.hd p{margin:2px 0 0;color:#4a596b;font-size:14px}
+.steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px}
+.st{display:flex;align-items:center;gap:8px;border-radius:20px;padding:5px 12px;background:#fff;border:1px solid #e0e7f1;color:#6b7a8c;font-size:14px;white-space:nowrap;min-width:0}
+.st b{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:12px;background:#eef2f7;color:#6b7a8c;flex:none}
+.st span{overflow:hidden;text-overflow:ellipsis}
+.st.cur{background:#1677ff;border-color:#1677ff;color:#fff;font-weight:600}.st.cur b{background:#fff;color:#1677ff}
+.st.done{border-color:#91caff;color:#0958d9}.st.done b{background:#e6f4ff;color:#0958d9}
+.st.skip{border-style:dashed;color:#98a4b3}
+/* 输入框 */
 .ask{border:1.5px solid #b7d8ff;box-shadow:0 2px 12px rgba(22,119,255,.10)}
-.ask textarea{width:100%;border:0;outline:0;resize:none;min-height:104px;font-size:16px;line-height:1.7;padding:16px 18px;background:transparent;border-radius:12px 12px 0 0}
-.ask-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#f7faff;border-top:1px solid #e6eefb;border-radius:0 0 12px 12px}
+.ask-in{display:flex;gap:10px;padding:12px 16px 4px}
+.ask-in .ai{width:30px;height:30px;border-radius:8px;background:#e6f4ff;display:grid;place-items:center;flex:none;margin-top:4px}
+.ask textarea{flex:1;border:0;outline:0;resize:none;min-height:58px;font-size:16px;line-height:1.7;padding:4px 0;background:transparent}
+.ask-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid #e6eefb}
 .ask-bar .hint{flex:1;color:#98a4b3;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mic{width:42px;height:42px;border-radius:50%;border:1px solid #d3d9e1;background:#fff;cursor:pointer;display:grid;place-items:center;position:relative;flex:none}
+.mic{width:40px;height:40px;border-radius:50%;border:1px solid #d3d9e1;background:#fff;cursor:pointer;display:grid;place-items:center;position:relative;flex:none}
 .mic svg{width:20px;height:20px;fill:#5b6878}
 .mic:hover{border-color:var(--primary)}.mic:hover svg{fill:var(--primary)}
 .mic.on{background:#ff4d4f;border-color:#ff4d4f}.mic.on svg{fill:#fff}
@@ -27,58 +41,94 @@
 .wave i{width:3px;background:#ff4d4f;border-radius:2px;animation:w 0.9s infinite ease-in-out}
 .wave i:nth-child(2){animation-delay:.1s}.wave i:nth-child(3){animation-delay:.2s}.wave i:nth-child(4){animation-delay:.3s}.wave i:nth-child(5){animation-delay:.4s}
 @keyframes w{0%,100%{height:5px}50%{height:20px}}
-.send{border:0;background:#1677ff;color:#fff;border-radius:8px;padding:0 26px;height:42px;font-weight:600;font-size:15px;cursor:pointer;flex:none;box-shadow:0 2px 6px rgba(22,119,255,.35)}
-.send:active{background:#0958d9}
-.card .ch{padding:12px 18px 4px;font-weight:600;color:#0a7a52;display:flex;align-items:center;gap:6px}
-.card .ch.blue{color:#0958d9}
-.chips{display:flex;flex-wrap:wrap;gap:8px;padding:6px 18px 14px}
-.pc{display:inline-flex;align-items:center;gap:6px;border-radius:18px;background:#f2f6fb;padding:4px 14px;font-size:14px;white-space:nowrap}
-.pc b{color:#0958d9}
-.pc .k{color:#3b4a5c;font-weight:600}
-.pc.miss{background:#fff;border:1px dashed #c4cad3;color:#98a4b3}
-.pc.warn{background:#fff7e6;color:#ad4e00}
+.bt{height:40px;padding:0 18px;font-size:14.5px;border-radius:8px;flex:none}
+.bt.primary{padding:0 24px;font-weight:600;box-shadow:0 2px 6px rgba(22,119,255,.3)}
+.btn[disabled],.btn.dis{opacity:.45;cursor:not-allowed;box-shadow:none}
+/* 卡片标题 */
+.sh{display:flex;align-items:center;gap:10px;padding:12px 18px 6px;flex-wrap:wrap}
+.sh h2{margin:0;font-size:16px;display:flex;align-items:center;gap:6px}
+.sh .sub{color:var(--muted);font-size:13px}
+.sh .sp{flex:1}
+.stale{margin:0 18px 10px;border-radius:8px;padding:6px 12px;font-size:13px;background:#fff7e6;border:1px solid #ffd591;color:#ad4e00}
+/* 解析结果：可编辑字段 */
+.pf{display:grid;grid-template-columns:1fr 1fr .9fr 1.5fr 1.1fr;gap:10px 14px;padding:4px 18px 14px}
+.pf label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:4px;white-space:nowrap}
+.pf .inp{width:100%;height:36px;font-size:14.5px}
+.pf .miss .inp{border-color:#ffa39e;background:#fff8f7}
+.pf .suf{position:relative}.pf .suf .inp{padding-right:30px}.pf .suf em{position:absolute;right:10px;top:9px;font-style:normal;color:var(--muted);font-size:13px}
+.pf .rt{display:flex;align-items:center;gap:6px}.pf .rt .inp{flex:1;min-width:0}.pf .rt span{white-space:nowrap;color:#3b4a5c;font-size:14px}
+.pf .fh{font-size:12px;color:var(--faint);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .alts{padding:0 18px 12px;display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px;color:#6b7a8c}
 .chipf{border:1px solid var(--line);background:#fff;border-radius:14px;padding:1px 12px;cursor:pointer;font-size:13px;color:#3b4a5c;white-space:nowrap}
 .chipf:hover{border-color:var(--primary);color:var(--primary)}
-.facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px 16px;padding:6px 18px 4px}
-.facts .k{font-size:12px;color:var(--muted);white-space:nowrap}
-.facts .v{font-size:18px;font-weight:700;white-space:nowrap}
-.facts .v small{font-size:12px;font-weight:500;color:var(--muted);margin-left:3px}
-.lvl{display:inline-block;border-radius:4px;padding:0 8px;font-size:12px;line-height:20px;font-weight:600;vertical-align:2px;margin-left:6px}
+/* 库存测算 */
+.lvl{display:inline-block;border-radius:4px;padding:0 8px;font-size:12px;line-height:20px;font-weight:600}
 .lvl.ok{background:#f6ffed;color:#237804;border:1px solid #b7eb8f}.lvl.mid{background:#fff7e6;color:#ad4e00;border:1px solid #ffd591}.lvl.bad{background:#fff1f0;color:#a8071a;border:1px solid #ffa39e}
-.notebox{margin:4px 18px 12px;border-radius:8px;padding:8px 12px;font-size:13px;line-height:1.7}
-.notebox.red{background:#fff1f0;border:1px solid #ffa39e;color:#a8071a}
-.notebox.amb{background:#fff7e6;border:1px solid #ffd591;color:#ad4e00}
-.notebox.blu{background:#f0f7ff;border:1px solid #b7d8ff;color:#0958d9}
-.gobar{display:flex;align-items:center;gap:12px;padding:14px 4px 4px;flex-wrap:wrap}
-.gobar .btn.primary{padding:9px 30px;font-size:15px;font-weight:600}
-.gobar .sm{color:var(--muted);font-size:12.5px}
-.quick{margin-top:18px}
-.quick h3{margin:0 0 8px;font-size:14px;color:#6b7a8c;font-weight:600;padding-bottom:6px;border-bottom:1px solid var(--line)}
-.quick .chipf{border-radius:20px;padding:6px 16px;font-size:14px;color:#4a596b;background:#fff}
-.qwrap{display:flex;flex-wrap:wrap;gap:10px}
+.mcs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;padding:4px 18px 12px}
+.mc{border:1px solid #e6ebf2;border-radius:10px;padding:10px 12px;background:#fbfcfe;min-width:0}
+.mc .k{font-size:12.5px;color:var(--muted);white-space:nowrap;display:flex;align-items:center;gap:4px}
+.mc .v{font-size:20px;font-weight:700;white-space:nowrap;margin-top:2px}
+.mc .v small{font-size:12px;font-weight:500;color:var(--muted);margin-left:3px}
+.mc .n{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mc.red{background:#fff1f0;border-color:#ffccc7}.mc.red .v{color:#cf1322}
+.mc.grn{background:#f6ffed;border-color:#d9f7be}.mc.grn .v{color:#237804}
+.mc.amb .v{color:#d46b08}
+.mc select{height:28px;padding:0 6px;font-weight:600;font-size:14px;width:88px}
+.tabs2{display:flex;align-items:center;gap:8px;padding:0 18px;border-bottom:1px solid var(--line-2)}
+.tabs2 .tb{border:0;background:none;padding:8px 6px;font-size:14px;color:#5b6878;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs2 .tb.on{color:#0958d9;border-bottom-color:#1677ff;font-weight:600}
+.tabs2 .sp{flex:1}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg button{border:0;background:#fff;padding:3px 12px;font-size:13px;cursor:pointer;color:#3b4a5c;border-left:1px solid var(--line)}
+.seg button:first-child{border-left:0}.seg button.on{background:#1677ff;color:#fff}
+.chartbox{padding:10px 18px 4px}
+.dt{width:100%;border-collapse:collapse;font-size:13px}
+.dt th{text-align:left;color:var(--muted);font-weight:500;padding:6px 8px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff}
+.dt td{padding:5px 8px;border-bottom:1px solid var(--line-2);white-space:nowrap}
+.dt td.r,.dt th.r{text-align:right}
+.dt tr.k td{background:#fffbe6}.dt tr.so td{background:#fff1f0;color:#a8071a}
+.dtw{max-height:300px;overflow:auto;margin:10px 18px 4px;border:1px solid var(--line-2);border-radius:8px}
+.concl{margin:8px 18px 12px;border-radius:8px;padding:9px 12px;font-size:13.5px;line-height:1.7;background:#f0f7ff;border:1px solid #b7d8ff;color:#0958d9}
+.concl.red{background:#fff1f0;border-color:#ffa39e;color:#a8071a}
+.concl.amb{background:#fff7e6;border-color:#ffd591;color:#ad4e00}
+.concl b.t{margin-right:4px}
+.acts{display:flex;align-items:center;gap:12px;padding:12px 18px 16px;border-top:1px solid var(--line-2);flex-wrap:wrap}
+.acts .why{color:var(--muted);font-size:13px}
+.acts .why.err{color:#cf1322}
+.skipc{padding:12px 18px;color:#5b6878;font-size:13.5px}
+/* 快捷提问 */
+.quick{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 18px}
+.quick h3{margin:0;font-size:14px;color:#1f2d3d;white-space:nowrap;display:flex;align-items:center;gap:4px}
+.quick .chipf{border-radius:20px;padding:5px 14px;font-size:13.5px;color:#4a596b}
 /* 右侧库存面板 */
-.inv h2{margin:0;font-size:20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.inv h2{margin:0;font-size:18px;display:flex;align-items:center;gap:8px}
 .inv .lg{display:flex;gap:12px;font-size:12.5px;color:#4a596b;flex-wrap:wrap;margin-top:6px}
 .inv .lg i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px}
 .inv .up{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 16px 0;color:var(--faint);font-size:12px;flex-wrap:wrap}
-.inv .grp{padding:10px 16px 6px}
-.inv .gt{font-weight:700;font-size:13px;margin:6px 0 4px;color:#1f2d3d}
-.invgrid{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
-.ir{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;cursor:pointer;font-size:13.5px;min-width:0}
+.inv .grp{padding:12px 16px 4px}
+.itabs{display:grid;grid-template-columns:1fr 1fr;margin:10px 16px 4px;background:#f2f5f9;border-radius:8px;padding:3px}
+.itabs button{border:0;background:none;padding:6px 0;border-radius:6px;font-size:14px;color:#5b6878;cursor:pointer}
+.itabs button.on{background:#fff;color:#0958d9;font-weight:600;box-shadow:0 1px 2px rgba(16,24,40,.08)}
+.ig{margin:8px 16px 0;border:1px solid var(--line-2);border-radius:10px;overflow:hidden}
+.ig-h{display:flex;align-items:center;gap:6px;padding:7px 12px;background:#f5f8fc;cursor:pointer;font-weight:600;font-size:13.5px;user-select:none}
+.ig-h .ar{display:inline-block;transition:transform .15s;color:#6b7a8c}.ig.closed .ar{transform:rotate(-90deg)}
+.ig.closed .ig-b{display:none}
+.ig-b{padding:4px 6px}
+.ir{display:flex;align-items:center;gap:8px;padding:5px 8px;border-radius:8px;cursor:pointer;font-size:13.5px;min-width:0}
 .ir:hover{background:#f2f6fb}
 .ir i{width:9px;height:9px;border-radius:50%;flex:none}
 .ir span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ir em{font-style:normal;color:var(--faint);font-size:12px;white-space:nowrap}
 .ir b{font-size:12.5px;border-radius:6px;padding:0 8px;line-height:22px;flex:none}
 .ir.ok i{background:#52c41a}.ir.ok b{background:#f6ffed;color:#389e0d}
 .ir.mid i{background:#fa8c16}.ir.mid b{background:#fff7e6;color:#d46b08}
 .ir.bad i{background:#ff4d4f}.ir.bad b{background:#fff1f0;color:#cf1322}
 .ir.sel{background:#e6f4ff}
-.imp{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 16px 14px;border-top:1px solid var(--line-2);font-size:12.5px;color:var(--muted)}
+.imp{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:12px 16px 14px;margin-top:10px;border-top:1px solid var(--line-2);font-size:12.5px;color:var(--muted)}
 .imp .btn{padding:3px 12px}
 .sample{background:#fffbe6;border:1px solid #ffe58f;color:#ad6800;border-radius:6px;padding:0 8px;font-size:12px;line-height:20px;white-space:nowrap}
-@media(max-width:1200px){.p11{grid-template-columns:1fr}.invgrid{grid-template-columns:1fr 1fr}}
-@media(max-width:700px){.hero h1{font-size:28px}.hero p:before,.hero p:after{display:none}.facts{grid-template-columns:repeat(2,minmax(0,1fr))}.invgrid{grid-template-columns:1fr}.ask-bar .hint{display:none}}
+@media(max-width:1280px){.p11{grid-template-columns:minmax(0,1fr)}.mcs{grid-template-columns:repeat(3,minmax(0,1fr))}.pf{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:700px){.steps{grid-template-columns:1fr 1fr}.quick .chipf,.st{white-space:normal}.hd-ico{display:none}.acts .bt{flex:1}.mcs{grid-template-columns:repeat(2,minmax(0,1fr))}.pf{grid-template-columns:1fr 1fr}.pf .wide{grid-column:1/-1}.ask-bar .hint{display:none}.hd h1{font-size:20px}}
 </style>
 </head>
 <body>
@@ -87,16 +137,24 @@
     <main class="page">
       <div class="p11">
         <section>
-          <div class="hero"><small>智慧发船预测系统</small><h1>智能发船助手</h1><p>发船方案 · 库存预警 · 港口容量</p></div>
+          <div class="card hd">
+            <div class="hd-t">
+              <div class="hd-ico"><svg viewBox="0 0 40 40"><path d="M6 26h28l-4 7H10z" fill="#1677ff"/><path d="M11 25V15h14l4 10z" fill="#69b1ff"/><rect x="14" y="9" width="7" height="6" rx="1" fill="#0958d9"/><path d="M4 35c3 0 3-1.5 6-1.5s3 1.5 6 1.5 3-1.5 6-1.5 3 1.5 6 1.5 3-1.5 6-1.5" stroke="#91caff" stroke-width="1.6" fill="none"/></svg></div>
+              <div><h1>智能发船助手<small>智慧发船预测系统</small></h1><p>基于库存消耗、港口容量与航程规则的发船方案助手</p></div>
+            </div>
+            <div class="steps" id="steps"></div>
+          </div>
           <div class="card ask">
-            <textarea id="q" placeholder="像说话一样描述需求，比如：烧结石灰石 秦皇岛→德信 5万吨 12月10日前到港"></textarea>
-            <div class="ask-bar"><span class="hint" id="hint">按 Enter 发送，Shift+Enter 换行</span><span class="wave" id="wave"><i></i><i></i><i></i><i></i><i></i></span>
+            <div class="ask-in"><span class="ai"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M4 4h16v12H8l-4 4z" fill="none" stroke="#1677ff" stroke-width="2" stroke-linejoin="round"/><path d="M8 9h8M8 12h5" stroke="#1677ff" stroke-width="2" stroke-linecap="round"/></svg></span>
+              <textarea id="q" placeholder="像说话一样描述需求，比如：烧结石灰石 秦皇岛→德信 5万吨 12月10日前到港"></textarea></div>
+            <div class="ask-bar"><span class="hint" id="hint">按 Enter 解析，Shift+Enter 换行</span><span class="wave" id="wave"><i></i><i></i><i></i><i></i><i></i></span>
               <button class="mic" id="mic" aria-label="语音输入" title="语音输入"><svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V22h2v-3.08A7 7 0 0 0 19 12h-2z"/></svg></button>
-              <button class="send" id="send">发送</button></div>
+              <button class="btn bt" id="clr">清空</button>
+              <button class="btn primary bt" id="send">解析需求</button></div>
           </div>
           <div id="parsed"></div>
           <div id="stock"></div>
-          <div class="quick"><h3>快捷提问</h3><div class="qwrap" id="quick"></div></div>
+          <div class="card"><div class="quick" id="quickbox"><h3><svg width="14" height="14" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z" fill="#1677ff"/></svg>快捷提问</h3><span id="quick" style="display:contents"></span></div></div>
         </section>
         <aside class="card inv" id="inv"></aside>
       </div>
@@ -108,93 +166,186 @@
 (function () {
   SHELL.mount({ active: 'P11', title: '智能提问' });
   const M = window.MOCK, E = window.ENGINE, C = window.C, N = window.NLP, $ = (id) => document.getElementById(id);
-  const fmt = C.fmt, T = E.TODAY, md = (n) => E.md(n), mdCn = (n) => C.mdCn(E.iso(n)), wk = (n) => C.wk(E.iso(n));
+  const fmt = C.fmt, T = E.TODAY, md = (n) => E.md(n), mdCn = (n) => C.mdCn(E.iso(n));
   const EXAMPLES = ['烧结石灰石 秦皇岛→德信 5万吨 2026年12月10日前', '废钢 新村港→德信 1万吨 11月28日前', '高硅块 唐山→德信 3万吨 11月30日前', '成品线材2.8万吨，11月8日到20日装船，发海防', '备件船8000吨从雅加达来，下周到港'];
-  let S = { text: '', ov: {}, parsed: null, buf: (M.inventory && M.inventory.bufferDays) || 3 };
+  const BIZ = ['大宗采购船', '成品销售船', '物资备件船'], LOCAL = 'BAHODOPI', DEF_LOAD = 'QINHUANGDAO', DEF_CUST = 'HAIPHONG';
+  // 页面状态。阶段：1 输入需求 → 2 智能解析 → 3 库存测算 → 4 生成方案（只改界面流程，计算全部调用原有引擎函数）
+  const S = { text: '', ov: {}, parsed: null, stale: false, gen: false, buf: (M.inventory && M.inventory.bufferDays) || 3,
+    invTab: 'mat', closed: {}, view: 'trend', range: 0 };
   const lvl = (d) => (d >= 25 ? ['ok', '充裕'] : d >= 15 ? ['mid', '偏紧'] : ['bad', '危险']);
+  const isProd = () => S.parsed && S.parsed.biz === '成品销售船';
+  const routeOf = (p) => (p.biz === '成品销售船' ? { load: LOCAL, disch: p.disch || DEF_CUST } : { load: p.load || DEF_LOAD, disch: LOCAL });
+  const missing = () => { const p = S.parsed, m = []; if (!p) return ['需求']; if (!p.biz) m.push('船型'); if (!p.tons) m.push('货量'); return m; };
+  const ready = () => !!(S.parsed && !S.stale && !missing().length && !S.parsed.outside);
 
-  // ---------- 右侧：库存可用天数分析 ----------
+  // ---------- 四阶段 ----------
+  function stage() {
+    if (!S.parsed || S.stale) return 1;
+    if (!ready()) return 2;
+    return 4;                                                   // 解析完整后库存测算即时完成（未指定物料时跳过），等待生成方案
+  }
+  function drawSteps() {
+    const cur = stage(), noItem = S.parsed && !S.stale && !S.parsed.item;
+    const names = ['输入需求', '智能解析', noItem && cur === 4 ? '库存测算（未指定物料）' : '库存测算', S.gen ? '正在生成方案' : '生成方案'];
+    $('steps').innerHTML = names.map((n, i) => { const k = i + 1; let c = k < cur ? 'done' : k === cur ? 'cur' : '';
+      if (k === 3 && noItem && cur === 4) c = 'skip';
+      return '<div class="st ' + c + '"><b>' + (c === 'done' ? '✓' : k) + '</b><span>' + n + '</span></div>'; }).join('');
+  }
+  function syncButtons() {
+    const has = !!$('q').value.trim();
+    $('send').disabled = !has; $('send').title = has ? '' : '先输入需求';
+    $('clr').disabled = !has && !S.parsed;
+    const g = $('go'), why = $('why');
+    if (g) {
+      const ok = ready() && !S.gen; g.disabled = !ok;
+      if (why) { const m = missing(); why.className = 'why' + (ok ? '' : ' err');
+        why.textContent = S.gen ? '正在生成…' : S.stale ? '需求文字已修改，请先点「解析需求」' : m.length ? '还缺少：' + m.join('、') : S.parsed.outside ? '时间超出范围，只能看未来 60 天' : '下一页给出推荐方案和备选方案' + (S.parsed.item ? '，并保证不断料' : ''); }
+    }
+    drawSteps();
+  }
+
+  // ---------- 右侧：库存可用天数分析（按物料 / 按风险） ----------
   function drawInv() {
     const I = M.inventory, sel = S.parsed && S.parsed.item ? S.parsed.item.name : '';
-    const grp = (type) => { const L = I.items.filter((i) => i.type === type).sort((a, b) => a.days - b.days);
-      return '<div><div class="gt">' + type + '</div>' + L.map((i) => { const l = lvl(i.days); return '<div class="ir ' + l[0] + (i.name === sel ? ' sel' : '') + '" data-n="' + C.esc(i.name) + '"' + C.tipAttr(i.name + '\n当前库存 ' + fmt(i.stock) + ' 吨 · 日耗 ' + fmt(i.daily) + ' 吨\n' + (i.stockout ? '断料日 ' + C.mdCn(E.iso(i.stockout)) + '（距今 ' + (i.stockout - T) + ' 天）' : '模拟期内不断料') + '\n点击带入提问') + '><i></i><span>' + i.name + '</span><b>' + i.days + '天</b></div>'; }).join('') + '</div>'; };
-    $('inv').innerHTML = '<div class="grp"><h2>库存可用天数分析' + C.ic('按库存消耗模拟表计算：可用天数 = 当前库存 ÷ 日耗。模拟库存已经包含已排定的到货，所以「断料日」就是模拟库存降到 0 的那一天，也就是断料计划。点击某个物料可以带入提问。') + '</h2>' +
+    const row = (i, showType) => { const l = lvl(i.days);
+      return '<div class="ir ' + l[0] + (i.name === sel ? ' sel' : '') + '" data-n="' + C.esc(i.name) + '"' + C.tipAttr(i.name + '\n当前库存 ' + fmt(i.stock) + ' 吨 · 日耗 ' + fmt(i.daily) + ' 吨\n' + (i.stockout ? '模拟库存首次降到 0：' + C.mdCn(E.iso(i.stockout)) + '（距今 ' + (i.stockout - T) + ' 天）' : '模拟期内不断料') + '\n点击带入提问') + '><i></i><span>' + i.name + '</span>' + (showType ? '<em>' + i.type + '</em>' : '') + '<b>' + i.days + '天</b></div>'; };
+    const grp = (key, title, list, showType) => '<div class="ig' + (S.closed[key] ? ' closed' : '') + '"><div class="ig-h" data-g="' + C.esc(key) + '"><span class="ar">▾</span>' + title + '（' + list.length + '）</div><div class="ig-b">' +
+      (list.length ? list.map((i) => row(i, showType)).join('') : '<div class="ir" style="cursor:default;color:var(--faint)">没有</div>') + '</div></div>';
+    let body;
+    if (S.invTab === 'mat') { const types = [...new Set(I.items.map((i) => i.type))]; body = types.map((ty) => grp('t:' + ty, ty, I.items.filter((i) => i.type === ty).sort((a, b) => a.days - b.days), false)).join(''); }
+    else body = [['bad', '危险（15 天以内）'], ['mid', '偏紧（15–25 天）'], ['ok', '充裕（25 天以上）']].map(([k, t]) => grp('r:' + k, t, I.items.filter((i) => lvl(i.days)[0] === k).sort((a, b) => a.days - b.days), true)).join('');
+    $('inv').innerHTML = '<div class="grp"><h2>库存可用天数分析' + C.ic('按库存消耗模拟表计算：可用天数 = 当前库存 ÷ 日耗。模拟库存已经包含已排定的到货，降到 0 的那一天就是断料日。点击某个物料可以带入提问。') + '</h2>' +
       '<div class="lg"><span><i style="background:#52c41a"></i>充裕（>25天）</span><span><i style="background:#fa8c16"></i>偏紧（15–25天）</span><span><i style="background:#ff4d4f"></i>危险（&lt;15天）</span></div></div>' +
       '<div class="up"><span>更新于 ' + I.updated + '</span>' + (I.sample ? '<span class="sample">示例数据（数值虚构）</span>' : '<span class="sample" style="background:#f6ffed;border-color:#b7eb8f;color:#237804">已导入：' + C.esc(I.source.replace('导入：', '')) + '</span>') + '</div>' +
-      '<div class="grp"><div class="invgrid">' + grp('焦煤') + grp('铁矿') + '</div>' + grp('辅料').replace('<div><div class="gt">', '<div style="margin-top:6px"><div class="gt">') + '</div>' +
+      '<div class="itabs"><button data-t="mat" class="' + (S.invTab === 'mat' ? 'on' : '') + '">按物料</button><button data-t="risk" class="' + (S.invTab === 'risk' ? 'on' : '') + '">按风险</button></div>' + body +
       '<div class="imp"><button class="btn" id="imp">导入库存消耗模拟表</button><input type="file" id="file" accept=".xlsx,.xls" hidden>' + (I.sample ? '' : '<button class="btn" id="rst">恢复示例数据</button>') + '<span>文件只在你的浏览器里解析，不上传、不保存到仓库。</span></div>';
-    $('inv').querySelectorAll('.ir').forEach((r) => r.onclick = () => { const n = r.dataset.n, it = I.items.find((x) => x.name === n); const route = it.type === '辅料' ? '新村港' : '秦皇岛'; $('q').value = n.replace('总库存', '') + ' ' + route + '→德信 5万吨'; run(); $('parsed').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); });
+    $('inv').querySelectorAll('.itabs [data-t]').forEach((b) => b.onclick = () => { S.invTab = b.dataset.t; drawInv(); });
+    $('inv').querySelectorAll('.ig-h').forEach((h) => h.onclick = () => { const k = h.dataset.g; S.closed[k] = !S.closed[k]; h.parentNode.classList.toggle('closed', S.closed[k]); });
+    $('inv').querySelectorAll('.ir[data-n]').forEach((r) => r.onclick = () => { const n = r.dataset.n, it = I.items.find((x) => x.name === n); const route = it.type === '辅料' ? '新村港' : '秦皇岛'; $('q').value = n.replace('总库存', '') + ' ' + route + '→德信 5万吨'; run(); $('parsed').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); });
     $('imp').onclick = () => $('file').click(); $('file').onchange = (e) => { if (e.target.files[0]) importFile(e.target.files[0]); };
     const rs = $('rst'); if (rs) rs.onclick = () => { try { sessionStorage.removeItem('ssps-inventory'); } catch (e) { /* ignore */ } location.reload(); };
   }
 
-  // ---------- 解析与展示 ----------
-  const chip = (k, v, cls) => '<span class="pc' + (cls ? ' ' + cls : '') + '"><span class="k">' + k + '</span>' + v + '</span>';
+  // ---------- 阶段 2：解析结果（可编辑后重新计算） ----------
+  function fieldsHtml(p) {
+    const prod = p.biz === '成品销售船', I = M.inventory.items, types = [...new Set(I.map((i) => i.type))], ports = M.ports.filter((x) => !x.isLocal);
+    const cell = (lab, ctl, cls, hint) => '<div class="' + (cls || '') + '"><label>' + lab + '</label>' + ctl + (hint ? '<div class="fh">' + hint + '</div>' : '') + '</div>';
+    const bizSel = '<select class="inp" data-f="biz"><option value="">待确认</option>' + BIZ.map((b) => '<option' + (p.biz === b ? ' selected' : '') + '>' + b + '</option>').join('') + '</select>';
+    const itemSel = '<select class="inp" data-f="item"><option value="">不指定（只按港口容量）</option>' + types.map((ty) => '<optgroup label="' + ty + '">' +
+      I.filter((i) => i.type === ty).map((i) => '<option value="' + C.esc(i.name) + '"' + (p.item && p.item.name === i.name ? ' selected' : '') + '>' + i.name + '（' + i.days + ' 天）</option>').join('') + '</optgroup>').join('') + '</select>';
+    const tons = '<div class="suf"><input class="inp" type="number" min="0" step="1000" data-f="tons" value="' + (p.tons || '') + '" placeholder="待补充"><em>吨</em></div>';
+    const pSel = (f, v) => '<select class="inp" data-f="' + f + '"><option value="">' + (f === 'load' ? '未识别（默认秦皇岛）' : '未识别（默认海防）') + '</option>' + ports.map((x) => '<option value="' + x.en + '"' + (v === x.en ? ' selected' : '') + '>' + x.cn.replace(/（.*?）/g, '') + '</option>').join('') + '</select>';
+    const route = prod ? '<div class="rt"><span>德信 →</span>' + pSel('disch', p.disch) + '</div>' : '<div class="rt">' + pSel('load', p.load) + '<span>→ 德信</span></div>';
+    const dl = '<input class="inp" type="date" data-f="b" value="' + (p.userDeadline && p.b ? E.iso(p.b) : '') + '" min="' + E.iso(T) + '" max="' + E.iso(T + 60) + '">';
+    const dh = p.userDeadline && p.b ? (p.range && p.a > T ? '窗口 ' + md(p.a) + ' – ' + md(p.b) : '你约定的截止日') : (p.item ? '未说明，按库存自动推算' : '未说明，默认看未来 15 天');
+    const ih = p.item ? (p.item.name.endsWith('总库存') ? '只说了类型，按' + p.item.type + '总库存判断' : '按这个品名判断断料') : (p.biz === '大宗采购船' ? '未识别，只按港口容量预测' : '');
+    return '<div class="pf">' + cell('船型', bizSel, p.biz ? '' : 'miss', p.biz ? '' : '请选择') + cell('物料', itemSel, '', ih) + cell('货量', tons, p.tons ? '' : 'miss', p.tons ? '' : '请填写') +
+      cell('航线', route, 'wide') + cell(prod ? '装船截止日' : '到港截止日', dl, p.outside ? 'miss' : '', dh) + '</div>';
+  }
   function render() {
-    const p = S.parsed; if (!p) { $('parsed').innerHTML = ''; $('stock').innerHTML = ''; return; }
-    let h = '<div class="card" style="margin-top:14px"><div class="ch">解析结果' + C.ic('系统按关键词判断是大宗采购船、成品销售船还是物资备件船，并识别物料、货量、航线和到港截止日。数值由规则引擎计算，不经过生成式模型改写。') + '</div><div class="chips">';
-    h += p.biz ? chip('船型', '<b>' + p.biz + '</b>') : chip('船型', '待确认', 'miss');
-    if (p.item) h += chip('物料', '<b>' + p.item.name.replace('总库存', '（' + p.item.type + '总库存）') + '</b>'); else if (p.biz === '大宗采购船') h += chip('物料', '未识别（只按港口容量预测）', 'warn');
-    h += p.tons ? chip('货量', '<b>' + fmt(p.tons) + '吨</b>') : chip('货量', '待补充', 'miss');
-    const zh = (en) => C.zh(en);
-    h += p.biz === '成品销售船' ? chip('航线', '<b>' + (p.disch ? '本港装货 → ' + zh(p.disch) : '待补充客户港') + '</b>', p.disch ? '' : 'miss') : chip('航线', p.load ? '<b>' + zh(p.load) + ' → 德信</b>' : '装港待补充（默认秦皇岛）', p.load ? '' : 'warn');
-    h += p.userDeadline && p.b ? chip(p.biz === '成品销售船' ? '装船' : '到港截止', '<b>' + (p.range && p.a > T ? md(p.a) + ' – ' : '') + mdCn(p.b) + '</b>') : chip('到港截止', p.item ? '未说明，按库存自动推算' : '未说明，默认看未来 15 天', 'miss');
-    h += '</div>';
-    if (!p.biz) h += '<div class="alts">这是哪种船？' + ['大宗采购船', '成品销售船', '物资备件船'].map((b) => '<button class="chipf" data-biz="' + b + '">' + b + '</button>').join('') + '</div>';
-    if (p.biz && !p.tons) h += '<div class="alts">还差一个货量，点选或在上面补一句：' + [20000, 30000, 50000, 70000].map((n) => '<button class="chipf" data-tons="' + n + '">' + n / 10000 + ' 万吨</button>').join('') + '</div>';
+    const p = S.parsed;
+    if (!p) { $('parsed').innerHTML = ''; $('stock').innerHTML = ''; drawInv(); syncButtons(); return; }
+    let h = '<div class="card"><div class="sh"><h2><svg width="16" height="16" viewBox="0 0 24 24"><path d="M3 21l3-1 11-11-2-2L4 18zM14 6l2-2 4 4-2 2z" fill="#1677ff"/></svg>智能解析结果' + C.ic('系统按关键词识别船型、物料、货量、航线和截止日。识别不准可以直接改，改完自动重新计算。数值由规则引擎计算，不经过生成式模型改写。') + '</h2><span class="sub">可编辑后重新计算</span><span class="sp"></span><button class="btn" id="reparse"' + C.tipAttr('放弃手工修改，按输入框里的文字重新解析') + '>↻ 重新解析</button></div>';
+    if (S.stale) h += '<div class="stale">需求文字已修改，下面还是上一次的解析结果。点「解析需求」按新文字重新解析。</div>';
+    h += fieldsHtml(p);
+    if (p.biz && !p.tons) h += '<div class="alts">常用货量：' + [20000, 30000, 50000, 70000].map((n) => '<button class="chipf" data-tons="' + n + '">' + n / 10000 + ' 万吨</button>').join('') + '</div>';
     if (p.ambiguous && p.alt.length) h += '<div class="alts">也可能是：' + p.alt.map((i) => '<button class="chipf" data-item="' + C.esc(i.name) + '">' + i.name + '</button>').join('') + '</div>';
-    if (p.outside) h += '<div class="notebox red">时间超出范围，只能看未来 60 天。</div>';
+    if (p.outside) h += '<div class="concl red" style="margin-top:0">时间超出范围，只能看未来 60 天。</div>';
     $('parsed').innerHTML = h + '</div>';
-    $('parsed').querySelectorAll('[data-biz]').forEach((b) => b.onclick = () => { S.ov.biz = b.dataset.biz; run(true); });
-    $('parsed').querySelectorAll('[data-tons]').forEach((b) => b.onclick = () => { S.ov.tons = +b.dataset.tons; run(true); });
-    $('parsed').querySelectorAll('[data-item]').forEach((b) => b.onclick = () => { S.ov.item = M.inventory.items.find((x) => x.name === b.dataset.item); run(true); });
-    drawStock(); drawInv();
+    const pin = () => { if (!S.ov.biz && S.parsed.biz) S.ov.biz = S.parsed.biz; };   // 改其他字段时固定当前船型，避免重新识别时跳变
+    $('parsed').querySelectorAll('[data-f]').forEach((el) => el.onchange = () => {
+      const f = el.dataset.f, v = el.value; pin();
+      if (f === 'biz') { if (v) S.ov.biz = v; else delete S.ov.biz; }
+      else if (f === 'item') S.ov.item = v ? M.inventory.items.find((x) => x.name === v) : null;
+      else if (f === 'tons') { if (+v > 0) S.ov.tons = +v; else delete S.ov.tons; }
+      else if (f === 'load' || f === 'disch') { if (v) S.ov[f] = v; else delete S.ov[f]; }
+      else if (f === 'b') { if (v) S.ov.b = E.dn(v); else delete S.ov.b; }
+      setTimeout(() => { run(true); C.toast('已按修改重新计算'); }, 0);   // 下一拍再重绘，避免在 change/blur 过程中替换节点
+    });
+    $('parsed').querySelectorAll('[data-tons]').forEach((b) => b.onclick = () => { pin(); S.ov.tons = +b.dataset.tons; run(true); });
+    $('parsed').querySelectorAll('[data-item]').forEach((b) => b.onclick = () => { pin(); S.ov.item = M.inventory.items.find((x) => x.name === b.dataset.item); run(true); });
+    $('reparse').onclick = () => run(false);
+    drawStock(); drawInv(); syncButtons();
   }
-  const ready = () => S.parsed && S.parsed.biz && S.parsed.tons && !S.parsed.outside;
+
+  // ---------- 阶段 3：库存测算 ----------
+  function detailTable(it, until, marks) {
+    const rows = it.series.filter((x) => x[0] >= T && x[0] <= until);
+    let prev = null;
+    const tr = rows.map((x) => { const [d, s, dl] = x, tags = [];
+      if (d === T) tags.push('今天'); if (marks.gap && d === marks.gap.from) tags.push('短缺口开始'); if (d === marks.latest) tags.push('最晚到港'); if (d === marks.so) tags.push('断料日');
+      if (prev != null && s > prev) tags.push('到货 +' + fmt(s - prev + dl)); prev = s;
+      const cls = d === marks.so ? 'so' : tags.length ? 'k' : '';
+      return '<tr class="' + cls + '"><td>' + md(d) + '</td><td>' + C.wk(E.iso(d)) + '</td><td class="r">' + fmt(dl) + '</td><td class="r">' + fmt(s) + '</td><td class="r">' + (dl ? Math.floor(s / dl) : '—') + '</td><td>' + tags.join('、') + '</td></tr>'; }).join('');
+    return '<div class="dtw"><table class="dt"><thead><tr><th>日期</th><th>星期</th><th class="r">日耗（吨）</th><th class="r">模拟库存（吨）</th><th class="r">可用天数</th><th>标记</th></tr></thead><tbody>' + tr + '</tbody></table></div>';
+  }
+  const SHIP = '<svg width="16" height="16" viewBox="0 0 24 24" style="vertical-align:-3px;margin-right:6px"><path d="M3 15h18l-3 5H6z" fill="#fff"/><path d="M6 14V8h8l3 6z" fill="#fff" opacity=".7"/></svg>';
   function drawStock() {
-    const p = S.parsed, el = $('stock'); let h = '';
+    const p = S.parsed, el = $('stock');
+    if (!p) { el.innerHTML = ''; return; }
+    let h = '<div class="card">';
     if (p.item) {
-      const prod0 = p.biz === '成品销售船', sp = E.effStockout(p.item, S.buf, prod0 ? 'BAHODOPI' : (p.load || 'QINHUANGDAO'), prod0 ? (p.disch || 'HAIPHONG') : 'BAHODOPI', p.biz), it = p.item, so = sp.so, buf = S.buf, latest = so != null ? so - buf : null, d = it.days, l = lvl(d);
-      const gap = latest != null ? Math.max(0, latest - T) : null;
-      h += '<div class="card" style="margin-top:14px"><div class="ch blue">库存保障 · ' + it.name + '<span class="lvl ' + l[0] + '">' + l[1] + '</span>' + C.ic('库存曲线按日耗下降，已排定的到货会让它回升。降到 0 的那一天是断料日。新到的船必须在「断料日 − 缓冲天数」之前到港，否则按断料处理。') + '</div>' +
-        '<div class="facts"><div><div class="k">当前库存</div><div class="v">' + fmt(it.stock) + '<small>吨</small></div></div><div><div class="k">日耗</div><div class="v">' + fmt(it.daily) + '<small>吨/天</small></div></div>' +
-        '<div><div class="k">可用天数</div><div class="v">' + d + '<small>天</small></div></div><div><div class="k">断料日</div><div class="v">' + (so != null ? mdCn(so) : '不断料') + '<small>' + (so != null ? (so - T <= 0 ? '已断料' : '距今 ' + (so - T) + ' 天') : '') + '</small></div></div></div>';
-      h += '<div class="facts" style="padding-top:4px"><div><div class="k">到港后缓冲' + C.ic('船到港后还要靠泊、卸货、入库，所以要提前留几天。原型默认 3 天，待确认。') + '</div><div class="v"><select class="inp" id="buf" style="width:92px;height:28px;padding:0 6px;font-weight:600">' + [0, 1, 2, 3, 4, 5, 7].map((n) => '<option value="' + n + '"' + (n === buf ? ' selected' : '') + '>' + n + ' 天</option>').join('') + '</select></div></div>' +
-        '<div><div class="k">最晚到港日</div><div class="v">' + (latest != null ? mdCn(latest) : '—') + '<small>' + (latest != null ? (latest < T ? '已错过' : '距今 ' + (latest - T) + ' 天') : '') + '</small></div></div>' +
-        (p.userDeadline && p.b ? '<div><div class="k">你给的截止日</div><div class="v">' + mdCn(p.b) + '</div></div>' : '') + '</div>';
-      h += '<div style="padding:0 12px 6px">' + window.StockChart.html(it, { latest, so, gap: sp.gap, warnDays: 15, width: Math.max(300, ($('stock').clientWidth || 760) - 28) }) + '</div>';
-      if (sp.gap) h += '<div class="notebox blu"><b>' + mdCn(sp.gap.from) + ' 起有一个短缺口</b>，按这条航线的最快航程已经赶不上，之后由已排定的到货补回。这次排船以补回后的下一次断料日为目标。</div>';
-      if (so != null && so <= T) h += '<div class="notebox red">这个物料已经断料。预测会切换为「最快到港」，并如实提示断料天数；同时请联系供应商或调拨。</div>';
-      else if (latest != null && latest - T < 14) h += '<div class="notebox amb">按秦皇岛、唐山这类航线的航程（约 11～14 天），距最晚到港日只剩 ' + Math.max(0, latest - T) + ' 天，<b>可能已经赶不上</b>。生成预测后会给出最快能到的日期和断料天数。</div>';
-      else if (so == null) h += '<div class="notebox blu">模拟期内这个物料不会断料，预测只按港口容量安排。</div>';
-      else h += '<div class="notebox blu">预测会保证到港窗口落在最晚到港日（' + mdCn(latest) + '）之前，在此范围内选港口最宽松的时间。</div>';
-      h += '</div>';
-    } else if (p.biz === '大宗采购船') {
-      h += '<div class="notebox amb" style="margin:14px 0 0">没有找到这个物料的库存消耗数据，所以这次预测<b>只按港口容量</b>，不考虑断料。可以从右侧点选物料，或把品名说得更具体些。</div>';
+      const r = routeOf(p), sp = E.effStockout(p.item, S.buf, r.load, r.disch, p.biz), it = p.item, so = sp.so, latest = so != null ? so - S.buf : null, l = lvl(it.days);
+      const rule = E.ruleFor(r.load, r.disch, p.biz), p80 = rule && p.biz !== '成品销售船' ? Math.ceil(rule.effP80) : null;
+      h += '<div class="sh"><h2>库存保障 · ' + it.name + '</h2><span class="lvl ' + l[0] + '">' + l[1] + '</span>' + C.ic('库存曲线按日耗下降，已排定的到货会让它回升；降到 0 的那一天是断料日。新到的船必须在「断料日 − 缓冲天数」之前到港。') +
+        '<span class="sp"></span><span class="sub">到港后缓冲' + C.ic('船到港后还要靠泊、卸货、入库，所以要提前留几天。原型默认 3 天，待确认。') + '</span><select class="inp" id="buf" style="width:84px;height:30px;padding:0 6px;font-weight:600">' +
+        [0, 1, 2, 3, 4, 5, 7].map((n) => '<option value="' + n + '"' + (n === S.buf ? ' selected' : '') + '>' + n + ' 天</option>').join('') + '</select></div>';
+      const card = (k, v, n, cls) => '<div class="mc ' + (cls || '') + '"><div class="k">' + k + '</div><div class="v">' + v + '</div>' + (n ? '<div class="n">' + n + '</div>' : '') + '</div>';
+      h += '<div class="mcs">' + card('当前库存', fmt(it.stock) + '<small>吨</small>') + card('日耗', fmt(it.daily) + '<small>吨/天</small>') + card('可用天数', it.days + '<small>天</small>', l[1], l[0] === 'bad' ? 'red' : l[0] === 'mid' ? 'amb' : '') +
+        card('最晚到港日', latest != null ? mdCn(latest) : '—', latest != null ? (latest < T ? '已错过' : '距今 ' + (latest - T) + ' 天') : '不断料，无限制') +
+        card('约定的截止日', p.userDeadline && p.b ? mdCn(p.b) : '未约定', p.userDeadline && p.b ? '距今 ' + (p.b - T) + ' 天' : '按库存自动推算') +
+        card('断料日', so != null ? mdCn(so) : '不断料', so != null ? (so <= T ? '已断料' : '距今 ' + (so - T) + ' 天') + (sp.gap ? ' · 另有短缺口 ' + md(sp.gap.from) : '') : '模拟期内', so != null ? 'red' : 'grn') + '</div>';
+      h += '<div class="tabs2"><button class="tb' + (S.view === 'trend' ? ' on' : '') + '" data-v="trend">库存趋势预测</button><button class="tb' + (S.view === 'detail' ? ' on' : '') + '" data-v="detail">库存明细</button><span class="sp"></span>' +
+        '<span class="seg">' + [[7, '7天'], [15, '15天'], [30, '30天'], [0, '全部']].map(([n, t]) => '<button data-r="' + n + '" class="' + (S.range === n ? 'on' : '') + '">' + t + '</button>').join('') + '</span></div>';
+      const until = S.range ? T + S.range : Math.min(Math.max(T + 45, (so || 0) + 14, (latest || 0) + 14), T + 100);
+      if (S.view === 'trend') h += '<div class="chartbox">' + window.StockChart.html(it, { latest, so, gap: sp.gap, warnDays: 15, until: S.range ? until : undefined, width: Math.max(320, ($('stock').clientWidth || 900) - 36) }) + '</div>';
+      else h += detailTable(it, until, { so, latest, gap: sp.gap });
+      let cls = '', txt;
+      if (so == null) txt = '模拟期内这个物料不会断料，预测只按港口容量安排。';
+      else if (so <= T) { cls = 'red'; txt = '这个物料已经断料。生成方案时会切换为「最快到港」，并如实提示断料天数；同时请联系供应商或调拨。'; }
+      else {
+        txt = '为保障生产连续，到港窗口最后一天不晚于 <b>' + mdCn(latest) + '</b>（距今 ' + (latest - T) + ' 天，断料日 ' + mdCn(so) + ' 前 ' + S.buf + ' 天），在此范围内选港口最宽松的时间。';
+        if (p.userDeadline && p.b && p.b !== latest) txt += p.b < latest ? '你约定的截止日 ' + mdCn(p.b) + ' 更早，以它为准。' : '你约定的截止日 ' + mdCn(p.b) + ' 晚于最晚到港日，仍以最晚到港日为准（不能断料）。';
+        if (p80 != null && latest - T < p80) { cls = 'amb'; txt += '按这条航线的航程（约 ' + p80 + ' 天）<b>可能已经赶不上</b>，生成方案后会给出最快能到的日期和断料天数。'; }
+      }
+      if (sp.gap) txt = '<b>' + mdCn(sp.gap.from) + ' 起有一个短缺口</b>，按这条航线的最快航程已经赶不上，之后由已排定的到货补回；本次以补回后的下一次断料日为目标。' + txt;
+      h += '<div class="concl ' + cls + '"><b class="t">预测结论：</b>' + txt + '</div>';
+    } else {
+      h += '<div class="sh"><h2>库存测算</h2><span class="sub">未指定物料</span></div><div class="skipc">' + (p.biz === '大宗采购船' ? '没有识别到物料，本次预测<b>只按港口容量</b>，不考虑断料。可以在上面「物料」里选择，或从右侧点选物料。' : '未指定物料，本次只按港口容量和航程预测，不做库存测算。') + '</div>';
     }
-    h += '<div class="gobar"><button class="btn primary" id="go"' + (ready() ? '' : ' disabled') + '>生成预测</button><span class="sm">' + (ready() ? '下一页会给出推荐方案和备选方案' + (p.item ? '，并保证不断料' : '') : '还缺少船型或货量') + '</span></div>';
+    h += '<div class="acts"><button class="btn primary bt" id="go">' + SHIP + '生成发船方案</button><span class="why" id="why"></span></div></div>';
     el.innerHTML = h;
-    const b = $('buf'); if (b) b.onchange = (e) => { S.buf = +e.target.value; drawStock(); };
-    const g = $('go'); if (g && !g.disabled) g.onclick = go;
+    const b = $('buf'); if (b) b.onchange = (e) => { S.buf = +e.target.value; drawStock(); syncButtons(); };
+    el.querySelectorAll('[data-v]').forEach((x) => x.onclick = () => { S.view = x.dataset.v; drawStock(); syncButtons(); });
+    el.querySelectorAll('[data-r]').forEach((x) => x.onclick = () => { S.range = +x.dataset.r; drawStock(); syncButtons(); });
+    $('go').onclick = go;
   }
+
+  // ---------- 阶段 4：生成方案（跳到 P02，参数与原来一致） ----------
   function go() {
-    const p = S.parsed, it = p.item, prod = p.biz === '成品销售船';
-    const so = it ? E.effStockout(it, S.buf, prod ? 'BAHODOPI' : (p.load || 'QINHUANGDAO'), prod ? (p.disch || 'HAIPHONG') : 'BAHODOPI', p.biz).so : null, latest = so != null ? so - S.buf : null;
+    if (!ready() || S.gen) return;
+    S.gen = true; $('go').innerHTML = SHIP + '正在生成方案…'; syncButtons();
+    const p = S.parsed, it = p.item, r = routeOf(p);
+    const so = it ? E.effStockout(it, S.buf, r.load, r.disch, p.biz).so : null, latest = so != null ? so - S.buf : null;
     let we = p.userDeadline && p.b ? p.b : (it ? (latest != null ? Math.max(latest, T) : T + 30) : T + 15);
     let ws = p.a; if (we < ws) ws = Math.min(ws, T);
-    const q = { biz: p.biz, tons: p.tons, load: prod ? 'BAHODOPI' : (p.load || 'QINHUANGDAO'), disch: prod ? (p.disch || 'HAIPHONG') : 'BAHODOPI', ws: E.iso(ws), we: E.iso(we) };
+    const q = { biz: p.biz, tons: p.tons, load: r.load, disch: r.disch, ws: E.iso(ws), we: E.iso(we) };
     if (it) { q.item = it.name; q.buf = S.buf; q.pb = 'end'; }
-    location.href = 'P02-prediction.html?' + new URLSearchParams(q);
+    setTimeout(() => { location.href = 'P02-prediction.html?' + new URLSearchParams(q); }, 350);
   }
+
+  // ---------- 阶段 1 → 2：解析 ----------
   function run(keep) {
-    const text = $('q').value.trim(); if (!text) { C.toast('先说一句话，或点右侧的物料'); return; }
+    const text = $('q').value.trim(); if (!text) { C.toast('先输入需求，或点右侧的物料'); syncButtons(); return; }
     if (!keep) S.ov = {};
-    S.text = text; S.parsed = N.parse(text, S.ov); render();
+    S.text = text; S.parsed = N.parse(text, S.ov); S.stale = false; S.gen = false; render();
+    if (!keep) C.toast(ready() ? '已解析，可以直接修改字段后重新计算' : '已解析，还缺少：' + missing().join('、'));
   }
+  function clearAll() { $('q').value = ''; S.text = ''; S.ov = {}; S.parsed = null; S.stale = false; S.gen = false; render(); $('q').focus(); }
 
   // ---------- 语音输入 ----------
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition; let rec = null, on = false, timer = null;
-  const setOn = (v) => { on = v; $('mic').classList.toggle('on', v); $('wave').classList.toggle('on', v); $('hint').textContent = v ? '正在听，请直接说出需求…再点一次麦克风结束' : '按 Enter 发送，Shift+Enter 换行'; };
+  const setOn = (v) => { on = v; $('mic').classList.toggle('on', v); $('wave').classList.toggle('on', v); $('hint').textContent = v ? '正在听，请直接说出需求…再点一次麦克风结束' : '按 Enter 解析，Shift+Enter 换行'; };
   function demoVoice(why) {
     setOn(true); if (why) C.toast(why);
     const say = EXAMPLES[0], q = $('q'); q.value = ''; let i = 0; clearInterval(timer);
@@ -238,8 +389,10 @@
   $('quick').innerHTML = EXAMPLES.map((x, i) => '<button class="chipf" data-i="' + i + '">' + x + '</button>').join('');
   $('quick').onclick = (e) => { const b = e.target.closest('[data-i]'); if (b) { $('q').value = EXAMPLES[+b.dataset.i]; run(); } };
   $('send').onclick = () => run();
-  $('q').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); run(); } });
-  drawInv();
+  $('clr').onclick = clearAll;
+  $('q').addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); if ($('q').value.trim()) run(); } });
+  $('q').addEventListener('input', () => { const st = !!(S.parsed && $('q').value.trim() !== S.text); if (st !== S.stale) { S.stale = st; render(); } else syncButtons(); });
+  render();
   window.__P11 = { ask(t) { $('q').value = t; run(); }, state: () => S };
 })();
 </script>

@@ -545,11 +545,12 @@
     r.biz = ov.biz || detectBiz(t, !!r.item);
     r.tons = ov.tons || detectTons(t);
     const ports = detectPorts(t), others = ports.filter((p) => p !== LOCAL);
-    if (r.biz === '成品销售船') { r.load = LOCAL; r.disch = others[0] || null; } else { r.load = others[0] || null; r.disch = LOCAL; }
+    if (r.biz === '成品销售船') { r.load = LOCAL; r.disch = ov.disch || others[0] || null; } else { r.load = ov.load || others[0] || null; r.disch = LOCAL; }   // ov：用户在解析结果里手工改的值
     let w = detectWindow(t);
     if (w && r.item && w.d !== undefined) w = { a: T, b: w.d, deadline: true };       // 问库存物料时，单个日期理解为「到港截止日」
     r.hasWin = !!w; r.userDeadline = !!(w && (w.deadline || w.b));
     if (w) { r.a = Math.max(w.a, T); r.b = Math.min(w.b, HORIZON); r.outside = r.b < r.a; } else { r.a = T; r.b = null; }
+    if (ov.b != null) { r.b = ov.b; r.userDeadline = true; if (!w || r.a > r.b) r.a = T; r.outside = r.b < r.a || r.b > HORIZON; }   // 手工改了截止日
     return r;
   };
   window.NLP = N;
@@ -572,6 +573,8 @@
       let until = T + 45;
       [so, opts.latest, ...marks.map((m) => m.d + 14)].forEach((x) => { if (x != null && x + 14 > until) until = x + 14; });
       until = Math.min(until, T + 100);
+      if (opts.until) until = Math.max(T + 3, opts.until);              // 指定显示范围（7 / 15 / 30 天），只裁剪显示，不改计算
+      const inR = (d) => d != null && d >= T && d <= until;
       const base = E.project(item, [], until);
       const lines = marks.slice(0, 2).map((m) => ({ m, pts: E.project(item, [{ d: m.d, tons: m.tons }], until) }));
       const ymax = Math.max(...base.map((p) => p[1]), ...lines.flatMap((l) => l.pts.map((p) => p[1])), item.daily * (opts.warnDays || 15) * 1.4, 1) * 1.08;
@@ -582,9 +585,10 @@
       // y 轴刻度
       for (let k = 0; k <= 4; k++) { const v = ymax / 1.08 * k / 4; g += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y(v) + '" y2="' + y(v) + '" stroke="#eef0f3"/><text x="' + (L - 6) + '" y="' + (y(v) + 4) + '" text-anchor="end" font-size="11" fill="#98a4b3">' + fmtW(v) + '</text>'; }
       // x 轴刻度（每 10 天）
-      for (let d = T; d <= until; d += 10) g += '<text x="' + x(d) + '" y="' + (H - 12) + '" text-anchor="middle" font-size="11" fill="#98a4b3">' + md(d) + '</text>';
+      const step = until - T <= 10 ? 1 : until - T <= 20 ? 2 : until - T <= 40 ? 5 : 10;
+      for (let d = T; d <= until; d += step) g += '<text x="' + x(d) + '" y="' + (H - 12) + '" text-anchor="middle" font-size="11" fill="#98a4b3">' + md(d) + '</text>';
       // 断料期着色
-      if (so != null) { const end = marks.length ? Math.min(...marks.map((m) => m.d)) : until; if (end > so) g += '<rect x="' + x(so) + '" y="' + Tp + '" width="' + Math.max(0, x(Math.min(end, until)) - x(so)) + '" height="' + (H - Tp - B) + '" fill="#fff1f0" opacity=".75"/>'; }
+      if (inR(so)) { const end = marks.length ? Math.min(...marks.map((m) => m.d)) : until; if (end > so) g += '<rect x="' + x(so) + '" y="' + Tp + '" width="' + Math.max(0, x(Math.min(end, until)) - x(so)) + '" height="' + (H - Tp - B) + '" fill="#fff1f0" opacity=".75"/>'; }
       // 危险线
       g += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y(warn) + '" y2="' + y(warn) + '" stroke="#fa8c16" stroke-dasharray="5 4"/><text x="' + (W - R - 4) + '" y="' + (y(warn) - 5) + '" text-anchor="end" font-size="11" fill="#d46b08">危险线（' + (opts.warnDays || 15) + ' 天用量）</text>';
       // 基础库存线
@@ -594,10 +598,10 @@
       // 竖线：今天 / 最晚到港 / 断料日 / 方案到港
       const vline = (d, color, label, dy, dash, left) => '<line x1="' + x(d) + '" x2="' + x(d) + '" y1="' + Tp + '" y2="' + (H - B) + '" stroke="' + color + '" stroke-width="1.6"' + (dash ? ' stroke-dasharray="4 3"' : '') + '/><text x="' + (x(d) + (left ? -4 : 4)) + '" y="' + (Tp + 10 + dy) + '" text-anchor="' + (left ? 'end' : 'start') + '" font-size="11.5" font-weight="600" fill="' + color + '" stroke="#fff" stroke-width="3" paint-order="stroke">' + label + '</text>';
       g += vline(T, '#8c8c8c', '今天', 0, true);
-      if (opts.latest != null && so != null) g += vline(opts.latest, '#fa8c16', '最晚到港 ' + md(opts.latest), 16, true, opts.latest >= T + 8);
-      if (gap) g += vline(gap.from, '#fa8c16', '短缺口 ' + md(gap.from), 0, false);
-      if (so != null) g += vline(so, '#cf1322', '断料日 ' + md(so), 0, false);
-      marks.forEach((m, i) => { g += '<line x1="' + x(m.d) + '" x2="' + x(m.d) + '" y1="' + (H - B - 40) + '" y2="' + (H - B) + '" stroke="' + m.color + '" stroke-width="2.4"/><circle cx="' + x(m.d) + '" cy="' + (H - B - 40) + '" r="9" fill="' + m.color + '"/><text x="' + x(m.d) + '" y="' + (H - B - 36) + '" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">' + m.label + '</text>'; });
+      if (inR(opts.latest) && so != null) g += vline(opts.latest, '#fa8c16', '最晚到港 ' + md(opts.latest), 16, true, opts.latest >= T + 8);
+      if (gap && inR(gap.from)) g += vline(gap.from, '#fa8c16', '短缺口 ' + md(gap.from), 0, false);
+      if (inR(so)) g += vline(so, '#cf1322', '断料日 ' + md(so), 0, false);
+      marks.filter((m) => inR(m.d)).forEach((m, i) => { g += '<line x1="' + x(m.d) + '" x2="' + x(m.d) + '" y1="' + (H - B - 40) + '" y2="' + (H - B) + '" stroke="' + m.color + '" stroke-width="2.4"/><circle cx="' + x(m.d) + '" cy="' + (H - B - 40) + '" r="9" fill="' + m.color + '"/><text x="' + x(m.d) + '" y="' + (H - B - 36) + '" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">' + m.label + '</text>'; });
       return '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" style="display:block;max-width:100%;height:auto" role="img" aria-label="库存消耗模拟曲线">' + g + '</svg>';
     },
   };

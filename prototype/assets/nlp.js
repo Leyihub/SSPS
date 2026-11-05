@@ -75,11 +75,12 @@
     r.biz = ov.biz || detectBiz(t, !!r.item);
     r.tons = ov.tons || detectTons(t);
     const ports = detectPorts(t), others = ports.filter((p) => p !== LOCAL);
-    if (r.biz === '成品销售船') { r.load = LOCAL; r.disch = others[0] || null; } else { r.load = others[0] || null; r.disch = LOCAL; }
+    if (r.biz === '成品销售船') { r.load = LOCAL; r.disch = ov.disch || others[0] || null; } else { r.load = ov.load || others[0] || null; r.disch = LOCAL; }   // ov：用户在解析结果里手工改的值
     let w = detectWindow(t);
     if (w && r.item && w.d !== undefined) w = { a: T, b: w.d, deadline: true };       // 问库存物料时，单个日期理解为「到港截止日」
     r.hasWin = !!w; r.userDeadline = !!(w && (w.deadline || w.b));
     if (w) { r.a = Math.max(w.a, T); r.b = Math.min(w.b, HORIZON); r.outside = r.b < r.a; } else { r.a = T; r.b = null; }
+    if (ov.b != null) { r.b = ov.b; r.userDeadline = true; if (!w || r.a > r.b) r.a = T; r.outside = r.b < r.a || r.b > HORIZON; }   // 手工改了截止日
     return r;
   };
   window.NLP = N;

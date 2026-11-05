@@ -437,10 +437,10 @@
       '<span class="sp"></span><button class="link" id="togCand">系统比对过的 ' + (res.candidates || []).length + ' 个时间 ' + (showCands ? '▴' : '▾') + '</button>' +
       ic('把期望窗口切成每 3 天一档、每次挪一天，逐档计算后挑出推荐和备选。\\n框里是该档的' + (mixed ? '最低泊位余量（近 15 天）或同期最多船数（15 天后）' : le ? '最低泊位余量' : '同期最多船数') + '；带星号表示窗口里有没数据的日子，只按有数据的天数算。') + '</div>' +
       (showCands ? '<div class="cands"><div class="ct">候选窗口（3 天一档，' + (mixed ? '近 15 天按最低泊位余量、15 天后按同期最多船数，各自排序' : '按' + (le ? '最低泊位余量从高到低' : '同期最多船数从少到多')) + '，不使用综合评分）：</div>' + cands + (res.excluded.pastDepart ? '<span class="muted nw">另有 ' + res.excluded.pastDepart + ' 个时间的发船日已早于今天，已排除</span>' : '') + '</div>' : '') + '</div>';
-    h += stockCard(res);
     if (res.noCandidate) {
       h += '<div class="card banner"><div class="ico"></div><div><h3>窗口内没有可以推荐的时间</h3><p>' + (le ? '靠船计划只到 ' + mdCn(E.planCoverTo) : '航次计划只到 ' + mdCn(E.voyHorizon)) + '，这个窗口全部没有数据（灰色斜线，不是 0%）。系统不会因为没有数据而改用另一条计算路径，建议把窗口提前，或等下一期靠船计划。</p></div></div>';
     } else h += '<div class="plans">' + planCard(res.plans[0], res) + planCard(res.plans[1] || null, res) + '</div>';
+    h += stockCard(res);                                             // 方案在上、库存模拟图在下（2026-11-05 Leyinet）
     el.innerHTML = h;
     const tg = $('togCand'); if (tg) tg.onclick = () => { showCands = !showCands; renderResult(last); };
     el.querySelectorAll('[data-detail]').forEach((a) => a.onclick = () => {
