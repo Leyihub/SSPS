@@ -36,7 +36,8 @@ const colIndex = (ref: string) => { let n = 0; for (const ch of ref.replace(/[^A
 
 export interface SheetData { name: string; header: string[]; rows: Array<Record<string, unknown>> }
 
-export function readXlsx(buf: Buffer, sheetName?: string): SheetData {
+/** headerHint：表头行里一定会有的列名（如 '业务类型'）。表头前面有标题行时用它定位表头行；不传则取第一个非空行 */
+export function readXlsx(buf: Buffer, sheetName?: string, headerHint?: string): SheetData {
   const files = readZip(buf), get = (n: string) => files.get(n)?.toString('utf8');
   const wb = get('xl/workbook.xml');
   if (!wb) throw new Error('不是有效的 .xlsx 文件（缺少 workbook）');
@@ -66,7 +67,7 @@ export function readXlsx(buf: Buffer, sheetName?: string): SheetData {
     }
     grid.push(cells);
   }
-  const hi = grid.findIndex((r) => r.size > 0);
+  const hi = headerHint ? grid.findIndex((r) => [...r.values()].some((v) => String(v).trim() === headerHint)) : grid.findIndex((r) => r.size > 0);
   if (hi < 0) return { name: sheet.name, header: [], rows: [] };
   const width = Math.max(...grid[hi].keys()) + 1, header = Array.from({ length: width }, (_, i) => String(grid[hi].get(i) ?? '').trim());
   const rows: Array<Record<string, unknown>> = [];

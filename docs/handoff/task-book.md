@@ -369,7 +369,7 @@ Leyinet 提供，Codex 记录到 `docs/handoff/env-checklist.md`（只记状态�
 
 ## W4 迁移与验收（阶段 E）
 
-### W40 迁移脚本 dry-run（A27）
+### W40 迁移脚本 dry-run（A27）（2026-11-05 云端已写完并用虚构样本测试：`server/importers/migrate-plan.ts`、`scripts/migrate-dryrun.ts`；待办：Leyinet 本机用真实 Excel 跑（提示词 7，docs/local-tasks-prompts.md），按真实结果调规则；未覆盖：港口信息表→T01、靠船计划表→首个批次、人员映射、正式写入）
 
 规则：`docs/schema/migration-rules.md`；清洗代码已有：`server/importers/migrate.ts`（港口归一 295 种写法、船名拆分、拼船归并、去重、数值化）；Excel 读取：`server/lib/xlsx.ts`。数据源是 Leyinet 提供的企微导出 Excel（**忽略 Base 里已有的 17 张历史表**，2026-11-05 已确认）；原始 Excel 只在本机读，**不提交**。
 

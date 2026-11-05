@@ -9,3 +9,6 @@ data/raw/
 *.csv
 .DS_Store
 server/node_modules/
+# 迁移 dry-run 输出（含待确认清单原文）
+migration-out/
+app/migration-out/

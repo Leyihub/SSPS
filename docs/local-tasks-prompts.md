@@ -320,3 +320,24 @@ T01、T02、T08 行数不变（10、23、10）。
 1. 读 `app/` 里的 tsconfig、Nest 配置和 `.agent` 里的平台规范，开始阶段 C：领域层改成 TypeScript、按平台规范重写建库脚本、写后端模块和仓储层、前端用 React 重写；
 2. 把公式诊断的最终表达式写回建表清单；
 3. 经验航程估算版需要大宗采购部校对，补到 30–50 条。
+
+---
+
+## 提示词 7：迁移 dry-run（W40，在你的本机读企微导出的 Excel）
+
+前提：你手上有企微导出的三份 Excel（商务海运船舶动态表、大宗到船计划表、大宗到船计划表(副本)），**放在仓库目录之外**（比如 `D:\ssps-data\`），不要提交。已经拉取最新代码并 `npm install`。
+
+```text
+在 SSPS 仓库的 app/ 目录执行迁移 dry-run。先读 docs/schema/migration-rules.md、app/scripts/migrate-dryrun.ts 开头的注释。
+
+1. 确认三份 Excel 在仓库目录之外，路径我会告诉你；不要把它们复制进仓库。
+2. 如果 Base 里的 T01 港口表已有内容，先把它导出成 ports.json（格式见脚本注释：[{en, cn, alias[]}]），同样放在仓库目录之外；没有就用脚本内置的种子港口。
+3. 运行：
+   npx tsx --tsconfig tsconfig.node.json scripts/migrate-dryrun.ts --ship <商务海运表.xlsx> --bulk <大宗到船计划表.xlsx> --history <大宗副本.xlsx> [--ports <ports.json>] --out ../ssps-migration-out
+   （输出目录也放在仓库目录之外。）
+4. 如果报「找不到列」或读出 0 行，把表头所在行和前 3 行的列名（不要数据）告诉我，不要自己改代码。
+5. 只把 report.md 的内容回传给我（里面只有统计）。confirm.csv 含港口原文、船名，只留在本机，我会告诉你怎么填、怎么交回来。
+不要提交 Excel、不要提交输出目录；不要贴任何合同号、船名之外的业务明细。
+```
+
+做完把 report.md 发给我。我根据统计调规则，再出「待确认清单」的填写说明。
