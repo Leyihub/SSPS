@@ -1,5 +1,7 @@
 # 交接总览：从云端 Claude 交给本地 Codex（2026-11-05）
 
+> **更新**：开发主力改为 Leyinet 本机的 Claude Code，最新、最完整的入口是 `docs/handoff/claude-code-handoff.md`（初始化提示词：`docs/handoff/claude-code-init-prompt.md`）。本文件保留作为仓库地图和后端架构的补充，其中「本地 Codex」的分工描述以新手册为准。
+
 状态说明：**目前没有任何功能上线。** 下面的「已完成」都指代码已写好、在云端用内存数据和假飞书验证通过；没有连过真实飞书，也没有连过真实数据库。
 
 ## 1. 为什么交接、分工怎么变

@@ -71,3 +71,7 @@
 ## 编号约定
 
 K01–K14 是访谈决策；T01–T10 是飞书表；D01–D12 是应用库自有表（D11–D12 是库存断料）；A01–A30 是后端接口；P01–P11 是页面（P11 智能提问是预测入口，导航里排在 P02 前面）；M1–M3 / G1–G3 是里程碑和验收门。
+
+## 本机 Claude Code 接手（2026-11-05）
+
+开发主力已从云端转到 Leyinet 本机的 Claude Code（本机能连飞书和妙搭）。**先读 `docs/handoff/claude-code-handoff.md`**（完整交接手册：现状、架构、联调路线图、未验证假设清单）；初始化提示词在 `docs/handoff/claude-code-init-prompt.md`。目前**没有任何功能上线**，云端代码只在内存数据 / PGlite / 假飞书上测过。
