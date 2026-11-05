@@ -8,3 +8,4 @@ data/raw/
 *.xls
 *.csv
 .DS_Store
+server/node_modules/
