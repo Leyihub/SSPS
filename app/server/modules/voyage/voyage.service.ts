@@ -40,6 +40,10 @@ export class VoyageService {
     @Inject(DIRECTORY_PORT) private readonly dir: DirectoryPort,
   ) {}
 
+  /** 航次数据有保存时调用（兼容表据此打「待刷新」标记）。每次保存都会写变更日志，所以挂在写日志上 */
+  onSaved?: () => void;
+  private async log(entries: ChangeEntry[]) { await this.store.addChangeLog(entries); this.onSaved?.(); }
+
   /** 时钟：测试里替换 */
   clock: () => Date = () => new Date();
 
@@ -181,7 +185,7 @@ export class VoyageService {
     const warnings = this.check({ ...draft, id: '' } as Voyage, null);
     const { voyage, cargo: saved } = await this.store.create(draft, lines, sub(key, 'create'));
     const v = { ...voyage, status: deriveStatus(voyage) };
-    await this.store.addChangeLog([{ voyage: v.id, field: '新建航次', old: null, nw: v.biz + ' ' + v.load + '→' + v.disch, by: a.name, at: this.now() }]);
+    await this.log([{ voyage: v.id, field: '新建航次', old: null, nw: v.biz + ' ' + v.load + '→' + v.disch, by: a.name, at: this.now() }]);
     await this.store.addIssues(this.issuesOf(v, warnings));
     return { voyage: v, cargo: saved };
   }
@@ -207,7 +211,7 @@ export class VoyageService {
     if (status !== prev.status) entries.push({ voyage: prev.id, field: '状态', old: prev.status || null, nw: status, by: a.name, at });
     if (!entries.length) return { ...prev, status };
     const saved = await this.store.update(prev.id, { ...patch, status }, sub(key, 'update'));
-    await this.store.addChangeLog(entries);
+    await this.log(entries);
     await this.store.addIssues(this.issuesOf(saved, warnings));
     return { ...saved, status };
   }
@@ -223,7 +227,7 @@ export class VoyageService {
     if (nw === prev.eta) throw invalid('新的 ETA 与当前相同');
     const saved = await this.store.update(id, { eta: nw, etaUpdated: at }, sub(key, 'eta'));
     await this.store.addEtaRevision({ voyage: id, node: '预计抵卸港', old: prev.eta, nw, basis, by: a.name, at });
-    await this.store.addChangeLog([{ voyage: id, field: 'ETA', old: show(prev.eta), nw, by: a.name, at }]);
+    await this.log([{ voyage: id, field: 'ETA', old: show(prev.eta), nw, by: a.name, at }]);
     return { ...saved, status: deriveStatus(saved) };
   }
 
@@ -238,7 +242,7 @@ export class VoyageService {
     const saved = await this.store.update(id, { flags, status }, sub(key, 'flag'));
     const entries: ChangeEntry[] = [{ voyage: id, field: '异常标记', old: show(prev.flags), nw: show(flags), by: a.name, at }];
     if (status !== prev.status) entries.push({ voyage: id, field: '状态', old: prev.status || null, nw: status, by: a.name, at });
-    await this.store.addChangeLog(entries);
+    await this.log(entries);
     return { ...saved, status };
   }
 
@@ -271,7 +275,7 @@ export class VoyageService {
   async addCargo(id: string, body: Bag, a: Actor, key?: string) {
     await this.needEdit(id, a);
     const line = await this.store.addCargo(id, this.cleanCargo(body, true), sub(key, 'cargo'));
-    await this.store.addChangeLog([{ voyage: id, field: '货物明细', old: null, nw: '新增 ' + line.name + ' ' + line.tons + ' 吨', by: a.name, at: this.now() }]);
+    await this.log([{ voyage: id, field: '货物明细', old: null, nw: '新增 ' + line.name + ' ' + line.tons + ' 吨', by: a.name, at: this.now() }]);
     return line;
   }
   async updateCargo(id: string, no: string, body: Bag, a: Actor, key?: string) {
@@ -280,7 +284,7 @@ export class VoyageService {
     for (const k of Object.keys(patch)) if (!(k in (body || {}))) delete patch[k];          // 只保留请求里带的字段，不让默认值覆盖已有数据
     const line = await this.store.updateCargo(id, no, patch as Partial<CargoLine>, sub(key, 'cargo'));
     const labels = Object.fromEntries(CARGO_EDITABLE.map((k) => [k, '货物明细 ' + no + ' ' + k]));
-    await this.store.addChangeLog(this.diff(old as any, patch, labels, a.name, id, this.now()));
+    await this.log(this.diff(old as any, patch, labels, a.name, id, this.now()));
     return line;
   }
   async deleteCargo(id: string, no: string, a: Actor, key?: string) {
@@ -288,7 +292,7 @@ export class VoyageService {
     const old = await this.cargoIn(id, no);
     if ((await this.store.cargo(id)).length <= 1) throw invalid('至少保留一行货物明细');
     await this.store.deleteCargo(id, no, sub(key, 'cargo'));
-    await this.store.addChangeLog([{ voyage: id, field: '货物明细', old: old.name + ' ' + old.tons + ' 吨', nw: '已删除', by: a.name, at: this.now() }]);
+    await this.log([{ voyage: id, field: '货物明细', old: old.name + ' ' + old.tons + ' 吨', nw: '已删除', by: a.name, at: this.now() }]);
     return { deleted: no };
   }
 
@@ -316,7 +320,7 @@ export class VoyageService {
     const saved = await this.store.saveSettlement(id, patch, sub(key, 'settle'));
     const at = this.now();
     const labels = { ...Object.fromEntries(OPS_KEYS.map((k) => [k, '结算 ' + k])), ...MONEY_LABEL };
-    await this.store.addChangeLog(this.diff(old as Bag, patch, labels, a.name, id, at, MONEY_SET));
+    await this.log(this.diff(old as Bag, patch, labels, a.name, id, at, MONEY_SET));
     return canSeeMoney(a) ? saved : Object.fromEntries(Object.entries(saved).filter(([k]) => !MONEY_SET.has(k)));
   }
 
@@ -332,7 +336,7 @@ export class VoyageService {
     for (const k of Object.keys(body)) patch[k] = (body as any)[k] === '' ? null : (body as any)[k];
     if (patch.way != null && !(SALES_WAYS as readonly string[]).includes(String(patch.way))) throw invalid('租船方式只能是 CFR 或 FOB');
     const saved = await this.store.saveSalesExt(id, patch as any, sub(key, 'sales'));
-    await this.store.addChangeLog(this.diff(old as Bag, patch, SALES_LABEL, a.name, id, this.now()));
+    await this.log(this.diff(old as Bag, patch, SALES_LABEL, a.name, id, this.now()));
     return saved;
   }
 

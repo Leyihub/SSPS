@@ -57,6 +57,7 @@ export class FakeBase implements BaseGateway {
     }
   }
   async remove(table: TableKey, ids: string[]) { this.maybeFail(); this.log.push({ op: 'remove', table, n: ids.length }); for (const id of ids) this.t(table).delete(id); }
+  async ids(table: TableKey) { return [...this.t(table).keys()]; }
   count(table: string) { return this.t(table).size; }
   get(table: string, rid: string) { return this.t(table).get(rid); }
   all(table: string) { return [...this.t(table).values()]; }

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useMe, useHealth, useSyncLogs } from '../../ssps/api';
+import { api, useMe, useHealth, useSyncLogs, useWrite } from '../../ssps/api';
 import { fmt, mdh } from '../../ssps/format';
 import { Empty, Loading } from '../../ssps/ui';
 import './p10.css';
@@ -10,6 +10,7 @@ const tag = (r: string) => <span className={'tag ' + (r === '成功' || r === '�
 export default function AdminPage() {
   const { data: me } = useMe(), [tab, setTab] = useState('log'), [failOnly, setFailOnly] = useState(false);
   const admin = me?.role === '系统管理员';
+  const compat = useWrite(() => api.refreshCompat(), [['sync-logs']], '兼容表已刷新');
   const logs = useSyncLogs(failOnly, admin && tab === 'log'), health = useHealth(admin && tab === 'health');
   if (!me) return <Loading />;
   return (
@@ -26,9 +27,9 @@ export default function AdminPage() {
             {tab === 'compat' && <div className="pad"><div className="cols">
               {[['T09a', '兼容_商务海运船舶动态', '成品销售船，保留旧表原 33 列的列名和顺序'], ['T09b', '兼容_大宗到船计划', '大宗采购船，保留旧表原 87 列的列名和顺序，一合同一行']].map(([k, n, d]) => (
                 <div className="card cc" key={k}><h3>{n}（{k}）</h3><div className="sub">给综合物流平台用的旧结构表。</div>
-                  <div className="kv"><span>每行对应</span><span>一份货物明细（一合同一行）</span><span>列结构</span><span>{d}</span><span>定时</span><span>每日 15:50 全量重写 + 航次保存后增量</span><span>谁能改</span><span>任何人都不能改，只由后端生成</span><span>当前状态</span><b>未接入</b></div>
-                  <button className="btn" disabled title="兼容表刷新（A26）依赖真实的飞书写入，尚未开发">手动刷新</button></div>))}</div>
-              <div className="warnbox" style={{ margin: '14px 0 0' }}>兼容表刷新（A26）要等航次写入飞书之后才能做，目前<b>还没有开发</b>。综合物流平台先把数据源换成兼容表，并行比对 2 周，再正式切换，避免大屏断数。</div></div>}
+                  <div className="kv"><span>每行对应</span><span>一份货物明细（一合同一行）</span><span>列结构</span><span>{d}</span><span>定时</span><span>每日 15:50 全量重写 + 航次保存后增量</span><span>谁能改</span><span>任何人都不能改，只由后端生成</span><span>当前状态</span><b>{compat.data ? `上次刷新 ${k === 'T09a' ? compat.data.a : compat.data.b} 行` : '本页未刷新过'}</b></div>
+                  <button className="btn" disabled={compat.isPending} onClick={() => compat.mutate(undefined)}>{compat.isPending ? '刷新中…' : '手动刷新（两张表一起）'}</button></div>))}</div>
+              <div className="warnbox" style={{ margin: '14px 0 0' }}>兼容表刷新（A26）后端<b>已写好，还没连过真实飞书</b>：整表重写时按现有行就地覆盖，不会清空。综合物流平台先把数据源换成兼容表，并行比对 2 周，再正式切换，避免大屏断数。</div></div>}
 
             {tab === 'mig' && <div className="pad">
               <div className="warnbox" style={{ margin: '0 0 12px' }}>迁移在<b>本机</b>运行（要读企微导出的真实 Excel，原始文件不上传、不提交）。跑完 dry-run 后只回传统计数和待确认清单，确认后再正式写入；这里将显示最近一次 dry-run 的报告。迁移接口（A27）<b>还没有开发</b>。</div>

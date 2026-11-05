@@ -68,6 +68,7 @@ export const api = {
   addBerth: (b: unknown) => send('post', '/api/berths', b), patchBerth: (code: string, b: unknown) => send('patch', `/api/berths/${code}`, b),
   addVessel: (b: unknown) => send('post', '/api/vessels', b), patchVessel: (id: string, b: unknown) => send('patch', `/api/vessels/${id}`, b),
   addRule: (b: unknown) => send('post', '/api/route-rules', b), patchRule: (id: string, b: unknown) => send('patch', `/api/route-rules/${id}`, b),
+  refreshCompat: () => send<{ skipped: boolean; a: number; b: number }>('post', '/api/admin/compat/refresh'),
   recompute: () => send<{ rules: number; changed: number; switched: string[] }>('post', '/api/route-rules/recompute'),
 };
 export { getApiErrorMessage };

@@ -343,7 +343,7 @@ Leyinet 提供，Codex 记录到 `docs/handoff/env-checklist.md`（只记状态�
 
 验收：每个触发器在真实环境至少成功跑一次，D09 有记录；手动重复触发不产生重复数据。
 
-### W32 A26 兼容表 T09a/T09b 刷新
+### W32 A26 兼容表 T09a/T09b 刷新（2026-11-05 云端已写完并测试：`POST /api/admin/compat/refresh`、`CompatService`、`domain/compat.ts`，列对应见 docs/schema/compat-mapping.md；待办：Leyinet 核对列口径、本机真实 Base 联调、15:50 定时触发归 W31、对照企微原表抽样 50 行）
 
 规格：`docs/schema/T09-T10-compat-and-berth-plan.md`。T09a 保留商务海运表原 33 列，T09b 保留大宗到船计划表原 87 列，列名和顺序不变，每行对应 T05 一行货物明细，由后端**全量重写**（每日 15:50 + 航次保存后增量刷新，保存时只打「待刷新」标记）。全量重写要分批 ≤500 且不中断下游读取（先写新再切换，或按 Base 能力选择最小干扰方案，并在文档里说明）。
 
