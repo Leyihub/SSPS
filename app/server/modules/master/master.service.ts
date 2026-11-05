@@ -58,7 +58,7 @@ export class MasterService {
     const status = text(b.status ?? base?.status ?? '启用');
     if (!['启用', '停用'].includes(status)) errs.push('状态只能是启用或停用');
     if (errs.length) throw invalid(errs.join('；'));
-    return { en, cn, alias: 'alias' in b ? list(b.alias) : base?.alias ?? [], country, region: text(b.region ?? base?.region), kind: kind as PortRow['kind'], isLocal: 'isLocal' in b ? b.isLocal === true : !!base?.isLocal, status: status as PortRow['status'] };
+    return { code: text(b.code ?? base?.code), en, cn, alias: 'alias' in b ? list(b.alias) : base?.alias ?? [], country, region: text(b.region ?? base?.region), kind: kind as PortRow['kind'], isLocal: 'isLocal' in b ? b.isLocal === true : !!base?.isLocal, status: status as PortRow['status'] };
   }
   async addPort(b: Bag, a: Actor, key?: string) {
     if (!canMaintainMaster(a)) throw forbidden('只有物流管理员和系统管理员可以维护港口');
@@ -70,7 +70,7 @@ export class MasterService {
   }
   async patchPort(en: string, b: Bag, a: Actor, key?: string) {
     if (!canMaintainMaster(a)) throw forbidden('只有物流管理员和系统管理员可以维护港口');
-    only(b, ['cn', 'alias', 'country', 'region', 'kind', 'status']);        // 英文标准名和是否本港是港口身份，不允许改
+    only(b, ['code', 'cn', 'alias', 'country', 'region', 'kind', 'status']);        // 英文标准名和是否本港是港口身份，不允许改
     const all = await this.store.ports(), old = all.find((p) => p.en === en);
     if (!old) throw notFound('找不到港口：' + en);
     if (old.isLocal && b.status === '停用') throw invalid('本港不能停用');

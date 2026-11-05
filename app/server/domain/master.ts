@@ -1,5 +1,5 @@
 // 主数据（T01 港口、T02 泊位、T03 船舶、T08 航程规则）的行形状。泊位和航程规则的形状在 types.ts。
-export interface PortRow { en: string; cn: string; alias: string[]; country: string; region: string; kind: '内港' | '外港'; isLocal: boolean; status: '启用' | '停用' }
+export interface PortRow { code: string; en: string; cn: string; alias: string[]; country: string; region: string; kind: '内港' | '外港'; isLocal: boolean; status: '启用' | '停用' }
 export interface VesselRow { id: string; name: string; alias: string[]; mmsi: string | null; imo: string | null; type: string; dwt: number | null; length: number | null; tier: string | null }
 
 export const COUNTRIES = ['印度尼西亚', '中国', '菲律宾', '越南', '其他'];

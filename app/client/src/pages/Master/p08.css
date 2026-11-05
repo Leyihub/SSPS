@@ -1,0 +1,19 @@
+/* 由 scripts/extract-page-css.cjs 从原型页面抽出，选择器已加前缀 .pg-p08 */
+.pg-p08 .btns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pg-p08 .viewer{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:12px;white-space:nowrap}
+.pg-p08 .viewer select{height:28px;padding:0 6px;border:1px solid #d3d9e1;border-radius:6px;background:#fff}
+.pg-p08 .fbar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line-2)}
+.pg-p08 .fbar .inp{width:auto}
+.pg-p08 .tbl td,.pg-p08 .tbl th{white-space:nowrap}
+.pg-p08 .tbl td.wrap{white-space:normal;min-width:180px}
+.pg-p08 .note{margin:12px 16px 0;border-radius:8px;padding:8px 12px;font-size:13px;background:#fffbe6;border:1px solid #ffe58f;color:#ad6800}
+.pg-p08 .alias{display:flex;flex-wrap:wrap;gap:4px}
+.pg-p08 .alias span{background:#f2f4f7;border-radius:4px;padding:0 6px;font-size:12px;color:#4a596b;white-space:nowrap}
+.pg-p08 .prog{display:inline-flex;align-items:center;gap:6px}
+.pg-p08 .prog i{display:inline-block;width:56px;height:6px;border-radius:3px;background:#e8ebef;overflow:hidden;vertical-align:middle}
+.pg-p08 .prog i b{display:block;height:100%;background:var(--primary)}
+.pg-p08 .prog i b.ok{background:#52c41a}
+.pg-p08 .f-lab2{color:var(--muted);font-size:12px;margin-bottom:4px}
+.pg-p08 textarea.inp{height:auto;min-height:80px;padding:6px 9px}
+.pg-p08 .mut{color:var(--faint)}
+.pg-p08 .denied{color:#98a4b3;font-size:12px}

@@ -25,7 +25,7 @@ export const seedSnapshot = (today: string): Snapshot => ({ today, berths: SEED_
 const COUNTRY: Record<string, string> = { BAHODOPI: '印度尼西亚', JAKARTA: '印度尼西亚', SURABAYA: '印度尼西亚', SURIGAO: '菲律宾', TAGANITO: '菲律宾', SINGAPORE: '其他', HAIPHONG: '越南' };
 export function seedMaster() {
   return {
-    ports: SEED_PORTS.map((p): PortRow => ({ en: p.en, cn: p.cn, alias: p.alias || [], country: COUNTRY[p.en] || '中国', region: '', kind: p.isLocal ? '内港' : '外港', isLocal: p.isLocal, status: '启用' })),
+    ports: SEED_PORTS.map((p): PortRow => ({ code: '', en: p.en, cn: p.cn, alias: p.alias || [], country: COUNTRY[p.en] || '中国', region: '', kind: p.isLocal ? '内港' : '外港', isLocal: p.isLocal, status: '启用' })),
     berths: SEED_BERTHS,
     routeRules: SEED_RULES,
   };

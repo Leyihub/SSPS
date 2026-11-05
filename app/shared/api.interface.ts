@@ -49,7 +49,7 @@ export interface VoyageDetail {
   can: { edit: boolean; ops: boolean; money: boolean; sales: boolean; seeMoney: boolean };
 }
 
-export interface PortRowDto { en: string; cn: string; alias: string[]; country: string; region: string; kind: string; isLocal: boolean; status: string }
+export interface PortRowDto { code: string; en: string; cn: string; alias: string[]; country: string; region: string; kind: string; isLocal: boolean; status: string }
 export interface BerthDto { code: string; terminal: string; capacity: number; status: string; category?: string; basis?: string; note?: string }
 export interface VesselDto { id: string; name: string; alias: string[]; mmsi: string | null; imo: string | null; type: string; dwt: number | null; length: number | null; tier: string | null }
 export interface RouteRuleDto { id: string; load: string; disch: string; biz: BizType[]; exp: number | null; expMax: number | null; samples: number; p50: number | null; p80: number | null; basis: string; effP50: number | null; effP80: number | null; status?: string }

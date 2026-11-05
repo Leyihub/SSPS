@@ -31,7 +31,7 @@ Module({ imports: ['ports', 'prediction', 'capacity', 'voyage', 'master', 'impor
   app.use((req, _res, next) => { const n = decodeURIComponent(req.headers['x-demo-user'] || M.user.name); req.userContext = { userId: n, userName: n }; next(); });
 
   // 主数据
-  for (const p of M.ports) await master.savePort({ en: p.en, cn: p.cn, alias: p.alias || [], country: p.country, region: p.region || '', kind: p.nature, isLocal: !!p.isLocal, status: '启用' });
+  for (const p of M.ports) await master.savePort({ code: p.code || '', en: p.en, cn: p.cn, alias: p.alias || [], country: p.country, region: p.region || '', kind: p.nature, isLocal: !!p.isLocal, status: '启用' });
   for (const r of M.routeRules) await master.saveRouteRule({ ...r, status: r.status || '启用' });
   for (const v of M.vessels) await master.saveVessel({ id: v.id, name: v.name, alias: v.alias || [], mmsi: v.mmsi || null, imo: v.imo || null, type: v.type, dwt: v.dwt || null, length: v.loa || null, tier: v.tier || null });
 
