@@ -634,6 +634,8 @@ export const inventoryBatch = pgTable("inventory_batch", {
   validation: text("validation"),
   status: text("status").notNull(),
   isCurrent: boolean("is_current").notNull().unique().default(false),
+  importedBy: text("imported_by"),
+  itemsSummary: jsonb("items_summary"),
   // System field: Creation time (auto-filled, do not modify)
   createdAt: customTimestamptz("_created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
   // System field: Creator (auto-filled, do not modify)
@@ -702,6 +704,7 @@ export const berthPlanBatch = pgTable("berth_plan_batch", {
   validation: text("validation"),
   status: text("status").notNull(),
   isCurrent: boolean("is_current").notNull().unique().default(false),
+  importedBy: text("imported_by"),
   // System field: Creation time (auto-filled, do not modify)
   createdAt: customTimestamptz("_created_at").notNull().default(sql`CURRENT_TIMESTAMP`),
   // System field: Creator (auto-filled, do not modify)
