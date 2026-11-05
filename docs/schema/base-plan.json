@@ -1006,12 +1006,7 @@
         {
           "name": "从属单位",
           "type": "text",
-          "system_written": true
-        },
-        {
-          "name": "是否德信",
-          "type": "checkbox",
-          "note": "只做展示，原始文件无此列，来源待定",
+          "note": "原文照录",
           "system_written": true
         },
         {

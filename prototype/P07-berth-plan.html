@@ -50,7 +50,7 @@
         <div class="fbar">
           <select class="inp" id="tm"><option value="">全部码头</option><option>北区码头</option><option>拉博塔码头</option></select>
           <input class="inp" id="kw" placeholder="船名 / 泊位" style="width:200px">
-          <button class="chipf" id="f1">只看非德信池</button><button class="chipf" id="f2">只看德信船未匹配航次</button><button class="chipf" id="f3">只看德信船</button>
+          <button class="chipf" id="f1">只看非德信池</button><button class="chipf" id="f2">只看未匹配航次</button>
           <span class="muted nw" id="cnt" style="margin-left:auto;font-size:12px"></span>
         </div>
         <div class="tbl-wrap"><table class="tbl" id="rows"></table></div>
@@ -65,19 +65,19 @@
   const VIEWERS = [['顾明远', '仓储物流部', '物流管理员'], ['钟立诚', '仓储物流部', '系统管理员'], ['林海川', '大宗采购部', '业务员']];
   let who = VIEWERS[0];
   SHELL.mount({ active: 'P07', title: '靠船计划', user: who });
-  const S = { tm: '', kw: '', off: false, unm: false, dx: false, batch: M.batches[0].batchNo };
+  const S = { tm: '', kw: '', off: false, unm: false, batch: M.batches[0].batchNo };
   const canUp = () => ['物流管理员', '系统管理员'].includes(who[2]);
   const rows = M.berthPlanRows;
   const latest = M.batches[0];
 
   function alerts() {
-    const off = rows.filter((r) => !r.inPool).length, unm = rows.filter((r) => r.inPool && r.isDexin && !r.matchVoyage).length, parse = M.batches.filter((b) => b.status !== '成功').length;
+    const off = rows.filter((r) => !r.inPool).length, unm = rows.filter((r) => r.inPool && r.owner === '德信' && !r.matchVoyage).length, parse = M.batches.filter((b) => b.status !== '成功').length;
     const card = (cls, n, t, tip, fn) => '<div class="card al ' + cls + '" data-fn="' + fn + '"><b>' + n + '</b><span>' + t + (tip ? C.ic(tip) : '') + '</span></div>';
     $('alerts').innerHTML = card('', off, '非德信池泊位记录', '靠船计划里出现、但不在 23 个德信泊位内的记录（如 L5、L9、L10）。保留原文并标「非德信池」，不计入泊位余量。', 'f1') +
-      card(unm ? 'warn' : 'ok', unm, '德信船未匹配航次', '是德信的船，但航次表里找不到对应航次。请业务员补录航次，否则这条船在航次相关的统计里是缺失的。', 'f2') +
+      card(unm ? 'warn' : 'ok', unm, '未匹配航次', '从属单位是德信的船，但航次表里找不到对应航次。请业务员补录航次，否则这条船在航次相关的统计里是缺失的。', 'f2') +
       card('ok', rows.filter((r) => r.inPool).length - 0, '已匹配德信泊位', '预计靠泊的泊位能对上 23 个德信泊位的记录。', '') +
       card(parse ? 'err' : 'ok', parse, '部分失败 / 失败批次', '最近的批次里有解析失败的，请查看批次列表里的校验结果，必要时重新上传。', '');
-    $('alerts').querySelectorAll('[data-fn]').forEach((c) => c.onclick = () => { if (c.dataset.fn === 'f1') { S.off = !S.off; S.unm = false; } else if (c.dataset.fn === 'f2') { S.unm = !S.unm; S.off = false; S.dx = true; } draw(); $('rows').scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+    $('alerts').querySelectorAll('[data-fn]').forEach((c) => c.onclick = () => { if (c.dataset.fn === 'f1') { S.off = !S.off; S.unm = false; } else if (c.dataset.fn === 'f2') { S.unm = !S.unm; S.off = false; } draw(); $('rows').scrollIntoView({ behavior: 'smooth', block: 'start' }); });
   }
   function drawBatches() {
     $('batches').innerHTML = '<thead><tr><th>批次号</th><th>计划日期</th><th>来源</th><th>文件名</th><th style="text-align:right">行数</th><th>校验结果</th><th>状态</th></tr></thead><tbody>' + M.batches.map((b) =>
@@ -90,14 +90,14 @@
     $('dh').innerHTML = (isLatest ? '最新一期明细' : '批次明细') + ' · ' + b.batchNo + C.ic('只保留预测用到的列。表内泊位会映射到泊位主档；表外泊位保留原文，标「非德信池」。');
     $('dsub').textContent = '计划日期 ' + b.planDate + ' · ' + b.rows + ' 行';
     if (!isLatest) { $('rows').innerHTML = '<tbody><tr><td class="empty">原型只保留最新一期的明细；历史批次的明细存在应用库里，真实系统可按批次查看。<br><button class="btn" id="back" style="margin-top:10px">回到最新一期</button></td></tr></tbody>'; $('back').onclick = () => { S.batch = latest.batchNo; draw(); }; $('cnt').textContent = ''; return; }
-    const list = rows.filter((r) => (!S.tm || r.terminal === S.tm) && (!S.kw || (r.vessel + r.berthRaw + (r.berth || '')).toLowerCase().includes(S.kw.toLowerCase())) && (!S.off || !r.inPool) && (!S.dx || r.isDexin) && (!S.unm || (r.inPool && r.isDexin && !r.matchVoyage)));
-    $('rows').innerHTML = '<thead><tr><th>码头</th><th>泊位（原文）</th><th>泊位（德信池）</th><th>船名</th><th style="text-align:right">船长（米）</th><th>船舶类型</th><th>物资</th><th style="text-align:right">吨位</th><th>预计到港</th><th>预计靠泊</th><th>预计卸完</th><th>从属单位</th><th>是否德信</th><th>匹配航次</th></tr></thead><tbody>' +
-      (list.length ? list.map((r) => '<tr class="' + (r.inPool ? '' : 'off') + '"><td>' + r.terminal + '</td><td>' + r.berthRaw + '</td><td>' + (r.inPool ? '<b>' + r.berth + '</b>' : '<span class="tag gray"' + C.tipAttr('不在 23 个德信泊位内，保留原文，不计入泊位余量') + '>非德信池</span>') + '</td><td class="vname">' + r.vessel + '</td><td style="text-align:right">' + r.loa + '</td><td>' + r.shipType + '</td><td>' + r.cargo + '</td><td style="text-align:right">' + C.fmt(r.tons) + '</td><td>' + C.md(r.eta) + '</td><td>' + C.md(r.start) + '</td><td>' + C.md(r.end) + '</td><td>' + r.owner + '</td><td>' + (r.isDexin ? '是' : '否') + '</td><td class="vname">' + (r.matchVoyage ? '<a href="P05-voyage-detail.html?id=' + r.matchVoyage + '">' + r.matchVoyage + '</a>' : (r.isDexin && r.inPool ? '<span class="tag red">未匹配</span>' : '<span class="mut" style="color:var(--faint)">—</span>')) + '</td></tr>').join('') : '<tr><td colspan="14" class="empty">没有符合条件的记录</td></tr>') + '</tbody>';
+    const list = rows.filter((r) => (!S.tm || r.terminal === S.tm) && (!S.kw || (r.vessel + r.berthRaw + (r.berth || '')).toLowerCase().includes(S.kw.toLowerCase())) && (!S.off || !r.inPool) && (!S.unm || (r.inPool && r.owner === '德信' && !r.matchVoyage)));
+    $('rows').innerHTML = '<thead><tr><th>码头</th><th>泊位（原文）</th><th>泊位（德信池）</th><th>船名</th><th style="text-align:right">船长（米）</th><th>船舶类型</th><th>物资</th><th style="text-align:right">吨位</th><th>预计到港</th><th>预计靠泊</th><th>预计卸完</th><th>从属单位</th><th>匹配航次</th></tr></thead><tbody>' +
+      (list.length ? list.map((r) => '<tr class="' + (r.inPool ? '' : 'off') + '"><td>' + r.terminal + '</td><td>' + r.berthRaw + '</td><td>' + (r.inPool ? '<b>' + r.berth + '</b>' : '<span class="tag gray"' + C.tipAttr('不在 23 个德信泊位内，保留原文，不计入泊位余量') + '>非德信池</span>') + '</td><td class="vname">' + r.vessel + '</td><td style="text-align:right">' + r.loa + '</td><td>' + r.shipType + '</td><td>' + r.cargo + '</td><td style="text-align:right">' + C.fmt(r.tons) + '</td><td>' + C.md(r.eta) + '</td><td>' + C.md(r.start) + '</td><td>' + C.md(r.end) + '</td><td>' + r.owner + '</td><td class="vname">' + (r.matchVoyage ? '<a href="P05-voyage-detail.html?id=' + r.matchVoyage + '">' + r.matchVoyage + '</a>' : (r.owner === '德信' && r.inPool ? '<span class="tag red">未匹配</span>' : '<span class="mut" style="color:var(--faint)">—</span>')) + '</td></tr>').join('') : '<tr><td colspan="13" class="empty">没有符合条件的记录</td></tr>') + '</tbody>';
     $('cnt').textContent = '显示 ' + list.length + ' / ' + rows.length + ' 行';
-    $('f1').classList.toggle('on', S.off); $('f2').classList.toggle('on', S.unm); $('f3').classList.toggle('on', S.dx);
+    $('f1').classList.toggle('on', S.off); $('f2').classList.toggle('on', S.unm);
   }
   $('tm').onchange = (e) => { S.tm = e.target.value; draw(); }; $('kw').oninput = (e) => { S.kw = e.target.value.trim(); draw(); };
-  $('f1').onclick = () => { S.off = !S.off; draw(); }; $('f2').onclick = () => { S.unm = !S.unm; if (S.unm) S.dx = true; draw(); }; $('f3').onclick = () => { S.dx = !S.dx; draw(); };
+  $('f1').onclick = () => { S.off = !S.off; draw(); }; $('f2').onclick = () => { S.unm = !S.unm; draw(); };
 
   // 身份
   $('viewer').innerHTML = VIEWERS.map((x, i) => '<option value="' + i + '">' + x[0] + ' · ' + x[2] + '</option>').join('');

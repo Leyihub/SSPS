@@ -112,7 +112,7 @@
         loa: 120 + c * 25, shipType: c >= 3 ? '散货船' : '杂货船',
         cargo: cargoByCap[c], tons: Math.round(c * 10000 * 0.85 / 100) * 100,
         eta: '2026-' + eta, start: '2026-' + start, end: '2026-' + end,
-        owner: si % 3 === 0 ? '外部货主' : '德信', isDexin: si % 3 !== 0,
+        owner: si % 3 === 0 ? '外部货主' : '德信', 
         matchVoyage: null, batchNo: batch.batchNo,
       });
     });
@@ -121,7 +121,7 @@
     terminal: o.terminal, berthRaw: o.raw, berth: null, inPool: false,
     vessel: shipNames[si++ % shipNames.length], loa: 150, shipType: '散货船', cargo: '煤炭', tons: 40000,
     eta: '2026-' + o.eta, start: '2026-' + o.start, end: '2026-' + o.end,
-    owner: '外部货主', isDexin: false, matchVoyage: null, batchNo: batch.batchNo,
+    owner: '外部货主', matchVoyage: null, batchNo: batch.batchNo,
   }));
   batch.rows = berthPlanRows.length;
   batch.validation = '通过 · ' + OFFPOOL.length + ' 行标「非德信池」· 0 行未匹配泊位';
@@ -254,7 +254,7 @@
     planDischS: at(-3, '00:00'), planDischE: at(-1, '23:59'), planLoadArr: at(-9), actLoadArr: at(-9, '10:00'), loadBerth: at(-9, '14:00'), actLoadDep: at(-7, '09:00'), eta: at(-2), actDischArr: at(-2, '07:00'), dischBerth: at(-1, '09:00'), dischDep: at(0, '02:30'), actBerths: ['LN17'] });
   // 3) 靠船计划里的德信船：每条都生成对应航次（保证靠船计划与航次表一致）；故意留 3 条不生成，用来演示「未匹配航次」告警
   const used = new Set(M.voyages.map((v) => v.vessel).concat(list.map((v) => v.vessel)));
-  const dex = M.berthPlanRows.filter((r) => r.inPool && r.isDexin);
+  const dex = M.berthPlanRows.filter((r) => r.inPool && r.owner === '德信');
   const skip = new Set(dex.slice(-3));
   const roman = ['', ' II', ' III', ' IV'];
   let gen = 320; const owners = ['林海川', '周晓棠', '陈砚秋'];
