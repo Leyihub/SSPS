@@ -1,6 +1,9 @@
 import { Global, Logger, Module } from '@nestjs/common';
-import { BASE_GATEWAY, LARK_DRIVE, LARK_TOKEN, USER_LOOKUP } from '../ports/tokens';
+import { AuthorizationSDK } from '@lark-apaas/fullstack-nestjs-core';
+import { BASE_GATEWAY, LARK_DRIVE, LARK_TOKEN, USER_LOOKUP, USER_SOURCE } from '../ports/tokens';
 import { MemoryUserLookup } from '../adapters/memory/memory-user-lookup';
+import { createRoleMemberSource } from '../adapters/platform/role-members';
+import { DEFAULT_ROLE_MAP, PlatformUserLookup, parseMap } from '../adapters/platform/platform-directory';
 import { createTokenProvider } from './token';
 import { createDrive } from './drive';
 import { createBitable } from './bitable';
@@ -29,8 +32,17 @@ const tableIds = (): Record<string, string> => { try { return JSON.parse(process
         return createBitableGateway(createBitable({ getToken: t, appToken: process.env.BITABLE_APP_TOKEN, tableIds: ids, queue: createWriteQueue() }));
       },
     },
-    { provide: USER_LOOKUP, useFactory: () => { if (process.env.SSPS_STORE === 'real') log.warn('用户姓名与飞书用户 ID 的对照还没有真实实现（任务 W15）：负责业务员会显示为用户 ID，也不会写飞书人员字段'); return new MemoryUserLookup(); } },
+    // 平台用户目录：真实模式下读 SSPS 平台角色的成员（姓名、飞书企业内 user_id、部门），角色 bizID 见 ROLE_MAP；否则为 null
+    {
+      provide: USER_SOURCE, inject: [{ token: AuthorizationSDK, optional: true }],
+      useFactory: (sdk: any) => {
+        if (process.env.SSPS_STORE !== 'real') return null;
+        if (!sdk) throw new Error('SSPS_STORE=real 需要平台的 AuthorizationSDK（部署在妙搭上才有）');
+        return createRoleMemberSource(sdk, Object.keys(parseMap(process.env.ROLE_MAP, DEFAULT_ROLE_MAP, 'ROLE_MAP')));
+      },
+    },
+    { provide: USER_LOOKUP, inject: [USER_SOURCE], useFactory: (src: any) => (src ? new PlatformUserLookup(src) : new MemoryUserLookup()) },
   ],
-  exports: [LARK_TOKEN, LARK_DRIVE, BASE_GATEWAY, USER_LOOKUP],
+  exports: [LARK_TOKEN, LARK_DRIVE, BASE_GATEWAY, USER_LOOKUP, USER_SOURCE],
 })
 export class LarkModule {}

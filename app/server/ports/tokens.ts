@@ -11,3 +11,4 @@ export const LARK_TOKEN = Symbol('LARK_TOKEN');
 export const LARK_DRIVE = Symbol('LARK_DRIVE');
 export const BASE_GATEWAY = Symbol('BASE_GATEWAY');
 export const USER_LOOKUP = Symbol('USER_LOOKUP');
+export const USER_SOURCE = Symbol('USER_SOURCE');

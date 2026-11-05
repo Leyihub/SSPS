@@ -358,3 +358,21 @@ T01、T02、T08 行数不变（10、23、10）。
 5. 兼容表刷新如果返回 503 或报错，把错误原文（去掉密钥）发给我，不要自己改代码。
 不要提交任何包含令牌的文件；做完把报告发给我。
 ```
+
+---
+
+## 提示词 9：建 SSPS 的 4 个平台角色，并核对身份目录的假设（W15，在你的本机）
+
+前提：应用已发布到妙搭，能登录。云端把「平台角色 → 业务角色」「部门」「姓名/飞书 user_id」都按下面的约定写好了，但没在真实平台上验证过。
+
+```text
+为 SSPS 应用建平台角色并核对身份目录。先读 docs/handoff/task-book.md 的 W15、app/server/adapters/platform/ 下三个文件、AGENTS.md。
+
+1. 在妙搭应用里建 4 个角色，bizID 必须是：ssps_salesman（业务员）、ssps_manager（部门主管）、ssps_logistics（物流管理员）、ssps_admin（系统管理员）。用 lark-cli apps 的角色相关命令（先 --help），不要猜参数。
+2. 把我（当前登录账号）加到 ssps_admin。其余测试账号（W04 提供的四个）按各自角色加入，业务员/部门主管要在飞书里属于大宗采购部、商务海运部或仓储物流部。
+3. 用一个测试账号登录后，在后端临时打印（只打印，不要提交）req.userContext 的 roles 数组原样内容，回答：roles 里放的是角色的 bizID、角色名称还是别的？如果不是 bizID，告诉我实际值，我改对照表。
+4. 用 AuthorizationSDK 的 members.list(bizID, { type: 'User' }) 读 ssps_salesman 的成员，原样（去掉真实姓名，用 U1/U2 代替）回答：返回的 userList 里每个成员有哪些字段？name 的 key 是 zh_cn 还是别的？employeeID 有没有值（应该是飞书企业内 user_id）？department.name 有没有值，部门名称和飞书组织架构里的完全一致吗（比如是「大宗采购部」还是「大宗采购部（印尼）」）？
+5. 设置环境变量 SSPS_STORE=real 本机跑起来，用四个测试账号分别访问 /api/me，报告：每个账号返回的角色和部门；没有任何 SSPS 角色的账号应该返回 403。
+6. 如果部门名称对不上，不要改代码，用环境变量 DEPT_MAP（JSON：关键字 → 部门，见 .env.example）调到对；如果 roles 不是 bizID，用 ROLE_MAP 对上。调不通的告诉我。
+不要贴真实姓名、飞书 ID、密钥；做完把 3–6 的答案发给我。
+```
