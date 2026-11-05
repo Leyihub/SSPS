@@ -23,6 +23,8 @@ export function buildProvenance(res: any, plan: any, meta: any = {}) {
     rule: rule ? { id: rule.id, basis: rule.basis, samples: rule.samples, effP50: rule.effP50, effP80: rule.effP80, borrowed: R.borrowed } : null,
     depart: dstr(plan.depart), eta: plan.etaFrom != null ? [dstr(plan.etaFrom), dstr(plan.etaTo)] : null, deadline: dstr(plan.deadline), custEta: plan.custEta ? plan.custEta.map(dstr) : null,
     stock: plan.stock && res.stock ? { item: res.stock.item.name, stockout: dstr(res.stock.so), latest: dstr(res.stock.latest), buffer: res.stock.buffer, gap: res.stock.gap ? { from: dstr(res.stock.gap.from), to: dstr(res.stock.gap.to) } : null, urgent: !!res.urgent, batchNo: meta.inventoryBatchNo ?? null, ...plan.stock } : null,
+    candidates: (res.candidates || []).map((c) => ({ s: dstr(c.s), e: dstr(c.e), mode: c.mode || R.mode, metric: c.none ? null : c.metric, complete: !!c.complete, none: !!c.none, mark: res.plans.map((p) => (p && p.c === c ? p.label : '')).join('') })),
+    urgent: !!res.urgent, slack: plan.slack ?? null,
     excluded: res.excluded, trust: plan.trust, reasons: plan.reasons,
     runBy: meta.runBy ?? null, at: meta.now ?? null,
   };
