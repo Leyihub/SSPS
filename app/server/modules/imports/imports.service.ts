@@ -173,10 +173,11 @@ export class ImportsService {
     const none = { stale: false, since: null as string | null, changes: [] as Array<{ voyageId: string; voyageNo: string; vessel: string | null; item: string; field: string; at: string }> };
     if (!batch || !itemNames.length) return none;
     const changes: typeof none.changes = [];
+    const cargoAll = await this.voyages.cargoByVoyage();
     for (const v of await this.voyages.list()) {
       const st = deriveStatus(v);
       if (v.readonly || st === '已结束' || st === '已结束（取消）') continue;
-      const cargo = await this.voyages.cargo(v.id);
+      const cargo = cargoAll.get(v.id) ?? [];
       const item = itemNames.find((n) => cargo.some((c) => nameMatch(n, c.name) || nameMatch(n, c.alias)));
       if (!item) continue;
       for (const e of await this.voyages.changeLog(v.id)) if (ARRIVAL_FIELDS.has(e.field) && e.at > batch.importedAt) changes.push({ voyageId: v.id, voyageNo: v.no, vessel: v.vessel, item, field: e.field, at: e.at });

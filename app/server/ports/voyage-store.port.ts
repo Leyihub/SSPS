@@ -17,6 +17,10 @@ export interface VoyageStorePort {
   addCargo(id: string, line: NewCargo, key?: string): Promise<CargoLine>;
   updateCargo(id: string, no: string, patch: Partial<CargoLine>, key?: string): Promise<CargoLine>;
   deleteCargo(id: string, no: string, key?: string): Promise<void>;
+  /** 批量读（一次查询）：列表搜索、兼容表刷新、库存过期判断这类要扫全部航次的地方用，不要逐条 cargo(id) */
+  cargoByVoyage(): Promise<Map<string, CargoLine[]>>;
+  settlementByVoyage(): Promise<Map<string, Settlement>>;
+  salesExtByVoyage(): Promise<Map<string, SalesExt>>;
   settlement(id: string): Promise<Settlement | null>;
   saveSettlement(id: string, patch: Settlement, key?: string): Promise<Settlement>;
   salesExt(id: string): Promise<SalesExt | null>;

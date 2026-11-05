@@ -43,6 +43,9 @@ export class MemoryVoyageStore implements VoyageStorePort {
   async update(id: string, patch: Partial<Voyage>, key?: string) {
     return this.once(key, () => { const v = { ...this.need(id), ...patch, id }; this.voyages.set(id, v); return v; });
   }
+  async cargoByVoyage() { return new Map<string, CargoLine[]>([...this.lines].map(([k, v]) => [k, [...v]] as [string, CargoLine[]])); }
+  async settlementByVoyage() { return new Map(this.settle); }
+  async salesExtByVoyage() { return new Map(this.sales); }
   async cargo(id: string) { return this.lines.get(id) || []; }
   async addCargo(id: string, line: NewCargo, key?: string) {
     return this.once(key, () => { const ls = this.lines.get(id) || [], c = { ...line, voyage: id, no: 'CL-' + String(ls.length + 1).padStart(4, '0') }; this.lines.set(id, [...ls, c]); return c; });

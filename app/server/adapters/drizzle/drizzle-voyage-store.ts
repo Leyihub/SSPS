@@ -105,13 +105,32 @@ export class DrizzleVoyageStore implements VoyageStorePort {
   private async cargoRows(rid: string) { return this.db.select().from(mCargo).where(sql`${mCargo.voyage} -> 'link_record_ids' @> ${JSON.stringify([rid])}::jsonb`).orderBy(mCargo.appDetailId); }
   async cargo(id: string): Promise<CargoLine[]> { const v = await this.rowOf(id); if (!v) return []; return (await this.cargoRows(v.baseRecordId!)).map((c) => ({ ...this.cargoOf(c), voyage: id })); }
 
+  /** 飞书记录 ID → 航次编号（批量读用） */
+  private async idByRid(): Promise<Map<string, string>> {
+    const rows = await this.db.select({ rid: mVoyage.baseRecordId, voyageNo1: mVoyage.voyageNo1, createdAt: mVoyage.createdAt }).from(mVoyage);
+    return new Map(rows.map((r) => [r.rid!, this.idOf(r)] as const));
+  }
+  async cargoByVoyage(): Promise<Map<string, CargoLine[]>> {
+    const [ids, rows] = await Promise.all([this.idByRid(), this.db.select().from(mCargo).orderBy(mCargo.appDetailId)]), out = new Map<string, CargoLine[]>();
+    for (const c of rows) { const id = ids.get(linkIds(c.voyage)[0]); if (id) (out.get(id) ?? out.set(id, []).get(id)!).push({ ...this.cargoOf(c), voyage: id }); }
+    return out;
+  }
+  private settleOf(r: typeof mBulkSettle.$inferSelect): Settlement { const out: Settlement = {}; for (const [k, [, col, t]] of Object.entries(SETTLE)) { const x = (r as any)[col]; out[k] = x == null ? null : t === 'n' ? Number(x) : x; } return out; }
+  async settlementByVoyage(): Promise<Map<string, Settlement>> {
+    const [ids, rows] = await Promise.all([this.idByRid(), this.db.select().from(mBulkSettle)]), out = new Map<string, Settlement>();
+    for (const r of rows) { const id = ids.get(linkIds(r.voyage)[0]); if (id && !out.has(id)) out.set(id, this.settleOf(r)); }
+    return out;
+  }
+  async salesExtByVoyage(): Promise<Map<string, SalesExt>> {
+    const [ids, rows] = await Promise.all([this.idByRid(), this.db.select().from(mSalesExt)]), out = new Map<string, SalesExt>();
+    for (const r of rows) { const id = ids.get(linkIds(r.voyage)[0]); if (id && !out.has(id)) out.set(id, { way: r.charterType, contract: r.seaShippingContractNo }); }
+    return out;
+  }
+
   async settlement(id: string): Promise<Settlement | null> {
     const v = await this.rowOf(id); if (!v) return null;
     const [r] = await this.db.select().from(mBulkSettle).where(sql`${mBulkSettle.voyage} -> 'link_record_ids' @> ${JSON.stringify([v.baseRecordId])}::jsonb`);
-    if (!r) return null;
-    const out: Settlement = {};
-    for (const [k, [, col, t]] of Object.entries(SETTLE)) { const x = (r as any)[col]; out[k] = x == null ? null : t === 'n' ? Number(x) : x; }
-    return out;
+    return r ? this.settleOf(r) : null;
   }
   async salesExt(id: string): Promise<SalesExt | null> {
     const v = await this.rowOf(id); if (!v) return null;

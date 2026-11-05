@@ -432,7 +432,7 @@ lark-cli apps +release-get --as user --app-id <app_id> --release-id <release_id>
 
 核对：RLS 策略对四个角色的实际效果；金额字段在列表、详情、变更日志、导出、错误信息里都不泄露（变更日志对金额只记「已修改」不记值，已实现，真实适配器不能破坏）；所有 `/api/*` 带 `@NeedLogin()`；内部接口（拉取、重算、刷新）的系统内部鉴权；前端构建产物里搜不到 App ID / Secret；日志里没有密钥和业务明细；上传文件大小与类型限制（已有 10MB、仅 .xlsx）。产出 `docs/handoff/security-review.md`。
 
-### W53 性能检查
+### W53（云端部分已完成，见 docs/handoff/performance-notes.md；剩真实环境实测） 性能检查
 
 数据量按 2000 航次、16 万行靠船计划快照、库存 37 品名逐日行估：航次列表、日历、预测的 P95 响应时间（目标：列表 < 1 秒，预测 < 3 秒，具体由 Leyinet 定）；找出慢查询并加索引（DDL 走 W02 流程）。
 

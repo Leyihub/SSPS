@@ -120,8 +120,9 @@ export class VoyageService {
     const all = (await this.store.list()).map((v) => ({ ...v, status: deriveStatus(v) }));
     const kw = (q.q || '').trim().toLowerCase(), sts = q.status ? q.status.split(',').filter(Boolean) : [];
     const day = (v: Voyage) => { const d = localDate(v); return ((d.act || d.plan || '') as string).slice(0, 10); };
+    const cargoAll = await this.store.cargoByVoyage();                          // 一次读全部货物明细：搜索合同号、页内合计都用它，不逐条查
     const contracts = new Map<string, string>();
-    if (kw) for (const v of all) contracts.set(v.id, (await this.store.cargo(v.id)).map((c) => c.contract).join(' '));
+    if (kw) for (const v of all) contracts.set(v.id, (cargoAll.get(v.id) ?? []).map((c) => c.contract).join(' '));
     const match = (v: Voyage, skip: 'biz' | 'status' | null) => {
       if (skip !== 'biz' && q.biz && v.biz !== q.biz) return false;
       if (skip !== 'status' && sts.length && !sts.includes(v.status!)) return false;
@@ -139,13 +140,13 @@ export class VoyageService {
     const fin = (v: Voyage) => v.status === '已结束' || v.status === '已结束（取消）';
     const rows = all.filter((v) => match(v, null)).sort((x, y) => (fin(x) !== fin(y) ? (fin(x) ? 1 : -1) : fin(x) ? day(y).localeCompare(day(x)) : day(x).localeCompare(day(y)) || x.id.localeCompare(y.id)));
     const page = q.page || 1, size = q.pageSize || 50, slice = rows.slice((page - 1) * size, page * size);
-    const items = await Promise.all(slice.map(async (v) => {
-      const cargo = await this.store.cargo(v.id), d = localDate(v);
+    const items = slice.map((v) => {
+      const cargo = cargoAll.get(v.id) ?? [], d = localDate(v);
       return { id: v.id, biz: v.biz, attr: v.attr, no: v.no, vessel: v.vessel, load: v.load, disch: v.disch, status: v.status, side: v.load === 'BAHODOPI' ? '装' : '卸',
         localPlan: d.plan, localAct: d.act, eta: v.eta, etaUpdated: v.etaUpdated, owner: v.owner, dept: v.dept, flags: v.flags, focus: v.focus, readonly: v.readonly,
         tons: cargo.reduce((s, c) => s + (Number(c.tons) || 0), 0), pooled: cargo.length >= 2,
         missingDeparture: missingDeparture(v), etaStale: !!(v.eta && !v.actDischArr && v.etaUpdated && dn(this.today()) - dn(v.etaUpdated) > CONFIG.ETA_STALE_DAYS) };
-    }));
+    });
     return { total: rows.length, page, pageSize: size, items, counts, owners: [...new Set(all.map((v) => v.owner))].sort() };
   }
 

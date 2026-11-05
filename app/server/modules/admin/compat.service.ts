@@ -59,11 +59,11 @@ export class CompatService {
       const vessels = new Map((await this.master.vessels()).map((v) => [v.name.toUpperCase(), v]));
       const all = (await this.voyages.list()).map((v) => ({ ...v, status: deriveStatus(v) }));
       all.sort((x, y) => x.id.localeCompare(y.id));
-      const inputs: CompatInput[] = [];
-      for (const v of all) {
+      const [cargoAll, settleAll, salesAll] = await Promise.all([this.voyages.cargoByVoyage(), this.voyages.settlementByVoyage(), this.voyages.salesExtByVoyage()]);     // 每种一次查询，不逐航次查
+      const inputs: CompatInput[] = all.map((v) => {
         const ves = v.vessel ? vessels.get(v.vessel.toUpperCase()) : undefined;
-        inputs.push({ voyage: v, cargo: await this.voyages.cargo(v.id), settlement: v.biz === '大宗采购船' ? await this.voyages.settlement(v.id) : null, sales: v.biz === '成品销售船' ? await this.voyages.salesExt(v.id) : null, mmsi: ves?.mmsi ?? null, imo: ves?.imo ?? null });
-      }
+        return { voyage: v, cargo: cargoAll.get(v.id) ?? [], settlement: v.biz === '大宗采购船' ? settleAll.get(v.id) ?? null : null, sales: v.biz === '成品销售船' ? salesAll.get(v.id) ?? null : null, mmsi: ves?.mmsi ?? null, imo: ves?.imo ?? null };
+      });
       const today = this.clock().toISOString().slice(0, 10);
       const a = compatRowsA(inputs.filter((i) => COMPAT_A_BIZ.includes(i.voyage.biz))), b = compatRowsB(inputs.filter((i) => COMPAT_B_BIZ.includes(i.voyage.biz)), today);
       await this.rewrite('T09a', COLS_A, a); await this.rewrite('T09b', COLS_B, b);
