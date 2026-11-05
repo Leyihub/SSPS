@@ -15,7 +15,12 @@ export const daysBetween = (a?: string | null, b?: string | null) => (a && b ? M
 export const STATUS_ORDER = ['待宣船', '未到装港', '装港等泊', '装港装货', '航行中', '卸港等泊', '卸港卸货', '已结束'];
 export const stCls = (s: string) => (s === '已结束（取消）' ? 'sx' : 's' + STATUS_ORDER.indexOf(s));
 export const bizShort = (b: string) => b.replace('采购船', '').replace('销售船', '').replace('备件船', '备件');
+/** CSV 单元格：以 = + - @ 开头的文本会被 Excel 当公式执行（CSV 注入），前面补一个单引号；数字（含负数）原样 */
+export const csvCell = (x: string | number | null | undefined) => {
+  const t = String(x ?? '');
+  return '"' + (typeof x === 'string' && /^[=+\-@\t\r]/.test(t) ? "'" + t : t).replace(/"/g, '""') + '"';
+};
 export function downloadCsv(name: string, rows: Array<Array<string | number | null | undefined>>) {
-  const text = '﻿' + rows.map((r) => r.map((x) => '"' + String(x ?? '').replace(/"/g, '""') + '"').join(',')).join('\n');
+  const text = '﻿' + rows.map((r) => r.map(csvCell).join(',')).join('\n');
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: 'text/csv;charset=utf-8' })); a.download = name; a.click();
 }

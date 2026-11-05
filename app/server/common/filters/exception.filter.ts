@@ -1,4 +1,4 @@
-import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from '@nestjs/common';
+import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import type { Response } from 'express';
 import { BusinessException } from '../interfaces/exception.interface';
 import { HTTP_STATUS_TO_RESPONSE_CODE_MAP, ResponseCode } from '../constants/api_response_code';
@@ -60,14 +60,16 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         },
       };
     } else {
-      // 未知异常
+      // 未知异常：堆栈和原因只写服务端日志，生产环境不返回给客户端（会暴露文件路径、SQL 报错等内部信息）
       httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+      const dev = process.env.NODE_ENV !== 'production';
+      if (!dev) new Logger('GlobalExceptionFilter').error('未处理异常', (exception as Error)?.stack ?? String(exception));
       errorResponse = {
         error: {
           code: ResponseCode.INTERNAL_ERROR,
           message: '服务器内部错误',
-          stack: (exception as Error).stack,
-          cause: (exception as Error).cause as string,
+          stack: dev ? (exception as Error).stack : undefined,
+          cause: dev ? ((exception as Error).cause as string) : undefined,
           timestamp: Date.now(),
         },
       };

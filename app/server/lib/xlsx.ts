@@ -3,6 +3,9 @@
 // 日期在 xlsx 里就是数字（序列号），这里不转换，交给 parseDateTime 按列处理。
 import zlib from 'node:zlib';
 
+/** 单个压缩条目解压后的上限（防压缩炸弹）：50MB，远大于任何一份靠船计划或库存表 */
+const MAX_ENTRY = 50 * 1024 * 1024;
+
 interface Entry { name: string; method: number; csize: number; offset: number }
 
 function readZip(buf: Buffer): Map<string, Buffer> {
@@ -22,7 +25,7 @@ function readZip(buf: Buffer): Map<string, Buffer> {
     if (e.name.endsWith('/')) continue;
     if (buf.readUInt32LE(e.offset) !== 0x04034b50) throw new Error('.xlsx 文件损坏（' + e.name + '）');
     const start = e.offset + 30 + buf.readUInt16LE(e.offset + 26) + buf.readUInt16LE(e.offset + 28), raw = buf.subarray(start, start + e.csize);
-    out.set(e.name, e.method === 0 ? raw : e.method === 8 ? zlib.inflateRawSync(raw) : (() => { throw new Error('不支持的压缩方式：' + e.method); })());
+    out.set(e.name, e.method === 0 ? raw : e.method === 8 ? zlib.inflateRawSync(raw, { maxOutputLength: MAX_ENTRY }) : (() => { throw new Error('不支持的压缩方式：' + e.method); })());
   }
   return out;
 }

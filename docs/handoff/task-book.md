@@ -428,7 +428,7 @@ lark-cli apps +release-get --as user --app-id <app_id> --release-id <release_id>
 
 发布前检查清单：全绿；DDL 已在目标环境执行；环境变量齐全；`git status` 无 `.env*`；发布说明写清影响面。**发布必须 Leyinet 明确授权**，每次都问，不要复用上一次的授权。回滚：用平台的发布回退，并在 `docs/handoff/release-log.md` 记录；数据迁移类变更必须先有回滚方案（迁移批次标记）再发布。
 
-### W52 安全与权限审查
+### W52（云端部分已完成，见 docs/handoff/security-review.md；剩真实环境验证） 安全与权限审查
 
 核对：RLS 策略对四个角色的实际效果；金额字段在列表、详情、变更日志、导出、错误信息里都不泄露（变更日志对金额只记「已修改」不记值，已实现，真实适配器不能破坏）；所有 `/api/*` 带 `@NeedLogin()`；内部接口（拉取、重算、刷新）的系统内部鉴权；前端构建产物里搜不到 App ID / Secret；日志里没有密钥和业务明细；上传文件大小与类型限制（已有 10MB、仅 .xlsx）。产出 `docs/handoff/security-review.md`。
 
