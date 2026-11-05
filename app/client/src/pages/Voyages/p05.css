@@ -1,0 +1,56 @@
+/* 由 scripts/extract-page-css.cjs 从原型页面抽出，选择器已加前缀 .pg-p05 */
+.pg-p05 .back{display:inline-block;color:var(--muted);text-decoration:none;font-size:13px;margin-bottom:6px;white-space:nowrap}
+.pg-p05 .back:hover{color:var(--primary)}
+.pg-p05 .vh{padding:14px 16px}
+.pg-p05 .vh .l1{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pg-p05 .vh h1{margin:0;font-size:22px;white-space:nowrap}
+.pg-p05 .vh .l2{margin-top:6px;color:#3b4a5c;display:flex;flex-wrap:wrap;gap:2px 16px;font-size:13px}
+.pg-p05 .vh .l2 span{white-space:nowrap}
+.pg-p05 .vh .l2 em{font-style:normal;color:var(--muted);margin-right:4px}
+.pg-p05 .vh .acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;align-items:center}
+.pg-p05 .vh .acts .sp{flex:1}
+.pg-p05 .star{border:0;background:none;font-size:20px;line-height:1;cursor:pointer;color:#d0d5dc;padding:0}
+.pg-p05 .star.on{color:#faad14}
+.pg-p05 .ship{color:var(--primary);cursor:pointer;font-size:13px;white-space:nowrap;border:0;background:none;padding:0}
+.pg-p05 .banner{margin:12px 0 0;border-radius:8px;padding:8px 12px;font-size:13px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.pg-p05 .banner.warn{background:#fff7e6;border:1px solid #ffd591;color:#ad4e00}
+.pg-p05 .banner.err{background:#fff1f0;border:1px solid #ffa39e;color:#a8071a}
+.pg-p05 .banner.info{background:#f5f6f8;border:1px solid #d9dee5;color:#5b6878}
+.pg-p05 .banner .btn{padding:1px 12px}
+.pg-p05 .tlw{overflow-x:auto;padding:6px 16px 16px}
+.pg-p05 .tl{display:grid;gap:0;min-width:760px}
+.pg-p05 .tn{position:relative;padding:0 6px;text-align:center}
+.pg-p05 .tn:before{content:"";position:absolute;top:13px;left:-50%;right:50%;height:3px;background:#dfe3e8}
+.pg-p05 .tn:first-child:before{display:none}
+.pg-p05 .tn.done:before{background:var(--primary)}
+.pg-p05 .tn .dot{position:relative;z-index:1;width:28px;height:28px;border-radius:50%;margin:0 auto;display:grid;place-items:center;background:#fff;border:3px solid #dfe3e8;font-size:13px;color:#fff;font-weight:700}
+.pg-p05 .tn.done .dot{background:var(--primary);border-color:var(--primary)}
+.pg-p05 .tn.cur .dot{background:#fff;border-color:var(--primary);box-shadow:0 0 0 4px #bae0ff;color:var(--primary)}
+.pg-p05 .tn .lb{margin-top:6px;font-weight:600;font-size:13px;white-space:nowrap}
+.pg-p05 .tn .pl,.pg-p05 .nd .ac{font-size:12px;color:var(--muted);white-space:nowrap;margin-top:2px}
+.pg-p05 .tn .ac b{color:var(--text)}
+.pg-p05 .tn .late{display:inline-block;margin-left:4px;color:#cf1322;font-size:11px}
+.pg-p05 .tn .early{display:inline-block;margin-left:4px;color:#237804;font-size:11px}
+.pg-p05 .tn .none{color:#c0c8d2}
+.pg-p05 .sec{padding:14px 16px;border-top:1px solid var(--line-2)}
+.pg-p05 .sec:first-child{border-top:0}
+.pg-p05 .sec h3{margin:0 0 10px;font-size:14px;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.pg-p05 .kvg .it{min-width:0}
+.pg-p05 .kvg .it.hl{background:#fffbe6;outline:2px solid #ffd666;border-radius:6px;padding:4px 6px;margin:-4px -6px}
+.pg-p05 .kvg .v .mut{color:var(--faint)}
+.pg-p05 .fx{color:var(--muted);font-size:11px;margin-left:4px;border:1px solid var(--line);border-radius:3px;padding:0 4px;white-space:nowrap}
+.pg-p05 .lock{background:var(--stripe);color:#7b8696;border:1px solid #c4cad3;border-radius:6px;padding:1px 8px;font-size:12px;white-space:nowrap}
+.pg-p05 .bar2{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 16px;flex-wrap:wrap;border-top:1px solid var(--line-2)}
+.pg-p05 .tb-wrap{overflow-x:auto}
+.pg-p05 textarea.inp{height:auto;min-height:60px;padding:6px 9px}
+.pg-p05 .f-lab2{color:var(--muted);font-size:12px;margin-bottom:4px}
+.pg-p05 .errtxt{color:#cf1322;font-size:12.5px;margin-top:6px}
+.pg-p05 .note2{color:var(--muted);font-size:12px;margin-top:6px}
+.pg-p05 .sumline{padding:8px 16px;background:#f7f9fb;border-top:1px solid var(--line-2);display:flex;gap:18px;flex-wrap:wrap;font-size:13px}
+.pg-p05 .sumline span{white-space:nowrap}
+.pg-p05 .viewer{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:12px;white-space:nowrap}
+.pg-p05 .viewer select{height:26px;padding:0 6px;border:1px solid #d3d9e1;border-radius:6px;background:#fff}
+@media(max-width:900px){.pg-p05 .vh h1{font-size:19px}
+.pg-p05 .vh .acts .sp{display:none}
+.pg-p05 .viewer{width:100%}
+}

@@ -286,6 +286,7 @@ export class VoyageService {
   async deleteCargo(id: string, no: string, a: Actor, key?: string) {
     await this.needEdit(id, a);
     const old = await this.cargoIn(id, no);
+    if ((await this.store.cargo(id)).length <= 1) throw invalid('至少保留一行货物明细');
     await this.store.deleteCargo(id, no, sub(key, 'cargo'));
     await this.store.addChangeLog([{ voyage: id, field: '货物明细', old: old.name + ' ' + old.tons + ' 吨', nw: '已删除', by: a.name, at: this.now() }]);
     return { deleted: no };

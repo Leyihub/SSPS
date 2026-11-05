@@ -127,6 +127,7 @@ test('货物明细：增改删有日志；改只带传入字段；不存在的�
   assert.equal(up.tons, 35000); assert.equal(up.contract, 'C-1', '没传的字段不被覆盖');
   await svc.deleteCargo(voyage.id, 'CL-0002', lin);
   assert.equal((await store.cargo(voyage.id)).length, 1);
+  await err(svc.deleteCargo(voyage.id, 'CL-0001', lin), 422, /至少保留/);
   await err(svc.updateCargo(voyage.id, 'CL-0099', { tons: 1 }, lin), 404);
   await err(svc.addCargo(voyage.id, { name: '煤', tons: 'abc' }, lin), 422);
   await err(svc.addCargo(voyage.id, { name: '煤', tons: 1 }, other), 403);

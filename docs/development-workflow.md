@@ -1,5 +1,7 @@
 # 开发阶段：流程、环节衔接与前置条件（2026-11-05）
 
+> **交接（2026-11-05）：后续工作由本地 Codex 接手，入口见仓库根目录 `AGENTS.md`、`docs/handoff/README.md`（现状与规矩）、`docs/handoff/task-book.md`（全部任务书）。** 下面第 1–5 节是交接前的流程与进度记录，进度表仍需每次提交后更新。
+
 状态说明：目前**没有任何功能上线**。下面的「完成」都指代码已写好并通过测试，不代表接了真实飞书。
 
 ## 1. 谁做什么
@@ -78,6 +80,6 @@
 | 云空间拉取 A18、系统管理 A26–A28 | `app/server/modules/` | 计划中（依赖飞书客户端接入） |
 | 飞书仓储层（先写飞书再回写镜像）与定时任务 | `app/server/` | 计划中（客户端、写队列、幂等、补偿已有） |
 | 迁移脚本（读 Excel） | — | 计划中（清洗规则已有） |
-| 前端 React 重写（P01–P11） | `app/client/src/pages/` | 计划中 |
+| 前端 React 重写（P01–P11） | `app/client/src/{ssps,pages,components}` | 进行中：底座（样式、接口钩子、通用组件、导航外壳）和 P04 航次列表已完成并在云端渲染截图验证；P05 样式已抽出、页面未写；其余未开始。云端用 `npm run preview:build` + `scripts/demo-server.cjs`（原型示例数据 + 内存后端）预览 |
 
-冒烟（真起 Nest，走完整条 HTTP 主线）：`cd app && npm run smoke`；运行测试：`cd app && npm test`（90 个）；类型检查：`npm run type:check:server`；代码检查：`npx eslint server --quiet`。
+冒烟（真起 Nest，走完整条 HTTP 主线）：`cd app && npm run smoke`；运行测试：`cd app && npm test`（91 个）；类型检查：`npm run type:check:server`；代码检查：`npx eslint server --quiet`。
