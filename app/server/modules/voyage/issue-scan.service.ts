@@ -27,7 +27,7 @@ export class IssueScanService {
   ) {}
   clock: () => Date = () => new Date();
 
-  /** a 为 null 表示定时任务（内部令牌）；否则必须是系统管理员 */
+  /** a 为 null 表示定时任务（jobs.automation.ts）；否则必须是系统管理员 */
   async scan(a: Actor | null) {
     if (a && a.role !== '系统管理员') throw new BusinessException(ResponseCode.FORBIDDEN, '只有系统管理员或定时任务可以触发扫描', HttpStatus.FORBIDDEN);
     const today = this.clock().toISOString().slice(0, 10), at = this.clock().toISOString().slice(0, 16).replace('T', ' ');

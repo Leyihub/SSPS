@@ -25,7 +25,7 @@ export class AdminService {
   async healthCheck(a: Actor) { this.guard(a); return { at: new Date().toISOString().slice(0, 16).replace('T', ' '), checks: await this.health.checks() }; }
 
   /**
-   * W16 补偿：把「飞书已写成功、回写镜像没做完」的记录补完（不会再写飞书）。系统管理员手动触发，或定时任务带内部令牌触发。
+   * W16 补偿：把「飞书已写成功、回写镜像没做完」的记录补完（不会再写飞书）。系统管理员手动触发，或定时任务（jobs.automation.ts）触发。
    * 没有写队列（内存模式）时直接返回 enabled=false。pending/failed 是飞书写失败的，等用户用同一个幂等键重试，这里只汇报数量。
    */
   async replay(a: Actor | null) {

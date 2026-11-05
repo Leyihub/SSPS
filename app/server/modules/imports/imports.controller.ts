@@ -4,7 +4,6 @@ import { ResponseCode } from '../../common/constants/api_response_code';
 import { LARK_DRIVE } from '../../ports/tokens';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Request } from 'express';
-import { isInternalCall } from '../../common/internal-token';
 import { NeedLogin } from '@lark-apaas/fullstack-nestjs-core';
 import { IsArray, IsObject, IsOptional, IsString, Matches } from 'class-validator';
 import { ImportsService } from './imports.service';
@@ -32,13 +31,11 @@ export class BerthPlanController {
   constructor(private readonly svc: ImportsService, @Optional() @Inject(LARK_DRIVE) private readonly drive?: { listFolder(t: string): Promise<any>; download(t: string): Promise<Buffer> } | null) {}
   @Post('import') async import(@Body() dto: ImportDto, @Req() req: Request, @Headers(KEY) key?: string) { return this.svc.importBerthPlan(dto, await this.svc.actor(req.userContext as any), key); }
   @Post('import-file') @UseInterceptors(UPLOAD) async importFile(@UploadedFile() file: Upload, @Body('planDate') planDate: string | undefined, @Req() req: Request, @Headers(KEY) key?: string) { return this.svc.importBerthPlan({ ...this.svc.parseUpload(file), planDate: planDate || undefined }, await this.svc.actor(req.userContext as any), key); }
-  /** A18：从云空间文件夹拉取新的靠船计划。系统管理员，或自动化触发器带内部令牌（请求头 x-internal-token = 环境变量 INTERNAL_JOB_TOKEN） */
-  @Post('pull') async pull(@Req() req_: Request, @Headers('x-internal-token') token?: string) {
-    const internal = isInternalCall(token);
-    if (!internal) { const a = await this.svc.actor(req_.userContext as any); if (a.role !== '系统管理员') throw new BusinessException(ResponseCode.FORBIDDEN, '只有系统管理员或定时任务可以触发拉取', HttpStatus.FORBIDDEN); }
-    const folder = process.env.DRIVE_FOLDER_TOKEN_BERTH_PLAN;
-    if (!this.drive || !folder) throw new BusinessException(ResponseCode.SERVICE_UNAVAILABLE, '云空间拉取未配置：需要环境变量 LARK_APP_ID、LARK_APP_SECRET、DRIVE_FOLDER_TOKEN_BERTH_PLAN', HttpStatus.SERVICE_UNAVAILABLE);
-    return this.svc.pullBerthPlans(this.drive as any, folder, null);
+  /** A18：从云空间文件夹拉取新的靠船计划。系统管理员手动触发；定时触发见 admin/jobs.automation.ts */
+  @Post('pull') async pull(@Req() req_: Request) {
+    const a = await this.svc.actor(req_.userContext as any);
+    if (a.role !== '系统管理员') throw new BusinessException(ResponseCode.FORBIDDEN, '只有系统管理员可以手动触发拉取', HttpStatus.FORBIDDEN);
+    return this.svc.pullFromDrive(this.drive as any, null);
   }
   @Get('batches') batches() { return this.svc.berthBatches(); }
   @Get('batches/:batchNo/rows') rows(@Param('batchNo') batchNo: string, @Query('status') status?: string) { return this.svc.berthBatchRows(batchNo, status); }

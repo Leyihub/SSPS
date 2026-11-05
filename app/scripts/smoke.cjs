@@ -35,12 +35,6 @@ Module({ imports: ['ports/ports', 'prediction/prediction', 'capacity/capacity', 
   assert.equal((await call('POST', `/api/predictions/${p.body.runNo}/announcement`, { label: 'A' })).status, 201); step('生成宣船文案');
   assert.equal((await call('GET', '/api/capacity/calendar')).status, 200); step('容量日历');
   assert.equal((await call('POST', '/api/route-rules/recompute')).status, 403); step('非系统管理员不能重算航程规则');
-  process.env.INTERNAL_JOB_TOKEN = 'smoke-token-123';
-  assert.equal((await call('POST', '/api/route-rules/recompute', undefined, { 'x-internal-token': 'wrong-token-123' })).status, 403); step('定时任务令牌错误被拒绝');
-  assert.equal((await call('POST', '/api/route-rules/recompute', undefined, { 'x-internal-token': 'smoke-token-123' })).status, 201); step('定时任务带令牌可以重算航程规则');
-  assert.equal((await call('POST', '/api/data-issues/scan', undefined, { 'x-internal-token': 'smoke-token-123' })).status, 201); step('定时任务触发数据质量扫描');
-  assert.equal((await call('POST', '/api/admin/replay', undefined, { 'x-internal-token': 'smoke-token-123' })).body.enabled, false); step('补偿重放（内存模式未启用）');
-  delete process.env.INTERNAL_JOB_TOKEN;
   assert.equal((await call('GET', '/api/health')).status, 403); step('连通性自检只对系统管理员开放');
   await app.close();
   console.log('冒烟通过');

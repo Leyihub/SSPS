@@ -108,6 +108,12 @@ export class ImportsService {
    * A18：从云空间文件夹拉取靠船计划。只处理还没导入过的文件（按文件 token 去重），从旧到新逐个导入；
    * 一个文件失败不影响其他文件，失败原因写进运行日志。drive 由调用方注入（真实是飞书云空间客户端，测试里是假的）。
    */
+  /** 按环境变量 DRIVE_FOLDER_TOKEN_BERTH_PLAN 拉取；没配置云空间时 503，不编造默认值 */
+  pullFromDrive(drive: { listFolder(token: string): Promise<DriveFile[]>; download(token: string): Promise<Buffer> } | null | undefined, a: Actor | null) {
+    const folder = process.env.DRIVE_FOLDER_TOKEN_BERTH_PLAN;
+    if (!drive || !folder) throw fail(ResponseCode.SERVICE_UNAVAILABLE, '云空间拉取未配置：需要环境变量 LARK_APP_ID、LARK_APP_SECRET、DRIVE_FOLDER_TOKEN_BERTH_PLAN', HttpStatus.SERVICE_UNAVAILABLE);
+    return this.pullBerthPlans(drive, folder, a);
+  }
   async pullBerthPlans(drive: { listFolder(token: string): Promise<DriveFile[]>; download(token: string): Promise<Buffer> }, folderToken: string, a: Actor | null) {
     const files = (await drive.listFolder(folderToken)).filter((f) => /\.xlsx$/i.test(f.name)), out = { found: files.length, imported: [] as string[], skipped: 0, failed: [] as Array<{ name: string; error: string }> };
     for (const f of files) {

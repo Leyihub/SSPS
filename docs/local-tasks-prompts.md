@@ -344,19 +344,18 @@ T01、T02、T08 行数不变（10、23、10）。
 
 ---
 
-## 提示词 8：建定时触发器（W31，在你的本机用 lark-cli 建）
+## 提示词 8：核对定时触发器已注册（W31，在你的本机）
 
-前提：应用已经发布到妙搭；已经在应用的环境变量里设置了 `INTERNAL_JOB_TOKEN`（一段你自己生成的随机长字符串，不要写进仓库和对话）。
+前提：应用已发布到妙搭（触发器是应用启动时由代码自动注册的，不用手动建）。
 
 ```text
-为 SSPS 应用建定时触发器。先读 docs/handoff/scheduled-jobs.md，再读 lark-cli 的 lark-apps 自动化参考（先 lark-cli apps --help 找到 +automation-create 的用法，不要猜参数）。
+核对 SSPS 的定时触发器。先读 docs/handoff/scheduled-jobs.md 和 app/server/modules/admin/jobs.automation.ts，再读 lark-cli 的 lark-apps 自动化参考（lark-cli apps --help 找自动化/触发器相关命令，不要猜参数）。
 
-1. 按 docs/handoff/scheduled-jobs.md 的表，为 6 个任务各建一个定时触发器，频率和接口路径照表。时间用 IMIP 当地时间（UTC+8）。
-2. 每个触发器是 HTTP POST 到应用后端对应路径，请求头带 x-internal-token，值取环境变量 INTERNAL_JOB_TOKEN（用触发器支持的环境变量引用方式，不要把令牌明文写进触发器配置、命令行或回复）。
-3. 建好后每个触发器手动触发一次，报告：触发器名称、频率、接口返回的状态码和 JSON（去掉敏感信息）、系统管理 → 同步日志里是否多出对应记录。
-4. 云空间拉取如果返回 503（没配 DRIVE_FOLDER_TOKEN_BERTH_PLAN），不要自己编文件夹 token，告诉我缺哪个变量。
-5. 兼容表刷新如果返回 503 或报错，把错误原文（去掉密钥）发给我，不要自己改代码。
-不要提交任何包含令牌的文件；做完把报告发给我。
+1. 列出应用当前注册的触发器，确认 6 个都在：cronPullBerthPlan、cronReplay、cronCompatDirty、cronCompatFull、cronRecomputeRoutes、cronIssueScan，cron 表达式和文档一致。缺哪个告诉我，不要自己改代码。
+2. 回答：平台触发器的 cron 用什么时区（UTC 还是 UTC+8）？依据是什么（文档或实测）？
+3. 对每个触发器各手动触发一次（用平台提供的手动触发/测试命令），报告：是否成功、应用日志里该任务的「完成/失败」那一行（去掉敏感信息）、系统管理 → 同步日志里是否多出对应记录（云空间拉取、航程重算、兼容表刷新会写日志）。
+4. 云空间拉取如果提示没配置（缺 DRIVE_FOLDER_TOKEN_BERTH_PLAN 等），不要自己编，告诉我缺哪个变量；兼容表刷新失败把错误原文（去掉密钥）发给我。
+不要提交任何包含密钥的文件；做完把报告发给我。
 ```
 
 ---
