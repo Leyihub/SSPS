@@ -67,12 +67,14 @@ test(`${mode} · 船舶：业务员能新增，只有物流/系统能改；船�
   const { svc } = await mk();
   const v = await svc.addVessel({ name: 'mv star', alias: 'STAR ONE', dwt: 56000, imo: '9123456', mmsi: '412345678' }, biz);
   assert.deepEqual([v.name, v.tier, v.id], ['MV STAR', '5 万吨', 'V-0001']);
-  await err(svc.addVessel({ name: 'Star One' }, biz), 409, /重复/);
-  await err(svc.addVessel({ name: 'OTHER', imo: '9123456' }, biz), 409, /IMO/);
+  await err(svc.addVessel({ name: 'NO MMSI' }, biz), 422, /MMSI 必填/);
+  await err(svc.addVessel({ name: 'Star One', mmsi: '412000009' }, biz), 409, /重复/);
+  await err(svc.addVessel({ name: 'OTHER', imo: '9123456', mmsi: '412000008' }, biz), 409, /IMO/);
   await err(svc.addVessel({ name: 'OTHER', mmsi: '412345678' }, biz), 409, /MMSI/);
   await err(svc.addVessel({ name: '', imo: '12', mmsi: 'abc', type: '飞艇' }, biz), 422, /标准船名.*船型.*MMSI.*IMO/);
   await err(svc.patchVessel(v.id, { dwt: 100000 }, biz), 403);
   assert.equal((await svc.patchVessel(v.id, { dwt: 100000 }, logi)).tier, '10 万吨');
+  await err(svc.patchVessel(v.id, { mmsi: '' }, logi), 422, /不能清空/);
   assert.deepEqual((await svc.vessels('412345')).map((x) => x.name), ['MV STAR']);
 });
 

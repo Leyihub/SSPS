@@ -133,7 +133,9 @@ export class MasterService {
   }
   async addVessel(b: Bag, a: Actor, key?: string) {
     if (!canAddVessel(a)) throw forbidden('当前角色不能新增船舶');
-    const row = this.cleanVessel(b), c = await this.vesselClash(row); if (c) throw conflict(c);
+    const row = this.cleanVessel(b);
+    if (!row.mmsi) throw invalid('MMSI 必填（K13：一期手工更新 ETA 要靠它定位船位）');            // 只管新增：迁移来的历史船舶缺 MMSI 的，进数据质量清单补
+    const c = await this.vesselClash(row); if (c) throw conflict(c);
     return this.store.saveVessel(row, key);
   }
   async patchVessel(id: string, b: Bag, a: Actor, key?: string) {
@@ -141,7 +143,9 @@ export class MasterService {
     only(b, ['name', 'alias', 'mmsi', 'imo', 'type', 'dwt', 'length']);
     const old = (await this.store.vessels()).find((v) => v.id === id);
     if (!old) throw notFound('找不到船舶：' + id);
-    const row = this.cleanVessel(b, old), c = await this.vesselClash(row, id); if (c) throw conflict(c);
+    const row = this.cleanVessel(b, old);
+    if (old.mmsi && !row.mmsi) throw invalid('已有 MMSI 的船舶不能清空 MMSI');                  // 历史上本来就缺 MMSI 的可以继续缺，补上之后不能再删
+    const c = await this.vesselClash(row, id); if (c) throw conflict(c);
     return this.store.saveVessel({ ...row, id }, key);
   }
 
