@@ -88,6 +88,7 @@ export class ImportsService {
       status: '成功', importedBy: by, importedAt: this.now(),
     }, rows, key);
     await this.voyages.addIssues(rows.filter((r) => r.status === 'anomaly').map((r) => ({ object: batchNo + '#' + r.line + ' ' + r.vessel, type: '靠船计划日期异常', note: r.issue!.text, owner: by })));
+    await this.voyages.addIssues(rows.filter((r) => r.status === 'active' && !r.berth).map((r) => ({ object: batchNo + '#' + r.line + ' ' + r.vessel, type: '泊位未匹配', field: 'berth', note: `泊位「${r.berthRaw || '空'}」无法对应到泊位表，该行不计入泊位占用`, owner: by })));
     return { batch, summary: s, coverTo: res.coverTo };
   }
   berthBatches() { return this.store.berthBatches(); }

@@ -130,3 +130,10 @@ test('库存趋势：基准曲线与加入方案到货后的曲线都来自引�
   assert.ok(r.lines[0].pts.find((p) => p[0] === today + 3)![1] > r.base.find((p) => p[0] === today + 3)![1], '到货后库存更高');
   await err(svc.inventoryTrend('没有', [], today + 3), 404);
 });
+
+test('泊位对不上的行（泊位号无法识别）进数据质量清单「泊位未匹配」；池外泊位是正常情况，不报', async () => {
+  const { svc, vstore } = mk();
+  await svc.importBerthPlan({ fileName: 'x.xlsx', rows: [plan({ 船名: 'MV OK' }), plan({ 船名: 'MV OFF', 泊位: 'L1' }), plan({ 船名: 'MV BAD', 泊位: '待定' })] }, logi);
+  const issues = (await vstore.issues()).filter((i) => i.type === '泊位未匹配');
+  assert.equal(issues.length, 1); assert.match(issues[0].object, /MV BAD/); assert.match(issues[0].note, /待定/);
+});
