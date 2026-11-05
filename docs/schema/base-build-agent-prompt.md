@@ -83,7 +83,46 @@
 - 最后在对话里把 report.md 的全文显示给我。
 ```
 
-## 3. 建完之后
+## 3. 密钥怎么存
+
+需要保密的只有 App Secret。App ID、app token、table ID 不是密钥，但也不要公开贴出去。
+
+1. **正本放密码管理器**：公司有企业密码库就用它，没有就用 Bitwarden、1Password 或 KeePass。不要放在微信、邮件、飞书聊天、云文档、桌面 txt 或代码仓库里。
+2. **本机使用时只放进当前终端**：用上面第 1 节第 5 步的命令临时设置，关掉终端就没了。不要用 `setx` 或「系统属性 → 环境变量」设成永久变量：那样会明文存在注册表里，所有程序都能读到。
+3. **嫌每次复制麻烦**，用系统自带的加密存储，用时一条命令取出。
+
+   Windows PowerShell，只需做一次：
+
+   ```powershell
+   Install-Module Microsoft.PowerShell.SecretManagement, Microsoft.PowerShell.SecretStore -Scope CurrentUser
+   Register-SecretVault -Name SSPS -ModuleName Microsoft.PowerShell.SecretStore -DefaultVault
+   Set-Secret -Name LARK_APP_SECRET
+   ```
+
+   最后一条会提示你输入密钥（屏幕不显示），第一次还会让你设置一个保管库密码。以后每次开终端时执行：
+
+   ```powershell
+   $env:LARK_APP_SECRET = Get-Secret -Name LARK_APP_SECRET -AsPlainText
+   ```
+
+   macOS，只需做一次（会提示输入密钥）：
+
+   ```bash
+   security add-generic-password -a "$USER" -s SSPS_LARK_APP_SECRET -w
+   ```
+
+   以后每次：
+
+   ```bash
+   export LARK_APP_SECRET="$(security find-generic-password -s SSPS_LARK_APP_SECRET -w)"
+   ```
+
+4. **不要把密钥交给 AI**：不贴进提示词或聊天，agent 只从环境变量读。能执行命令的 agent 技术上读得到当前终端的环境变量，所以只在你信任的 agent 里使用，提示词里也已禁止它打印或保存。
+5. **应用上线后**：密钥用 `lark-cli apps +env-set` 存到妙搭的环境变量里，代码只从环境变量读。本机调试用的 `.env.local` 已被 `.gitignore` 排除，不会被提交。
+6. **一旦泄露就重置**：密钥被贴到聊天、截图、提交进仓库或发给了别人，马上到开放平台 → 你的应用 →「凭证与基础信息」重置 App Secret，然后更新密码管理器和妙搭环境变量。旧密钥重置后立即失效。
+7. **权限最小化**：应用只开通需要的权限，Base 只给应用和系统管理员，这样即使密钥泄露，影响范围也有限。
+
+## 4. 建完之后
 
 1. 把 agent 显示的报告全文发给我（报告里没有密钥；app token 和 table ID 不是密钥，后面要写进环境变量）。
 2. 我会核对报告，告诉你还要在界面里手工补哪些公式、哪些字段要在高级权限里设为只读。
