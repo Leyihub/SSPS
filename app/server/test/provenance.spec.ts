@@ -6,7 +6,7 @@ import path from 'node:path';
 import { createEngine, buildProvenance, toRunRecord, toPlanRecord, announce } from '../engine';
 import { iso } from '../lib/dates';
 
-const proto = path.join(__dirname, '../../../prototype');
+const proto = path.join(__dirname, 'fixtures/prototype');
 const ctx = { window: {}, console }; ctx.window.window = ctx.window; vm.createContext(ctx);
 for (const f of ['mock-data.js']) vm.runInContext('var window=this.window;' + fs.readFileSync(path.join(proto, f), 'utf8'), ctx);
 const M = ctx.window.MOCK;

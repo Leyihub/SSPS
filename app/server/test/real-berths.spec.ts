@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createEngine } from '../engine';
 
-const seed = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../docs/schema/seed/T02-berths.json'), 'utf8'));
+const seed = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures/T02-berths.json'), 'utf8'));
 const berths = seed.map((b) => ({ code: b['泊位编码'], terminal: b['码头'], capacity: b['容量吨级（吨）'], status: b['状态'] }));
 const E = createEngine({ today: '2026-11-05', berths, planRows: [], voyages: [], routeRules: [] });
 

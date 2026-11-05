@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 
-const proto = path.join(__dirname, '../../../../prototype');
+const proto = path.join(__dirname, '../fixtures/prototype');
 const ctx: any = { window: {}, console }; ctx.window.window = ctx.window; vm.createContext(ctx);
 vm.runInContext('var window=this.window;' + fs.readFileSync(path.join(proto, 'mock-data.js'), 'utf8'), ctx);
 export const M = ctx.window.MOCK;

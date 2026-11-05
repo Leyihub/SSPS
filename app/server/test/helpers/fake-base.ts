@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import type { BaseGateway, BaseRecord, TableKey, WriteOpts } from '../../lark/gateway';
 
-const plan = JSON.parse(fs.readFileSync(path.join(__dirname, '../../../../docs/schema/base-plan.json'), 'utf8'));
+const plan = JSON.parse(fs.readFileSync(path.join(__dirname, '../fixtures/base-plan.json'), 'utf8'));
 export const FIELDS: Record<string, Record<string, { type: string; options?: string[] }>> = Object.fromEntries(plan.tables.map((t: any) => [t.key, Object.fromEntries(t.fields.map((f: any) => [f.name, { type: f.type, options: f.options }]))]));
 const IGNORED = new Set(['autonumber', 'formula', 'lookup']);
 

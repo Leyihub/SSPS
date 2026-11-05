@@ -1,6 +1,6 @@
 // 演示服务：用内存版后端 + 原型里的虚构示例数据，起一个能被前端页面调用的 /api。
 // 只用于本地预览和截图，不连飞书和数据库，数据重启即清。用法：npm run build:server && node scripts/demo-server.cjs [端口]
-// 登录身份：请求头 x-demo-user（默认 林海川），可选值见 prototype/mock-data.js 的 people。
+// 登录身份：请求头 x-demo-user（默认 林海川），可选值见 server/test/fixtures/prototype/mock-data.js 的 people。
 require('reflect-metadata');
 const fs = require('node:fs'), path = require('node:path'), vm = require('node:vm');
 const express = require('express');
@@ -10,7 +10,7 @@ const root = path.join(__dirname, '..'), d = path.join(root, 'dist/server/');
 const pick = (p, n) => require(d + p)[n];
 
 const ctx = { window: {}, console }; ctx.window.window = ctx.window; vm.createContext(ctx);
-for (const f of ['mock-data.js']) vm.runInContext('var window=this.window;' + fs.readFileSync(path.join(root, '../prototype', f), 'utf8'), ctx);
+for (const f of ['mock-data.js']) vm.runInContext('var window=this.window;' + fs.readFileSync(path.join(root, 'server/test/fixtures/prototype', f), 'utf8'), ctx);
 const M = ctx.window.MOCK;
 const NOW = new Date(M.today + 'T09:42:00Z');
 

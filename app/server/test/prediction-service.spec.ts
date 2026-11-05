@@ -17,7 +17,7 @@ import { buildRule } from '../domain/routeRules';
 import { BusinessException } from '../common/interfaces/exception.interface';
 
 // 用原型的示例数据组一份快照（有靠船计划、航次、库存），和引擎测试用同一份
-const proto = path.join(__dirname, '../../../prototype');
+const proto = path.join(__dirname, 'fixtures/prototype');
 const ctx: any = { window: {}, console }; ctx.window.window = ctx.window; vm.createContext(ctx);
 for (const f of ['mock-data.js']) vm.runInContext('var window=this.window;' + fs.readFileSync(path.join(proto, f), 'utf8'), ctx);
 const M = ctx.window.MOCK;
