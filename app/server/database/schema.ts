@@ -1,7 +1,7 @@
 /* eslint-disable */
 /** auto generated, do not edit */
 import { sql } from 'drizzle-orm';
-import { boolean, date, foreignKey, index, integer, jsonb, numeric, pgTable, text, uniqueIndex, uuid, customType } from "drizzle-orm/pg-core"
+import { bigint, boolean, date, foreignKey, index, integer, jsonb, numeric, pgTable, text, uniqueIndex, uuid, varchar, customType } from "drizzle-orm/pg-core"
 
 export const customTimestamptz = customType<{
   data: Date;
@@ -116,6 +116,311 @@ export const fileAttachmentArray = customType<{
     });
   },
 });
+
+export const mRouteRule = pgTable("m_route_rule", {
+  id: uuid("id").primaryKey().unique().defaultRandom(),
+  baseRecordId: varchar("base_record_id").unique(),
+  ruleNo: bigint("rule_no", { mode: 'number' }),
+  loadPort: text("load_port"),
+  dischargePort: text("discharge_port"),
+  applicableBusinessType: text("applicable_business_type").array(),
+  tonnageGrade: text("tonnage_grade"),
+  experienceVoyageDay: numeric("experience_voyage_day"),
+  experienceVoyageMaxDay: numeric("experience_voyage_max_day"),
+  experienceMaintainer: userProfile("experience_maintainer"),
+  sampleCount: bigint("sample_count", { mode: 'number' }),
+  statP50Day: numeric("stat_p50_day"),
+  statP80Day: numeric("stat_p80_day"),
+  adoptCaliber: text("adopt_caliber"),
+  effectiveVoyageP50Day: text("effective_voyage_p50_day"),
+  effectiveVoyageP80Day: text("effective_voyage_p80_day"),
+  recentRecalcTime: customTimestamptz("recent_recalc_time"),
+  appStatus: text("app_status"),
+  // System field: Creation time (auto-filled, do not modify)
+  createdAt: customTimestamptz("_created_at").notNull().default(sql`now()`),
+  // System field: Creator (auto-filled, do not modify)
+  createdBy: userProfile("_created_by"),
+  // System field: Update time (auto-filled, do not modify)
+  updatedAt: customTimestamptz("_updated_at").notNull().default(sql`now()`),
+  // System field: Updater (auto-filled, do not modify)
+  updatedBy: userProfile("_updated_by"),
+}, (table) => [
+  uniqueIndex("unq_1881013246044163").on(table.id),
+  uniqueIndex("unq_1881013246044195").on(table.baseRecordId),
+]);
+
+export const mSalesExt = pgTable("m_sales_ext", {
+  id: uuid("id").primaryKey().unique().defaultRandom(),
+  baseRecordId: varchar("base_record_id").unique(),
+  extensionNo: bigint("extension_no", { mode: 'number' }),
+  /**
+   * 航次
+   */
+  voyage: jsonb("voyage"),
+  charterType: text("charter_type"),
+  seaShippingContractNo: text("sea_shipping_contract_no"),
+  // System field: Creation time (auto-filled, do not modify)
+  createdAt: customTimestamptz("_created_at").notNull().default(sql`now()`),
+  // System field: Creator (auto-filled, do not modify)
+  createdBy: userProfile("_created_by"),
+  // System field: Update time (auto-filled, do not modify)
+  updatedAt: customTimestamptz("_updated_at").notNull().default(sql`now()`),
+  // System field: Updater (auto-filled, do not modify)
+  updatedBy: userProfile("_updated_by"),
+}, (table) => [
+  uniqueIndex("unq_1881013205313628").on(table.id),
+  uniqueIndex("unq_1881013205313660").on(table.baseRecordId),
+]);
+
+export const mBulkSettle = pgTable("m_bulk_settle", {
+  id: uuid("id").primaryKey().unique().defaultRandom(),
+  baseRecordId: varchar("base_record_id").unique(),
+  settlementNo: bigint("settlement_no", { mode: 'number' }),
+  /**
+   * 航次
+   */
+  voyage: jsonb("voyage"),
+  dischargeClause: text("discharge_clause"),
+  dischargeRateTonPerDay: bigint("discharge_rate_ton_per_day", { mode: 'number' }),
+  allowableDischargeDays: numeric("allowable_discharge_days"),
+  turnTimeHour: bigint("turn_time_hour", { mode: 'number' }),
+  demurrageRate: numeric("demurrage_rate"),
+  currency: text("currency"),
+  demurrageDespatchUsd: numeric("demurrage_despatch_usd"),
+  dischargePortDraftTon: numeric("discharge_port_draft_ton"),
+  waterGauge1Min: bigint("water_gauge_1_min", { mode: 'number' }),
+  waterGauge2Min: bigint("water_gauge_2_min", { mode: 'number' }),
+  waterGauge3Min: bigint("water_gauge_3_min", { mode: 'number' }),
+  exchangeRate: numeric("exchange_rate"),
+  portFeeUnitPrice: numeric("port_fee_unit_price"),
+  portFeeUsd: numeric("port_fee_usd"),
+  handlingFeeUsd: numeric("handling_fee_usd"),
+  truckingVolumeTon: numeric("trucking_volume_ton"),
+  pipeConveyorVolumeTon: numeric("pipe_conveyor_volume_ton"),
+  weighbridgeWeightTon: numeric("weighbridge_weight_ton"),
+  otherDeptVolumeTon: numeric("other_dept_volume_ton"),
+  transferCarCount: bigint("transfer_car_count", { mode: 'number' }),
+  x1BeltConveyorCount: bigint("x1_belt_conveyor_count", { mode: 'number' }),
+  crossMonthShipRoadTon: numeric("cross_month_ship_road_ton"),
+  crossMonthShipBeltTon: numeric("cross_month_ship_belt_ton"),
+  _3BeltConveyorIdleHour: numeric("3_belt_conveyor_idle_hour"),
+  _4BeltConveyorIdleHour: numeric("4_belt_conveyor_idle_hour"),
+  handoverSendDate: date("handover_send_date"),
+  handoverReturnDate: date("handover_return_date"),
+  detianNoHandover: boolean("detian_no_handover"),
+  lightRainBond: boolean("light_rain_bond"),
+  shipUnloadFactorAbnormalFeedback: text("ship_unload_factor_abnormal_feedback"),
+  // System field: Creation time (auto-filled, do not modify)
+  createdAt: customTimestamptz("_created_at").notNull().default(sql`now()`),
+  // System field: Creator (auto-filled, do not modify)
+  createdBy: userProfile("_created_by"),
+  // System field: Update time (auto-filled, do not modify)
+  updatedAt: customTimestamptz("_updated_at").notNull().default(sql`now()`),
+  // System field: Updater (auto-filled, do not modify)
+  updatedBy: userProfile("_updated_by"),
+}, (table) => [
+  uniqueIndex("unq_1881013467761720").on(table.id),
+  uniqueIndex("unq_1881013467762712").on(table.baseRecordId),
+]);
+
+export const mCargo = pgTable("m_cargo", {
+  id: uuid("id").primaryKey().unique().defaultRandom(),
+  baseRecordId: varchar("base_record_id").unique(),
+  appDetailId: bigint("app_detail_id", { mode: 'number' }),
+  /**
+   * 航次
+   */
+  voyage: jsonb("voyage"),
+  contractNo: text("contract_no"),
+  eaPurchaseOrderNo: text("ea_purchase_order_no"),
+  materialCategory: text("material_category"),
+  goodsName: text("goods_name"),
+  materialAlias: text("material_alias"),
+  userUnit: text("user_unit"),
+  supplierCustomer: text("supplier_customer"),
+  estimatedShippingWeightTon: numeric("estimated_shipping_weight_ton"),
+  portLoadingWeightTon: numeric("port_loading_weight_ton"),
+  dryBaseConversionTon: numeric("dry_base_conversion_ton"),
+  overShortShipmentPercent: numeric("over_short_shipment_percent"),
+  contractExecutor: userProfile("contract_executor"),
+  // System field: Creation time (auto-filled, do not modify)
+  createdAt: customTimestamptz("_created_at").notNull().default(sql`now()`),
+  // System field: Creator (auto-filled, do not modify)
+  createdBy: userProfile("_created_by"),
+  // System field: Update time (auto-filled, do not modify)
+  updatedAt: customTimestamptz("_updated_at").notNull().default(sql`now()`),
+  // System field: Updater (auto-filled, do not modify)
+  updatedBy: userProfile("_updated_by"),
+}, (table) => [
+  uniqueIndex("unq_1881013107479655").on(table.id),
+  uniqueIndex("unq_1881013107480647").on(table.baseRecordId),
+]);
+
+export const mVoyage = pgTable("m_voyage", {
+  id: uuid("id").primaryKey().unique().defaultRandom(),
+  baseRecordId: varchar("base_record_id").unique(),
+  voyageNo1: bigint("voyage_no_1", { mode: 'number' }),
+  /**
+   * 船名
+   */
+  vesselName: jsonb("vessel_name"),
+  /**
+   * 总货量（吨）
+   */
+  totalCargoTon: jsonb("total_cargo_ton"),
+  /**
+   * 装港是否本港
+   */
+  loadPortLocal: jsonb("load_port_local"),
+  /**
+   * MMSI
+   */
+  mmsi: jsonb("mmsi"),
+  businessType: text("business_type"),
+  businessAttribute: text("business_attribute"),
+  voyageNo: text("voyage_no"),
+  vessel: text("vessel"),
+  carrier: text("carrier"),
+  vesselVoyageNo: text("vessel_voyage_no"),
+  loadPort: text("load_port"),
+  dischargePort: text("discharge_port"),
+  secondDischargePort: text("second_discharge_port"),
+  finalDestination: text("final_destination"),
+  localSide: text("local_side"),
+  laycanStart: customTimestamptz("laycan_start"),
+  laycanEnd: customTimestamptz("laycan_end"),
+  etaLoadPort: customTimestamptz("eta_load_port"),
+  ataLoadPort: customTimestamptz("ata_load_port"),
+  loadPortBerth: customTimestamptz("load_port_berth"),
+  planDepartLoadPort: customTimestamptz("plan_depart_load_port"),
+  actualDepartLoadPort: customTimestamptz("actual_depart_load_port"),
+  planArriveDischargeWindowStart: customTimestamptz("plan_arrive_discharge_window_start"),
+  planArriveDischargeWindowEnd: customTimestamptz("plan_arrive_discharge_window_end"),
+  currentEtaDischargePort: customTimestamptz("current_eta_discharge_port"),
+  actualArriveDischargePort: customTimestamptz("actual_arrive_discharge_port"),
+  dischargePortBerth: customTimestamptz("discharge_port_berth"),
+  dischargePortDeparture: customTimestamptz("discharge_port_departure"),
+  vesselStatus: text("vessel_status"),
+  abnormalMark: text("abnormal_mark").array(),
+  loadingPortOverdue: text("loading_port_overdue"),
+  actualVoyageDays: text("actual_voyage_days"),
+  berthWaitDays: text("berth_wait_days"),
+  portOperationDays: text("port_operation_days"),
+  /**
+   * 计划泊位
+   */
+  plannedBerth: jsonb("planned_berth"),
+  /**
+   * 实际泊位
+   */
+  actualBerth: jsonb("actual_berth"),
+  responsibleSalesman: userProfile("responsible_salesman"),
+  department: text("department"),
+  keyAttention: boolean("key_attention"),
+  auditStatus: text("audit_status"),
+  dataSource: text("data_source"),
+  appRecordKey: text("app_record_key"),
+  historyReadonly: boolean("history_readonly"),
+  remark: text("remark"),
+  /**
+   * 货物明细
+   */
+  goodsDetail: jsonb("goods_detail"),
+  sharedShip: text("shared_ship"),
+  /**
+   * 大宗卸船结算
+   */
+  bulkUnloadSettlement: jsonb("bulk_unload_settlement"),
+  /**
+   * 成品销售扩展
+   */
+  productSalesExtend: jsonb("product_sales_extend"),
+  // System field: Creation time (auto-filled, do not modify)
+  createdAt: customTimestamptz("_created_at").notNull().default(sql`now()`),
+  // System field: Creator (auto-filled, do not modify)
+  createdBy: userProfile("_created_by"),
+  // System field: Update time (auto-filled, do not modify)
+  updatedAt: customTimestamptz("_updated_at").notNull().default(sql`now()`),
+  // System field: Updater (auto-filled, do not modify)
+  updatedBy: userProfile("_updated_by"),
+}, (table) => [
+  uniqueIndex("unq_1881013165233316").on(table.id),
+  uniqueIndex("unq_1881013165234372").on(table.baseRecordId),
+]);
+
+export const mVessel = pgTable("m_vessel", {
+  id: uuid("id").primaryKey().unique().defaultRandom(),
+  baseRecordId: varchar("base_record_id").unique(),
+  shipNo: bigint("ship_no", { mode: 'number' }),
+  appMmsi: text("app_mmsi"),
+  appImo: text("app_imo"),
+  standardShipName: text("standard_ship_name"),
+  shipNameAlias: text("ship_name_alias"),
+  shipType: text("ship_type"),
+  dwt: bigint("dwt", { mode: 'number' }),
+  shipLengthM: numeric("ship_length_m"),
+  tonnageClass: text("tonnage_class"),
+  // System field: Creation time (auto-filled, do not modify)
+  createdAt: customTimestamptz("_created_at").notNull().default(sql`now()`),
+  // System field: Creator (auto-filled, do not modify)
+  createdBy: userProfile("_created_by"),
+  // System field: Update time (auto-filled, do not modify)
+  updatedAt: customTimestamptz("_updated_at").notNull().default(sql`now()`),
+  // System field: Updater (auto-filled, do not modify)
+  updatedBy: userProfile("_updated_by"),
+}, (table) => [
+  uniqueIndex("unq_1881013022885960").on(table.id),
+  uniqueIndex("unq_1881013022887064").on(table.baseRecordId),
+]);
+
+export const mBerth = pgTable("m_berth", {
+  id: uuid("id").primaryKey().unique().defaultRandom(),
+  baseRecordId: varchar("base_record_id").unique(),
+  berthCode: text("berth_code"),
+  wharf: text("wharf"),
+  capacityTonnage: bigint("capacity_tonnage", { mode: 'number' }),
+  berthCategory: text("berth_category"),
+  status: text("status"),
+  basisVersion: text("basis_version"),
+  effectiveDate: date("effective_date"),
+  remark: text("remark"),
+  // System field: Creation time (auto-filled, do not modify)
+  createdAt: customTimestamptz("_created_at").notNull().default(sql`now()`),
+  // System field: Creator (auto-filled, do not modify)
+  createdBy: userProfile("_created_by"),
+  // System field: Update time (auto-filled, do not modify)
+  updatedAt: customTimestamptz("_updated_at").notNull().default(sql`now()`),
+  // System field: Updater (auto-filled, do not modify)
+  updatedBy: userProfile("_updated_by"),
+}, (table) => [
+  uniqueIndex("unq_1881013315481699").on(table.id),
+  uniqueIndex("unq_1881013315482643").on(table.baseRecordId),
+]);
+
+export const mPort = pgTable("m_port", {
+  id: uuid("id").primaryKey().unique().defaultRandom(),
+  baseRecordId: varchar("base_record_id").unique(),
+  portCode: text("port_code"),
+  chineseName: text("chinese_name"),
+  englishStandardName: text("english_standard_name"),
+  alias: text("alias"),
+  country: text("country"),
+  region: text("region"),
+  nature: text("nature"),
+  isLocalPort: boolean("is_local_port"),
+  status: text("status"),
+  // System field: Creation time (auto-filled, do not modify)
+  createdAt: customTimestamptz("_created_at").notNull().default(sql`now()`),
+  // System field: Creator (auto-filled, do not modify)
+  createdBy: userProfile("_created_by"),
+  // System field: Update time (auto-filled, do not modify)
+  updatedAt: customTimestamptz("_updated_at").notNull().default(sql`now()`),
+  // System field: Updater (auto-filled, do not modify)
+  updatedBy: userProfile("_updated_by"),
+}, (table) => [
+  uniqueIndex("unq_1881013248954451").on(table.id),
+  uniqueIndex("unq_1881013248954483").on(table.baseRecordId),
+]);
 
 export const writeQueue = pgTable("write_queue", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -461,6 +766,14 @@ export const dataIssueTable = dataIssue;
 export const etaRevisionTable = etaRevision;
 export const inventoryBatchTable = inventoryBatch;
 export const inventoryRowTable = inventoryRow;
+export const mBerthTable = mBerth;
+export const mBulkSettleTable = mBulkSettle;
+export const mCargoTable = mCargo;
+export const mPortTable = mPort;
+export const mRouteRuleTable = mRouteRule;
+export const mSalesExtTable = mSalesExt;
+export const mVesselTable = mVessel;
+export const mVoyageTable = mVoyage;
 export const milestoneLogTable = milestoneLog;
 export const predictionPlanTable = predictionPlan;
 export const predictionRunTable = predictionRun;
