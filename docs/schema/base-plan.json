@@ -266,14 +266,16 @@
           "type": "lookup",
           "via": "船舶",
           "target_field": "标准船名",
-          "aggregate": "none"
+          "aggregate": "none",
+          "manual_ui": true
         },
         {
           "name": "MMSI",
           "type": "lookup",
           "via": "船舶",
           "target_field": "MMSI",
-          "aggregate": "none"
+          "aggregate": "none",
+          "manual_ui": true
         },
         {
           "name": "承运方",
@@ -313,6 +315,7 @@
           "via": "装港",
           "target_field": "是否本港",
           "aggregate": "none",
+          "manual_ui": true,
           "note": "辅助字段，供「本港侧」公式使用"
         },
         {
@@ -1647,6 +1650,7 @@
           "via": "货物明细",
           "target_field": "预计装船重量（吨）",
           "aggregate": "sum",
+          "manual_ui": true,
           "note": "汇总 T05；「货物明细」是 T05 建「航次」双向关联时自动生成的反向字段"
         },
         {

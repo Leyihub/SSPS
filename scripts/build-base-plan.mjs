@@ -19,7 +19,8 @@ const person = (name, multiple = false) => ({ name, type: 'person', multiple });
 const auto = (name, example) => ({ name, type: 'autonumber', example });
 const link = (name, target, multiple = false, note) => ({ name, type: 'link', target, multiple, ...(note ? { note } : {}) });
 const duplex = (name, target, backName, note) => ({ name, type: 'duplex', target, back_field_name: backName, ...(note ? { note } : {}) });
-const lookup = (name, via, targetField, agg = 'none', note) => ({ name, type: 'lookup', via, target_field: targetField, aggregate: agg, ...(note ? { note } : {}) });
+// 飞书开放接口不支持创建「查找引用」字段（2026-11-05 建表实测），manual_ui = true：本机 agent 跳过，由人在界面手工配置
+const lookup = (name, via, targetField, agg = 'none', note) => ({ name, type: 'lookup', via, target_field: targetField, aggregate: agg, manual_ui: true, ...(note ? { note } : {}) });
 const formula = (name, logic, result, note) => ({ name, type: 'formula', logic, result, ...(note ? { note } : {}) });
 const sys = (f) => Object.assign(f, { system_written: true });
 

@@ -26,7 +26,7 @@
 
 ### 3.1 现在就卡着后面工作的（越早越好）
 
-1. **多维表格建表**：按 `docs/schema/base-build-agent-prompt.md` 做完，把报告（含 11 张表的 table ID）发给我。阻塞：集成、迁移。
+1. **多维表格建表**：已建好 11 张表（报告与核对见 `docs/schema/base-build-report-2026-11-05.md`）。剩余：手工建 T04 的 4 个查找引用，再用 `docs/schema/base-verify-agent-prompt.md` 跑一次核对和公式自检，并回答报告里第 2、4 两个问题。
 2. **创建妙搭应用并生成脚手架**：在本机执行 `lark-cli apps +create --app-type full_stack`、`+feature-enable --feature database`、`+init`，把生成的**目录结构**（`tree -L 3`，不含 `node_modules`）发给我，或把脚手架提交到仓库的 `scaffold` 分支。阻塞：阶段 C。这一步我无法代劳。
 3. **《泊位容量表》（2026-10-08）原件**：T02 的 23 行容量吨级要用它。没有它，预测只能用示例容量，结果不能当真。
 4. **常用航线经验航程表（30–50 条）**：大宗采购部提供，写入 T08。没有它，大宗预测会被拦截（提示先补经验航程）。
