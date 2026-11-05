@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Headers, Param, Patch, Post, Query, Req } from '@nestjs/common';
 import type { Request } from 'express';
+import { isInternalCall } from '../../common/internal-token';
 import { NeedLogin } from '@lark-apaas/fullstack-nestjs-core';
 import { MasterService } from './master.service';
 
@@ -28,5 +29,6 @@ export class MasterController {
   @Get('route-rules') routeRules() { return this.svc.routeRules(); }
   @Post('route-rules') async addRule(@Body() b: Record<string, unknown>, @Req() req: Request, @Headers(KEY) key?: string) { return this.svc.addRouteRule(b, await this.who(req), key); }
   @Patch('route-rules/:id') async patchRule(@Param('id') id: string, @Body() b: Record<string, unknown>, @Req() req: Request, @Headers(KEY) key?: string) { return this.svc.patchRouteRule(id, b, await this.who(req), key); }
-  @Post('route-rules/recompute') async recompute(@Req() req: Request) { return this.svc.recomputeRouteRules(await this.who(req)); }
+  /** A06：重算航程规则。系统管理员，或定时任务带内部令牌（x-internal-token） */
+  @Post('route-rules/recompute') async recompute(@Req() req: Request, @Headers('x-internal-token') token?: string) { return this.svc.recomputeRouteRules(isInternalCall(token) ? null : await this.who(req)); }
 }

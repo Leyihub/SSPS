@@ -1,8 +1,8 @@
 import { Body, Controller, Delete, Get, Headers, HttpStatus, Param, Patch, Post, Query, Req } from '@nestjs/common';
 import { BusinessException } from '../../common/interfaces/exception.interface';
 import { ResponseCode } from '../../common/constants/api_response_code';
-import { timingSafeEqual } from 'crypto';
 import type { Request } from 'express';
+import { isInternalCall } from '../../common/internal-token';
 import { NeedLogin } from '@lark-apaas/fullstack-nestjs-core';
 import { VoyageService } from './voyage.service';
 import { IssueScanService } from './issue-scan.service';
@@ -38,7 +38,7 @@ export class DataIssueController {
   constructor(private readonly svc: VoyageService, private readonly scanner: IssueScanService) {}
   /** W34：数据质量扫描（缺 MMSI、ETA 超期未更新；条件消失自动关闭）。系统管理员，或定时任务带 x-internal-token */
   @Post('scan') async scan(@Req() req: Request, @Headers('x-internal-token') token?: string) {
-    const expect = process.env.INTERNAL_JOB_TOKEN, internal = !!(expect && token && token.length === expect.length && timingSafeEqual(Buffer.from(token), Buffer.from(expect)));
+    const internal = isInternalCall(token);
     return this.scanner.scan(internal ? null : await this.svc.actor(req.userContext as any));
   }
   @Get() list(@Query('status') status?: string, @Query('owner') owner?: string, @Query('type') type?: string) { return this.svc.issues({ status, owner, type }); }
