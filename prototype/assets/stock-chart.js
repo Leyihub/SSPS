@@ -6,7 +6,7 @@
     // opts: { latest, buffer, marks:[{d,tons,label,color}], until, warnDays }
     html(item, opts) {
       opts = opts || {};
-      const W = Math.round(opts.width || 760), H = opts.height || 240, L = 52, R = 16, Tp = 22, B = 32, so = E.stockout(item);
+      const W = Math.round(opts.width || 760), H = opts.height || 240, L = 52, R = 16, Tp = 22, B = 32, so = opts.so !== undefined ? opts.so : E.stockout(item), gap = opts.gap || null;
       const marks = (opts.marks || []).filter((m) => m && m.d != null);
       let until = T + 45;
       [so, opts.latest, ...marks.map((m) => m.d + 14)].forEach((x) => { if (x != null && x + 14 > until) until = x + 14; });
@@ -34,6 +34,7 @@
       const vline = (d, color, label, dy, dash, left) => '<line x1="' + x(d) + '" x2="' + x(d) + '" y1="' + Tp + '" y2="' + (H - B) + '" stroke="' + color + '" stroke-width="1.6"' + (dash ? ' stroke-dasharray="4 3"' : '') + '/><text x="' + (x(d) + (left ? -4 : 4)) + '" y="' + (Tp + 10 + dy) + '" text-anchor="' + (left ? 'end' : 'start') + '" font-size="11.5" font-weight="600" fill="' + color + '" stroke="#fff" stroke-width="3" paint-order="stroke">' + label + '</text>';
       g += vline(T, '#8c8c8c', '今天', 0, true);
       if (opts.latest != null && so != null) g += vline(opts.latest, '#fa8c16', '最晚到港 ' + md(opts.latest), 16, true, opts.latest >= T + 8);
+      if (gap) g += vline(gap.from, '#fa8c16', '短缺口 ' + md(gap.from), 0, false);
       if (so != null) g += vline(so, '#cf1322', '断料日 ' + md(so), 0, false);
       marks.forEach((m, i) => { g += '<line x1="' + x(m.d) + '" x2="' + x(m.d) + '" y1="' + (H - B - 40) + '" y2="' + (H - B) + '" stroke="' + m.color + '" stroke-width="2.4"/><circle cx="' + x(m.d) + '" cy="' + (H - B - 40) + '" r="9" fill="' + m.color + '"/><text x="' + x(m.d) + '" y="' + (H - B - 36) + '" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">' + m.label + '</text>'; });
       return '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" style="display:block;max-width:100%;height:auto" role="img" aria-label="库存消耗模拟曲线">' + g + '</svg>';

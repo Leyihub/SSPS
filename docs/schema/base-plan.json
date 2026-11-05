@@ -1,0 +1,1666 @@
+{
+  "base": "德信智慧航运主数据",
+  "source": "docs/schema/base-build-checklist.md",
+  "generated_by": "scripts/build-base-plan.mjs",
+  "order": [
+    "T01",
+    "T02",
+    "T03",
+    "T04",
+    "T05",
+    "T06",
+    "T07",
+    "T08",
+    "T10",
+    "T09a",
+    "T09b"
+  ],
+  "rules": [
+    "每张表的第一个字段作为索引列（主字段）：新建表自带一个默认字段，把它改名并改类型为第一个字段，不要另建。",
+    "字段名一字不差，含括号、空格和斜杠。",
+    "required / unique 不在多维表格里设置，由应用后端校验。",
+    "system_written 字段建完后由你在高级权限里设为只读（agent 不改权限）。",
+    "group = 费用 的字段只有大宗采购部能看，由应用后端控制；Base 不对业务角色开放。"
+  ],
+  "formula_selfcheck": {
+    "row": {
+      "实际离装港": "2026-10-24 15:00",
+      "实际抵卸港": "2026-10-30 09:30",
+      "卸港靠泊": "2026-10-31 07:00",
+      "卸港离港": "2026-11-03 19:30",
+      "卸港": "本港 BAHODOPI"
+    },
+    "expect": {
+      "实际航程（天）": 5.77,
+      "本港等泊（天）": 0.9,
+      "本港作业（天）": 3.52,
+      "本港侧": "卸"
+    }
+  },
+  "tables": [
+    {
+      "key": "T01",
+      "name": "T01 港口主档",
+      "fields": [
+        {
+          "name": "港口编码",
+          "type": "text",
+          "note": "唯一；沿用原「编码」001…"
+        },
+        {
+          "name": "中文名称",
+          "type": "text"
+        },
+        {
+          "name": "英文标准名",
+          "type": "text",
+          "note": "航次里显示的名称，如 BAHODOPI"
+        },
+        {
+          "name": "别名",
+          "type": "text",
+          "note": "一行一个旧写法"
+        },
+        {
+          "name": "国家",
+          "type": "single",
+          "options": [
+            "印度尼西亚",
+            "中国",
+            "菲律宾",
+            "越南",
+            "其他"
+          ],
+          "note": "待确认，迁移时再补"
+        },
+        {
+          "name": "地区",
+          "type": "text"
+        },
+        {
+          "name": "性质",
+          "type": "single",
+          "options": [
+            "内港",
+            "外港"
+          ]
+        },
+        {
+          "name": "是否本港",
+          "type": "checkbox",
+          "note": "只有 BAHODOPI 勾选"
+        },
+        {
+          "name": "状态",
+          "type": "single",
+          "options": [
+            "启用",
+            "停用"
+          ]
+        }
+      ],
+      "seed": [
+        {
+          "中文名称": "巴浩多比",
+          "英文标准名": "BAHODOPI",
+          "是否本港": true,
+          "状态": "启用"
+        }
+      ]
+    },
+    {
+      "key": "T02",
+      "name": "T02 泊位主档",
+      "fields": [
+        {
+          "name": "泊位编码",
+          "type": "text",
+          "note": "唯一；北区 F1–F5、F7–F11；拉博塔 L4、L6、L7、L8、L11、L12、LN16–LN22"
+        },
+        {
+          "name": "码头",
+          "type": "single",
+          "options": [
+            "北区码头",
+            "拉博塔码头"
+          ]
+        },
+        {
+          "name": "容量吨级（吨）",
+          "type": "number",
+          "decimals": 0,
+          "note": "只取自《泊位容量表》2026-10-08"
+        },
+        {
+          "name": "泊位类别",
+          "type": "single",
+          "options": [
+            "海船泊位",
+            "驳船泊位"
+          ]
+        },
+        {
+          "name": "状态",
+          "type": "single",
+          "options": [
+            "启用",
+            "停用"
+          ]
+        },
+        {
+          "name": "依据版本",
+          "type": "text"
+        },
+        {
+          "name": "生效日期",
+          "type": "date",
+          "format": "yyyy/MM/dd"
+        },
+        {
+          "name": "备注",
+          "type": "text"
+        }
+      ],
+      "seed": [],
+      "seed_note": "23 行泊位等《泊位容量表》原件到位后再录入，本次不建行"
+    },
+    {
+      "key": "T03",
+      "name": "T03 船舶主档",
+      "fields": [
+        {
+          "name": "船舶编号",
+          "type": "autonumber",
+          "example": "VS-0001"
+        },
+        {
+          "name": "MMSI",
+          "type": "text",
+          "note": "唯一"
+        },
+        {
+          "name": "IMO",
+          "type": "text"
+        },
+        {
+          "name": "标准船名",
+          "type": "text"
+        },
+        {
+          "name": "船名别名",
+          "type": "text"
+        },
+        {
+          "name": "船型",
+          "type": "single",
+          "options": [
+            "散货船",
+            "拖驳组合",
+            "集装箱船",
+            "杂货船",
+            "其他"
+          ]
+        },
+        {
+          "name": "载重吨 DWT",
+          "type": "number",
+          "decimals": 0
+        },
+        {
+          "name": "船长（米）",
+          "type": "number",
+          "decimals": 1
+        },
+        {
+          "name": "吨级档",
+          "type": "single",
+          "options": [
+            "5 万吨"
+          ],
+          "note": "待确认，先只建「5 万吨」"
+        }
+      ]
+    },
+    {
+      "key": "T04",
+      "name": "T04 航次主表",
+      "fields": [
+        {
+          "name": "航次编号",
+          "type": "autonumber",
+          "example": "VY-2026-0001"
+        },
+        {
+          "name": "业务类型",
+          "type": "single",
+          "options": [
+            "大宗采购船",
+            "成品销售船",
+            "物资备件船"
+          ]
+        },
+        {
+          "name": "业务属性",
+          "type": "single",
+          "options": [
+            "内贸",
+            "外贸",
+            "雅加达物资",
+            "国内物资",
+            "本地",
+            "国际"
+          ]
+        },
+        {
+          "name": "船次号",
+          "type": "text"
+        },
+        {
+          "name": "船舶",
+          "type": "link",
+          "target": "T03",
+          "multiple": false
+        },
+        {
+          "name": "船名",
+          "type": "lookup",
+          "via": "船舶",
+          "target_field": "标准船名",
+          "aggregate": "none"
+        },
+        {
+          "name": "MMSI",
+          "type": "lookup",
+          "via": "船舶",
+          "target_field": "MMSI",
+          "aggregate": "none"
+        },
+        {
+          "name": "承运方",
+          "type": "text"
+        },
+        {
+          "name": "船方航次号",
+          "type": "text"
+        },
+        {
+          "name": "装港",
+          "type": "link",
+          "target": "T01",
+          "multiple": false
+        },
+        {
+          "name": "卸港",
+          "type": "link",
+          "target": "T01",
+          "multiple": false
+        },
+        {
+          "name": "第二卸港",
+          "type": "link",
+          "target": "T01",
+          "multiple": false
+        },
+        {
+          "name": "最终目的港",
+          "type": "link",
+          "target": "T01",
+          "multiple": false
+        },
+        {
+          "name": "装港是否本港",
+          "type": "lookup",
+          "via": "装港",
+          "target_field": "是否本港",
+          "aggregate": "none",
+          "note": "辅助字段，供「本港侧」公式使用"
+        },
+        {
+          "name": "本港侧",
+          "type": "formula",
+          "logic": "装港是否本港 为真 → \"装\"，否则 → \"卸\"",
+          "result": "text"
+        },
+        {
+          "name": "受载期始",
+          "type": "datetime",
+          "format": "yyyy/MM/dd HH:mm"
+        },
+        {
+          "name": "受载期止",
+          "type": "datetime",
+          "format": "yyyy/MM/dd HH:mm"
+        },
+        {
+          "name": "计划抵装港",
+          "type": "datetime",
+          "format": "yyyy/MM/dd HH:mm"
+        },
+        {
+          "name": "实际抵装港",
+          "type": "datetime",
+          "format": "yyyy/MM/dd HH:mm"
+        },
+        {
+          "name": "装港靠泊",
+          "type": "datetime",
+          "format": "yyyy/MM/dd HH:mm"
+        },
+        {
+          "name": "计划离装港",
+          "type": "datetime",
+          "format": "yyyy/MM/dd HH:mm"
+        },
+        {
+          "name": "实际离装港",
+          "type": "datetime",
+          "format": "yyyy/MM/dd HH:mm"
+        },
+        {
+          "name": "计划抵卸港窗口始",
+          "type": "datetime",
+          "format": "yyyy/MM/dd HH:mm"
+        },
+        {
+          "name": "计划抵卸港窗口止",
+          "type": "datetime",
+          "format": "yyyy/MM/dd HH:mm"
+        },
+        {
+          "name": "当前 ETA（卸港）",
+          "type": "datetime",
+          "format": "yyyy/MM/dd HH:mm",
+          "system_written": true
+        },
+        {
+          "name": "实际抵卸港",
+          "type": "datetime",
+          "format": "yyyy/MM/dd HH:mm"
+        },
+        {
+          "name": "卸港靠泊",
+          "type": "datetime",
+          "format": "yyyy/MM/dd HH:mm"
+        },
+        {
+          "name": "卸港离港",
+          "type": "datetime",
+          "format": "yyyy/MM/dd HH:mm"
+        },
+        {
+          "name": "船舶状态",
+          "type": "single",
+          "options": [
+            "待宣船",
+            "未到装港",
+            "装港等泊",
+            "装港装货",
+            "航行中",
+            "卸港等泊",
+            "卸港卸货",
+            "已结束"
+          ],
+          "system_written": true
+        },
+        {
+          "name": "异常标记",
+          "type": "multi",
+          "options": [
+            "取消",
+            "延期",
+            "移泊",
+            "改港"
+          ]
+        },
+        {
+          "name": "装港逾期",
+          "type": "formula",
+          "logic": "实际抵装港 和 受载期止 都有值，且 实际抵装港 晚于 受载期止 → \"是\"，否则为空",
+          "result": "text"
+        },
+        {
+          "name": "实际航程（天）",
+          "type": "formula",
+          "logic": "两者都有值时：实际抵卸港 − 实际离装港，单位天，保留 2 位小数；否则为空",
+          "result": "number"
+        },
+        {
+          "name": "本港等泊（天）",
+          "type": "formula",
+          "logic": "本港侧 = \"卸\"：卸港靠泊 − 实际抵卸港；本港侧 = \"装\"：装港靠泊 − 实际抵装港；单位天，2 位小数，缺值为空",
+          "result": "number"
+        },
+        {
+          "name": "本港作业（天）",
+          "type": "formula",
+          "logic": "本港侧 = \"卸\"：卸港离港 − 卸港靠泊；本港侧 = \"装\"：实际离装港 − 装港靠泊；单位天，2 位小数，缺值为空",
+          "result": "number"
+        },
+        {
+          "name": "计划泊位",
+          "type": "link",
+          "target": "T02",
+          "multiple": true
+        },
+        {
+          "name": "实际泊位",
+          "type": "link",
+          "target": "T02",
+          "multiple": true
+        },
+        {
+          "name": "负责业务员",
+          "type": "person",
+          "multiple": false
+        },
+        {
+          "name": "所属部门",
+          "type": "single",
+          "options": [
+            "大宗采购部",
+            "商务海运部",
+            "仓储物流部"
+          ]
+        },
+        {
+          "name": "重点关注",
+          "type": "checkbox"
+        },
+        {
+          "name": "审核状态",
+          "type": "single",
+          "options": [
+            "待审核",
+            "已审核"
+          ]
+        },
+        {
+          "name": "数据来源",
+          "type": "single",
+          "options": [
+            "企微商务海运表",
+            "企微大宗到船表",
+            "历史副本",
+            "应用录入"
+          ],
+          "system_written": true
+        },
+        {
+          "name": "原记录键",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "历史只读",
+          "type": "checkbox",
+          "system_written": true
+        },
+        {
+          "name": "备注",
+          "type": "text"
+        }
+      ],
+      "later": [
+        "总货量（吨）",
+        "拼船"
+      ]
+    },
+    {
+      "key": "T05",
+      "name": "T05 航次货物明细",
+      "fields": [
+        {
+          "name": "明细编号",
+          "type": "autonumber",
+          "example": "CL-000001"
+        },
+        {
+          "name": "航次",
+          "type": "duplex",
+          "target": "T04",
+          "back_field_name": "货物明细",
+          "note": "在 T04 自动生成反向字段「货物明细」"
+        },
+        {
+          "name": "合同号",
+          "type": "text"
+        },
+        {
+          "name": "EA 采购订单号",
+          "type": "text"
+        },
+        {
+          "name": "物资大类",
+          "type": "single",
+          "options": [
+            "原料",
+            "燃料",
+            "辅料",
+            "成品",
+            "工程辅料"
+          ]
+        },
+        {
+          "name": "物资类别",
+          "type": "single",
+          "options": [],
+          "note": "选项由迁移脚本从旧表枚举，先建空选项"
+        },
+        {
+          "name": "货物名称",
+          "type": "text"
+        },
+        {
+          "name": "物资别名",
+          "type": "text"
+        },
+        {
+          "name": "使用单位",
+          "type": "single",
+          "options": [
+            "DSI",
+            "DCI",
+            "DXI",
+            "金瑞"
+          ],
+          "note": "备注性质，不参与计算"
+        },
+        {
+          "name": "归属事业部",
+          "type": "single",
+          "options": [],
+          "note": "选项由迁移脚本枚举"
+        },
+        {
+          "name": "供应商/客户",
+          "type": "text"
+        },
+        {
+          "name": "预计装船重量（吨）",
+          "type": "number",
+          "decimals": 2
+        },
+        {
+          "name": "装港重量（吨）",
+          "type": "number",
+          "decimals": 2
+        },
+        {
+          "name": "干基折算（吨）",
+          "type": "number",
+          "decimals": 2
+        },
+        {
+          "name": "溢短装（%）",
+          "type": "number",
+          "decimals": 2
+        },
+        {
+          "name": "检测公司",
+          "type": "single",
+          "options": [],
+          "note": "选项由迁移脚本枚举"
+        },
+        {
+          "name": "合同执行人员",
+          "type": "person",
+          "multiple": false
+        },
+        {
+          "name": "储运物料名",
+          "type": "single",
+          "options": [],
+          "note": "备注性质"
+        },
+        {
+          "name": "储运大类",
+          "type": "single",
+          "options": [],
+          "note": "备注性质"
+        },
+        {
+          "name": "本地国际",
+          "type": "single",
+          "options": [],
+          "note": "备注性质"
+        }
+      ]
+    },
+    {
+      "key": "T06",
+      "name": "T06 大宗卸船结算扩展",
+      "fields": [
+        {
+          "name": "结算编号",
+          "type": "autonumber",
+          "example": "BS-000001"
+        },
+        {
+          "name": "航次",
+          "type": "duplex",
+          "target": "T04",
+          "back_field_name": "大宗卸船结算",
+          "note": "与大宗航次 1:1"
+        },
+        {
+          "name": "卸货条款",
+          "type": "text"
+        },
+        {
+          "name": "卸率（吨/天）",
+          "type": "number",
+          "decimals": 0,
+          "note": "CQD 时留空"
+        },
+        {
+          "name": "允许卸货天数",
+          "type": "number",
+          "decimals": 2
+        },
+        {
+          "name": "TURN TIME（小时）",
+          "type": "number",
+          "decimals": 0
+        },
+        {
+          "name": "滞期费率",
+          "type": "number",
+          "decimals": 2,
+          "group": "费用"
+        },
+        {
+          "name": "币种",
+          "type": "single",
+          "options": [
+            "IDR",
+            "USD"
+          ],
+          "group": "费用"
+        },
+        {
+          "name": "滞期费 / 速遣费（USD）",
+          "type": "number",
+          "decimals": 2,
+          "group": "费用"
+        },
+        {
+          "name": "卸港水尺吨位",
+          "type": "number",
+          "decimals": 2
+        },
+        {
+          "name": "水尺 1（分钟）",
+          "type": "number",
+          "decimals": 0
+        },
+        {
+          "name": "水尺 2（分钟）",
+          "type": "number",
+          "decimals": 0
+        },
+        {
+          "name": "水尺 3（分钟）",
+          "type": "number",
+          "decimals": 0
+        },
+        {
+          "name": "汇率",
+          "type": "number",
+          "decimals": 4,
+          "group": "费用"
+        },
+        {
+          "name": "港务费单价",
+          "type": "number",
+          "decimals": 4,
+          "group": "费用"
+        },
+        {
+          "name": "港务费（USD）",
+          "type": "number",
+          "decimals": 2,
+          "group": "费用"
+        },
+        {
+          "name": "装卸费（USD）",
+          "type": "number",
+          "decimals": 2,
+          "group": "费用"
+        },
+        {
+          "name": "汽运量（吨）",
+          "type": "number",
+          "decimals": 2
+        },
+        {
+          "name": "管带机运量（吨）",
+          "type": "number",
+          "decimals": 2
+        },
+        {
+          "name": "过磅重量（吨）",
+          "type": "number",
+          "decimals": 2
+        },
+        {
+          "name": "其他部门运量（吨）",
+          "type": "number",
+          "decimals": 2
+        },
+        {
+          "name": "倒运车数",
+          "type": "number",
+          "decimals": 0
+        },
+        {
+          "name": "X1 管带机车数",
+          "type": "number",
+          "decimals": 0
+        },
+        {
+          "name": "跨月船汽运预估（吨）",
+          "type": "number",
+          "decimals": 2
+        },
+        {
+          "name": "跨月船管带机预估（吨）",
+          "type": "number",
+          "decimals": 2
+        },
+        {
+          "name": "3# 管带机未运行（小时）",
+          "type": "number",
+          "decimals": 2
+        },
+        {
+          "name": "4# 管带机未运行（小时）",
+          "type": "number",
+          "decimals": 2
+        },
+        {
+          "name": "交接发出日",
+          "type": "date",
+          "format": "yyyy/MM/dd"
+        },
+        {
+          "name": "交接签回日",
+          "type": "date",
+          "format": "yyyy/MM/dd"
+        },
+        {
+          "name": "德天不用交接",
+          "type": "checkbox"
+        },
+        {
+          "name": "小雨保函",
+          "type": "checkbox"
+        },
+        {
+          "name": "影响卸船因素/异常反馈",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "key": "T07",
+      "name": "T07 成品销售扩展",
+      "fields": [
+        {
+          "name": "扩展编号",
+          "type": "autonumber",
+          "example": "SE-0001"
+        },
+        {
+          "name": "航次",
+          "type": "duplex",
+          "target": "T04",
+          "back_field_name": "成品销售扩展",
+          "note": "与成品航次 1:1"
+        },
+        {
+          "name": "租船方式",
+          "type": "single",
+          "options": [
+            "CFR",
+            "FOB"
+          ]
+        },
+        {
+          "name": "海运合同号",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "key": "T08",
+      "name": "T08 航程规则",
+      "fields": [
+        {
+          "name": "规则编号",
+          "type": "autonumber",
+          "example": "RR-0001"
+        },
+        {
+          "name": "装港",
+          "type": "link",
+          "target": "T01",
+          "multiple": false
+        },
+        {
+          "name": "卸港",
+          "type": "link",
+          "target": "T01",
+          "multiple": false
+        },
+        {
+          "name": "适用业务类型",
+          "type": "multi",
+          "options": [
+            "大宗采购船",
+            "成品销售船",
+            "物资备件船"
+          ]
+        },
+        {
+          "name": "吨级档",
+          "type": "single",
+          "options": [
+            "5 万吨"
+          ],
+          "note": "待确认"
+        },
+        {
+          "name": "经验航程（天）",
+          "type": "number",
+          "decimals": 1
+        },
+        {
+          "name": "经验航程上限（天）",
+          "type": "number",
+          "decimals": 1
+        },
+        {
+          "name": "经验值维护人",
+          "type": "person",
+          "multiple": false
+        },
+        {
+          "name": "样本数",
+          "type": "number",
+          "decimals": 0,
+          "system_written": true
+        },
+        {
+          "name": "统计 P50（天）",
+          "type": "number",
+          "decimals": 2,
+          "system_written": true
+        },
+        {
+          "name": "统计 P80（天）",
+          "type": "number",
+          "decimals": 2,
+          "system_written": true
+        },
+        {
+          "name": "采用口径",
+          "type": "formula",
+          "logic": "样本数 ≥ 5 → \"统计值\"，否则 → \"经验值\"",
+          "result": "text"
+        },
+        {
+          "name": "生效航程 P50（天）",
+          "type": "formula",
+          "logic": "采用口径 = \"统计值\" → 统计 P50（天），否则 → 经验航程（天）",
+          "result": "number"
+        },
+        {
+          "name": "生效航程 P80（天）",
+          "type": "formula",
+          "logic": "采用口径 = \"统计值\" → 统计 P80（天），否则 → 经验航程上限（天）",
+          "result": "number"
+        },
+        {
+          "name": "最近重算时间",
+          "type": "datetime",
+          "format": "yyyy/MM/dd HH:mm",
+          "system_written": true
+        },
+        {
+          "name": "状态",
+          "type": "single",
+          "options": [
+            "启用",
+            "停用"
+          ]
+        }
+      ]
+    },
+    {
+      "key": "T10",
+      "name": "T10 靠船计划",
+      "fields": [
+        {
+          "name": "码头",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "泊位原文",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "泊位",
+          "type": "link",
+          "target": "T02",
+          "multiple": false,
+          "note": "表外泊位留空",
+          "system_written": true
+        },
+        {
+          "name": "船名",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "船长",
+          "type": "number",
+          "decimals": 1,
+          "system_written": true
+        },
+        {
+          "name": "船舶类型",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "物资",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "吨位",
+          "type": "number",
+          "decimals": 0,
+          "system_written": true
+        },
+        {
+          "name": "预计到港",
+          "type": "date",
+          "format": "yyyy/MM/dd",
+          "system_written": true
+        },
+        {
+          "name": "预计靠泊",
+          "type": "datetime",
+          "format": "yyyy/MM/dd HH:mm",
+          "system_written": true
+        },
+        {
+          "name": "预计卸完",
+          "type": "datetime",
+          "format": "yyyy/MM/dd HH:mm",
+          "system_written": true
+        },
+        {
+          "name": "从属单位",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "是否德信",
+          "type": "checkbox",
+          "note": "只做展示，原始文件无此列，来源待定",
+          "system_written": true
+        },
+        {
+          "name": "匹配航次",
+          "type": "link",
+          "target": "T04",
+          "multiple": false,
+          "system_written": true
+        },
+        {
+          "name": "批次号",
+          "type": "text",
+          "system_written": true
+        }
+      ]
+    },
+    {
+      "key": "T09a",
+      "name": "T09a 兼容_商务海运船舶动态",
+      "fields": [
+        {
+          "name": "审核",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "关注",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "业务类型",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "业务属性",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "序号",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "租船方式",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "MMSI",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "IMO",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "船次号",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "供应商/船名",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "船舶状态",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "货物类型",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "目的港",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "货量（吨）",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "装港",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "受载期（始）",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "受载期（止）",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "预计抵达装港日期",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "实际到港日期",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "实际靠泊时间",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "逾期",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "实际离港日期",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "卸港",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "预计卸港到达时间",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "实际卸港到达时间",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "卸港靠泊时间",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "销售合同号",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "海运合同号",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "业务员",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "卸港代理",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "创建人",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "创建时间",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "最后编辑时间",
+          "type": "text",
+          "system_written": true
+        }
+      ]
+    },
+    {
+      "key": "T09b",
+      "name": "T09b 兼容_大宗到船计划",
+      "fields": [
+        {
+          "name": "序号Nomor.seri",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "类别Kategori",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "物资分类Klasifikasi.bahan",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "合同号Nomor.kontrak",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "使用单位Unit.penggunaan",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "供应商Suplier Name",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "物资类别Kategori.bahan",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "货物名称Nama.barang",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "物资别名Alias.Material",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "归属事业部Departement.pengguna",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "MMSI",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "IMO",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "船名Nama.kapal",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "（系统/Sistem）船舶动态Status Kapal",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "（人工/Manual）船舶动态Status Kapal",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "拼船情况Situasi.berbagi.perahu",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "总船重量Berat.Kapal",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "干基折算Konversi.BK",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "装货港Loading Port",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "预计装船重量Perkiraan.berat.kapal",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "装港重量Berat.Muat",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "溢短装Lebih/Kurang",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "检测公司Test Institution",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "计划到达装港日期Rencana.Tiba.Muat.",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "预计开出装港日期Estimasi.Berangkat.",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "实际开出装港日期Berangkat.Aktual",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "计划到达（始）Rencana.Mulai",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "计划到达（止）Rencana.Akhir",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "实际到达ETA.Aktual",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "靠港时间Sandar",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "离港时间Berangkat",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "实际卸船时间/天Bongkar/Hari",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "等泊用时/天Tunggu/Hari",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "共计用时/天Total/Hari",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "实际卸船时间/小时Bongkar/Jam",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "等泊用时/小时",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "共计用时/小时",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "TURN TIME",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "价格（到岸价）Harga.CIF",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "卸率/吨Discharge Rate",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "卸港水尺吨位Tonase.berdasarkan.kedalaman.air",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "滞期费率Biaya.keterlambatan",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "滞期费Demurrage",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "速遣费Dispatch",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "备注Remark",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "合同执行人员Pelaksana.kontrak",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "卸船进度Proses.pembongkaran.kapal",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "可用管带机Belt.Tersedia",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "倒运车数Jumlah.kendaraan",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "交接状态1Status.serahterima.1",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "交接状态2Status.serahterima.2",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "跨月船汽运预估吨位Est..Truk.Lintas.Bln",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "跨月船管带机预估运量Est..Belt.Lintas.Bln",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "汽运量Jumlah.angkutan.truk",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "管带机运量Jumlah.angkutan.konveyor",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "X1管带机吨位Tonase.konveyor.X1",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "X1管带机运量/车Tonase.konveyor.X1/Mobil",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "月份按离港算Bulan.kapal.meninggalkan.dermaga",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "排靠泊位Dermaga",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "汇率Nilai.tukar",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "港务费单价Tarif.jasa.pelabuhan",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "港务费Biaya.pelabuhan.",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "装卸费Biaya.bongkar.muat",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "2#管带机未运行Konveyor.2.",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "3#管带机未运行Konveyor.3.",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "4#管带机未运行Konveyor.4",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "1st水尺Pengukur.air.1",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "2st水尺Pengukur.air.2",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "3st水尺Pengukur.air.3",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "4st水尺Pengukur.air.4",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "影响卸船因素/异常反馈Faktor.mempengaruhi.pembongkaran.",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "业务员Admin.operasional",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "小雨保函Garansi.Hujan",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "备注Keterangan",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "价格类型Tipe.Harga",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "创建人Pembuat",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "储运1Logistik.1",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "储运2Logistik.2",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "储运3Logistik.3",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "储运4Logistik.4",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "储运5Logistik.5",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "过磅重量Berat.Timbang",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "其他部门运量Volume.Dept.Lain",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "业务类型Tipe.Bisnis",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "今日在港",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "公式",
+          "type": "text",
+          "system_written": true
+        },
+        {
+          "name": "到港日",
+          "type": "text",
+          "system_written": true
+        }
+      ]
+    }
+  ],
+  "later": [
+    {
+      "table": "T04",
+      "after": "T05",
+      "fields": [
+        {
+          "name": "总货量（吨）",
+          "type": "lookup",
+          "via": "货物明细",
+          "target_field": "预计装船重量（吨）",
+          "aggregate": "sum",
+          "note": "汇总 T05；「货物明细」是 T05 建「航次」双向关联时自动生成的反向字段"
+        },
+        {
+          "name": "拼船",
+          "type": "formula",
+          "logic": "货物明细 关联的记录数 ≥ 2 → \"是\"，否则 → \"否\"",
+          "result": "text"
+        }
+      ]
+    }
+  ]
+}

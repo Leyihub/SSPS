@@ -22,6 +22,18 @@
   const stockAt = (it, d) => { const S = it.series; if (!S.length) return it.stock; if (d <= S[0][0]) return S[0][1]; let v = S[0][1]; for (const x of S) { if (x[0] <= d) v = x[1]; else break; } return v; };
   const dailyAt = (it, d) => { const S = it.series; if (!S.length) return it.daily; let v = S[0][2]; for (const x of S) { if (x[0] <= d) v = x[2]; else break; } return v || it.daily || 1; };
   const stockout = (it) => { const x = it.series.find((q) => q[1] <= 0); return x ? x[0] : null; };
+  // 断料日（2026-11-05 确认）：首次降到 0 的缺口若按最快航程已赶不上、且之后被已排定到货补回，
+  // 只提示这个短缺口，排船目标改用补回后的下一次断料日。minLead = 缓冲天数 + P80 航程。
+  function stockoutPlan(it, minLead) {
+    const s = it.series, i = s.findIndex((q) => q[1] <= 0);
+    if (i < 0) return { so: null };
+    const so1 = s[i][0];
+    if (so1 - minLead >= TODAY) return { so: so1 };
+    const j = s.findIndex((q, k) => k > i && q[1] > 0);
+    if (j < 0) return { so: so1 };
+    const k = s.findIndex((q, n) => n > j && q[1] <= 0);
+    return { so: k < 0 ? null : s[k][0], gap: { from: so1, to: s[j][0] - 1 } };
+  }
   // 把一船新货算进去后的库存曲线（原序列里的已排定到货按相邻日差回推，保留）
   function project(it, arrivals, until) {
     const S = it.series, out = []; let prev = S.length ? S[0][1] : it.stock;
@@ -91,6 +103,14 @@
     return M.routeRules.find((r) => r.load === load && r.disch === disch && r.biz.includes(biz)) || null;
   }
 
+  // 物资备件船先用自己的规则，没有才借用同航线大宗规则（2026-11-05 确认）
+  const ruleFor = (load, disch, biz) => findRule(load, disch, biz) || (biz === '物资备件船' ? findRule(load, disch, '大宗采购船') : null);
+  // 有效断料日：按该航线最快航程（P80）判断首个缺口能否赶上
+  function effStockout(item, buffer, load, disch, biz) {
+    const r = ruleFor(load, disch, biz);
+    return stockoutPlan(item, buffer + (r && biz !== '成品销售船' ? Math.ceil(r.effP80) : 0));
+  }
+
   // ---------- 预测 ----------
   function predict(inp) {
     const biz = inp.biz, tons = Number(inp.tons);
@@ -108,15 +128,16 @@
 
     // 断料约束：到港窗口最晚一天必须早于「断料日 − 缓冲天数」，否则判为断料（硬约束，不是评分）
     const item = inp.item || null, buffer = inp.buffer != null ? inp.buffer : 3;
-    const so = item ? stockout(item) : null, latest = so != null ? so - buffer : Infinity;
-    res.stock = item ? { item, so, latest: isFinite(latest) ? latest : null, buffer } : null;
+    const rule0 = ruleFor(inp.load, inp.disch, biz);
+    const sp0 = item ? effStockout(item, buffer, inp.load, inp.disch, biz) : null;
+    const so = sp0 ? sp0.so : null, latest = so != null ? so - buffer : Infinity;
+    res.stock = item ? { item, so, latest: isFinite(latest) ? latest : null, buffer, gap: sp0.gap || null } : null;
     const target = inp.pathBy === 'end' ? Math.max(TODAY, Math.min(we, isFinite(latest) ? latest : we)) : ws;  // 目标到港日：默认窗口始；按截止日提问时取截止日
     const dist = target - TODAY;
     const mode = dist <= PATH_LIMIT ? 'cmr' : 'density'; // 只按日期分流，不看有没有数据
     const modeRun = mode;
     const side = biz === '成品销售船' ? '装' : '卸';
-    const rule = findRule(inp.load, inp.disch, biz) ||
-                 (biz === '物资备件船' ? findRule(inp.load, inp.disch, '大宗采购船') : null); // 物资备件船借用大宗航线样本
+    const rule = rule0; // 物资备件船先用自己的规则，没有才借用同航线大宗规则（2026-11-05 确认）
     const borrowed = biz === '物资备件船' && rule && !rule.biz.includes('物资备件船');
     res.run = {
       id: 'PR-' + M.today.replace(/-/g, '') + '-0007', mode, dist, target, side, ws, we,
@@ -155,20 +176,23 @@
       A = byStart[0] || null; B = A ? (byStart.find((c) => c.s - A.s >= A.len) || null) : null;
     } else if (auto) {                                               // 跨路径：每条路径内部各按自己的指标排序，不跨路径比数值
       const near = best(usable.filter((c) => c.mode === 'cmr'), 'cmr'), far = best(usable.filter((c) => c.mode === 'density'), 'density');
-      A = near.comp[0] || far.comp[0] || near.sp[0] || far.sp[0] || null;   // 优先数据完整的候选，没有才用数据不全的
+      // 2026-11-05 确认：先找余量达标（≥30%）的；15 天内都不达标而 15 天后有达标的，推荐取 15 天后的。两条路径的数值不互相比较。
+      const okA = (g) => g.comp.find((c) => qualify(c.mode, c.metric, P.n));
+      A = okA(near) || okA(far) || near.comp[0] || far.comp[0] || near.sp[0] || far.sp[0] || null;   // 优先数据完整的候选，没有才用数据不全的
       if (A) {
         const apart = (c) => Math.abs(c.s - A.s) >= A.len;
         const okB = (g) => g.comp.find((c) => c !== A && apart(c) && qualify(c.mode, c.metric, P.n));
         const grpA = A.mode === 'cmr' ? near : far, grpO = A.mode === 'cmr' ? far : near;
         B = okB(grpO) || okB(grpA) || null;
-        if (!B) { B = grpO.sp.find((c) => c !== A && apart(c)) || grpA.sp.find((c) => c !== A && apart(c)) || null; bFallback = !!B; }
+        const okSp = (c) => c !== A && apart(c) && qualify(c.mode, c.metric, P.n);   // 稀疏候选也要求有数据的天里余量 ≥30%（2026-11-05 确认）
+        if (!B) { B = grpO.sp.find(okSp) || grpA.sp.find(okSp) || null; bFallback = !!B; }
       }
     } else {
       const g = best(usable, mode); A = g.top;
       if (A) {
         const apart = (c) => Math.abs(c.s - A.s) >= A.len;               // B 与 A 窗口不重叠
         B = g.comp.find((c) => c !== A && apart(c) && qualify(mode, c.metric, P.n)) || null;
-        if (!B) { B = g.sp.find((c) => c !== A && apart(c)) || null; bFallback = !!B; }  // 没有完整数据候选 → 稀疏候选，低可信
+        if (!B) { B = g.sp.find((c) => c !== A && apart(c) && qualify(mode, c.metric, P.n)) || null; bFallback = !!B; }  // 没有完整数据候选 → 稀疏候选（同样要求 ≥30%），低可信
       }
     }
     if (auto && res.candidates && res.candidates.length) { const ms = new Set(res.candidates.map((c) => c.mode)); res.run.mode = ms.size > 1 ? 'mixed' : [...ms][0]; res.run.batchNo = ms.has('cmr') ? M.batch.batchNo : null; }
@@ -255,5 +279,5 @@
   }
 
   window.ENGINE = { stockAt, dailyAt, stockout, project, stockLevel, dn, iso, wk, md, TODAY, PATH_LIMIT, PLAN_B_MIN_CMR, WINDOW_LEN, poolFor, needTier,
-    planCoverTo, voyHorizon, predict, calendar, dayDetail, announce, modeOf, findRule, qualify, cancelledVoy, rows, voyages };
+    planCoverTo, voyHorizon, predict, calendar, dayDetail, announce, modeOf, findRule, ruleFor, effStockout, stockoutPlan, qualify, cancelledVoy, rows, voyages };
 })();

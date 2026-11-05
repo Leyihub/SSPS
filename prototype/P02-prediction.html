@@ -235,6 +235,8 @@
       v: { biz: '大宗采购船', tons: 50000, load: 'QINHUANGDAO', disch: LOCAL, ws: '2026-11-04', we: '2026-12-10', item: '烧结石灰石' } },
     { label: '库存告急 · 最快到港', tip: '高硅块（可用 6 天），唐山 → 德信：按最快航程也赶不上，改为最快到港并提示断料天数。',
       v: { biz: '大宗采购船', tons: 30000, load: 'TANGSHAN', disch: LOCAL, ws: '2026-11-04', we: '2026-11-30', item: '高硅块' } },
+    { label: '库存短缺口 · 已被补回', tip: '低硫气煤：近期有一个按最快航程也赶不上的短缺口，之后由已排定的到货补回；排船以补回后的下一次断料日为目标。',
+      v: { biz: '大宗采购船', tons: 30000, load: 'SURIGAO', disch: LOCAL, ws: '2026-11-04', we: '2026-12-20', item: '低硫气煤' } },
     { label: '缺少这条航线的航程', tip: '泗水 → 巴浩多比 还没有维护航程。',
       v: { biz: '大宗采购船', tons: 30000, load: 'SURABAYA', disch: LOCAL, ws: '2026-11-10', we: '2026-11-18' } },
   ];
@@ -310,8 +312,8 @@
     $('poolHint').innerHTML = f.tons > 0
       ? (P.n ? '能装下的泊位 <b style="color:var(--text);margin:0 3px">' + P.n + '</b> 个（共 ' + M.berths.length + ' 个）<span class="i" data-tip="只统计容量不小于货量的启用泊位，它们是计算泊位余量率的基数。">i</span>'
              : '<span class="err" style="margin:0">超过最大泊位 ' + fmt(mx) + ' 吨，没有能装下的泊位</span>') : '';
-    const it = f.item ? M.inventory.items.find((x) => x.name === f.item) : null, so = it ? E.stockout(it) : null;
-    $('itemHint').innerHTML = it ? '可用 ' + it.days + ' 天<span class="lvl ' + LV(it.days)[0] + '" style="margin-left:6px">' + LV(it.days)[1] + '</span> · ' + (so != null ? '断料日 ' + C0(so) : '模拟期内不断料') : '';
+    const it = f.item ? M.inventory.items.find((x) => x.name === f.item) : null, sp = it ? E.effStockout(it, bufDays, f.load, f.disch, f.biz) : null, so = sp ? sp.so : null;
+    $('itemHint').innerHTML = it ? '可用 ' + it.days + ' 天<span class="lvl ' + LV(it.days)[0] + '" style="margin-left:6px">' + LV(it.days)[1] + '</span> · ' + (sp.gap ? '短缺口 ' + C0(sp.gap.from) + ' · ' : '') + (so != null ? '断料日 ' + C0(so) : '模拟期内不断料') : '';
     const pb = $('pathbox');
     if (!f.winStart) { pb.className = 'pathbox le'; pb.innerHTML = '请选择时间窗口'; return; }
     const dist = E.dn(f.winStart) - E.TODAY, le = dist <= E.PATH_LIMIT;
@@ -403,16 +405,16 @@
     const st = res.stock; if (!st) return '';
     const it = st.item, so = st.so, l = LV(it.days), A = res.plans && res.plans[0], B = res.plans && res.plans[1];
     const marks = [A && { d: A.c.e, tons: res.input.tons, label: 'A', color: '#1677ff' }, B && { d: B.c.e, tons: res.input.tons, label: 'B', color: '#08979c' }].filter(Boolean);
-    let note = '';
+    let note = st.gap ? '<div class="bn blu"><b>' + mdCn(st.gap.from) + (st.gap.to > st.gap.from ? '–' + mdCn(st.gap.to) : '') + ' 有一个短缺口</b>，按最快航程已经赶不上，之后由已排定的到货补回。这次排船以补回后的下一次断料日为目标。</div>' : '';
     if (st.urgent) {
       const e = A ? A.c.e : null, gap = A && A.stock ? A.stock.gap : 0;
-      note = '<div class="bn red"><b>按最快航程也赶不上断料日。</b>' + (e ? '最早 ' + mdCn(e) + ' 到港' + (so != null ? '，比断料日（' + mdCn(so) + '）晚 ' + (e - so) + ' 天，预计断料约 ' + gap + ' 天' : '') + '。' : '') + '已改为「最快到港」优先，不再要求港口余量；请同时联系供应商或调拨，别只等这一船。</div>';
-    } else if (so == null) note = '<div class="bn blu">模拟期内这个物料不会断料，预测只按港口容量安排。</div>';
-    else note = '<div class="bn blu">所有候选都已排除到港晚于 <b>' + mdCn(st.latest) + '</b>（断料日 ' + mdCn(so) + ' 前 ' + st.buffer + ' 天）的时间；在剩下的时间里，按港口容量选最宽松的。这是硬约束，不参与任何评分。</div>';
+      note += '<div class="bn red"><b>按最快航程也赶不上断料日。</b>' + (e ? '最早 ' + mdCn(e) + ' 到港' + (so != null ? '，比断料日（' + mdCn(so) + '）晚 ' + (e - so) + ' 天，预计断料约 ' + gap + ' 天' : '') + '。' : '') + '已改为「最快到港」优先，不再要求港口余量；请同时联系供应商或调拨，别只等这一船。</div>';
+    } else if (so == null) note += '<div class="bn blu">模拟期内这个物料不会断料，预测只按港口容量安排。</div>';
+    else note += '<div class="bn blu">所有候选都已排除到港晚于 <b>' + mdCn(st.latest) + '</b>（断料日 ' + mdCn(so) + ' 前 ' + st.buffer + ' 天）的时间；在剩下的时间里，按港口容量选最宽松的。这是硬约束，不参与任何评分。</div>';
     return '<div class="card stk"><div class="card-h"><h2>库存保障 · ' + it.name + '<span class="lvl ' + l[0] + '">' + l[1] + '</span>' + ic('断料日来自库存消耗模拟表（已包含已排定的到货）。预测要求到港窗口的最后一天不晚于「断料日 − 缓冲天数」，否则判为断料。方案到港后库存按虚线回升。') + '</h2><span class="muted nw">' + M.inventory.source + ' · 更新于 ' + M.inventory.updated.slice(0, 10) + '</span></div>' +
       '<div class="facts"><div><div class="k">当前库存</div><div class="v">' + fmt(it.stock) + '<small>吨</small></div></div><div><div class="k">日耗</div><div class="v">' + fmt(it.daily) + '<small>吨/天</small></div></div><div><div class="k">可用天数</div><div class="v">' + it.days + '<small>天</small></div></div>' +
       '<div><div class="k">断料日</div><div class="v">' + (so != null ? mdCn(so) : '不断料') + '<small>' + (so != null ? (so <= E.TODAY ? '已断料' : '距今 ' + (so - E.TODAY) + ' 天') : '') + '</small></div></div><div><div class="k">最晚到港日（缓冲 ' + st.buffer + ' 天）</div><div class="v">' + (st.latest != null ? mdCn(st.latest) : '—') + '<small>' + (st.latest != null && st.latest < E.TODAY ? '已错过' : '') + '</small></div></div></div>' +
-      note + '<div>' + window.StockChart.html(it, { latest: st.latest, marks, warnDays: 15, width: Math.max(560, ($('result').clientWidth || 1000) - 30) }) + '</div></div>';
+      note + '<div>' + window.StockChart.html(it, { latest: st.latest, so: st.so, gap: st.gap, marks, warnDays: 15, width: Math.max(560, ($('result').clientWidth || 1000) - 30) }) + '</div></div>';
   }
   function renderResult(res) {
     const el = $('result');

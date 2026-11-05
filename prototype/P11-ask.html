@@ -154,7 +154,7 @@
   function drawStock() {
     const p = S.parsed, el = $('stock'); let h = '';
     if (p.item) {
-      const it = p.item, so = E.stockout(it), buf = S.buf, latest = so != null ? so - buf : null, d = it.days, l = lvl(d);
+      const prod0 = p.biz === '成品销售船', sp = E.effStockout(p.item, S.buf, prod0 ? 'BAHODOPI' : (p.load || 'QINHUANGDAO'), prod0 ? (p.disch || 'HAIPHONG') : 'BAHODOPI', p.biz), it = p.item, so = sp.so, buf = S.buf, latest = so != null ? so - buf : null, d = it.days, l = lvl(d);
       const gap = latest != null ? Math.max(0, latest - T) : null;
       h += '<div class="card" style="margin-top:14px"><div class="ch blue">库存保障 · ' + it.name + '<span class="lvl ' + l[0] + '">' + l[1] + '</span>' + C.ic('库存曲线按日耗下降，已排定的到货会让它回升。降到 0 的那一天是断料日。新到的船必须在「断料日 − 缓冲天数」之前到港，否则按断料处理。') + '</div>' +
         '<div class="facts"><div><div class="k">当前库存</div><div class="v">' + fmt(it.stock) + '<small>吨</small></div></div><div><div class="k">日耗</div><div class="v">' + fmt(it.daily) + '<small>吨/天</small></div></div>' +
@@ -162,7 +162,8 @@
       h += '<div class="facts" style="padding-top:4px"><div><div class="k">到港后缓冲' + C.ic('船到港后还要靠泊、卸货、入库，所以要提前留几天。原型默认 3 天，待确认。') + '</div><div class="v"><select class="inp" id="buf" style="width:92px;height:28px;padding:0 6px;font-weight:600">' + [0, 1, 2, 3, 4, 5, 7].map((n) => '<option value="' + n + '"' + (n === buf ? ' selected' : '') + '>' + n + ' 天</option>').join('') + '</select></div></div>' +
         '<div><div class="k">最晚到港日</div><div class="v">' + (latest != null ? mdCn(latest) : '—') + '<small>' + (latest != null ? (latest < T ? '已错过' : '距今 ' + (latest - T) + ' 天') : '') + '</small></div></div>' +
         (p.userDeadline && p.b ? '<div><div class="k">你给的截止日</div><div class="v">' + mdCn(p.b) + '</div></div>' : '') + '</div>';
-      h += '<div style="padding:0 12px 6px">' + window.StockChart.html(it, { latest, warnDays: 15, width: Math.max(300, ($('stock').clientWidth || 760) - 28) }) + '</div>';
+      h += '<div style="padding:0 12px 6px">' + window.StockChart.html(it, { latest, so, gap: sp.gap, warnDays: 15, width: Math.max(300, ($('stock').clientWidth || 760) - 28) }) + '</div>';
+      if (sp.gap) h += '<div class="notebox blu"><b>' + mdCn(sp.gap.from) + ' 起有一个短缺口</b>，按这条航线的最快航程已经赶不上，之后由已排定的到货补回。这次排船以补回后的下一次断料日为目标。</div>';
       if (so != null && so <= T) h += '<div class="notebox red">这个物料已经断料。预测会切换为「最快到港」，并如实提示断料天数；同时请联系供应商或调拨。</div>';
       else if (latest != null && latest - T < 14) h += '<div class="notebox amb">按秦皇岛、唐山这类航线的航程（约 11～14 天），距最晚到港日只剩 ' + Math.max(0, latest - T) + ' 天，<b>可能已经赶不上</b>。生成预测后会给出最快能到的日期和断料天数。</div>';
       else if (so == null) h += '<div class="notebox blu">模拟期内这个物料不会断料，预测只按港口容量安排。</div>';
@@ -178,7 +179,7 @@
   }
   function go() {
     const p = S.parsed, it = p.item, prod = p.biz === '成品销售船';
-    const so = it ? E.stockout(it) : null, latest = so != null ? so - S.buf : null;
+    const so = it ? E.effStockout(it, S.buf, prod ? 'BAHODOPI' : (p.load || 'QINHUANGDAO'), prod ? (p.disch || 'HAIPHONG') : 'BAHODOPI', p.biz).so : null, latest = so != null ? so - S.buf : null;
     let we = p.userDeadline && p.b ? p.b : (it ? (latest != null ? Math.max(latest, T) : T + 30) : T + 15);
     let ws = p.a; if (we < ws) ws = Math.min(ws, T);
     const q = { biz: p.biz, tons: p.tons, load: prod ? 'BAHODOPI' : (p.load || 'QINHUANGDAO'), disch: prod ? (p.disch || 'HAIPHONG') : 'BAHODOPI', ws: E.iso(ws), we: E.iso(we) };

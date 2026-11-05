@@ -210,7 +210,8 @@ table.tb th{background:#f7f9fb;color:var(--muted);font-weight:500;font-size:12px
         ['物料', it.name + ' · ' + it.type, '库存消耗模拟表（' + M.inventory.source + '），更新于 ' + M.inventory.updated.slice(0, 10)],
         ['当前库存 / 日耗', fmt(it.stock) + ' 吨 / ' + fmt(it.daily) + ' 吨每天', '同表：库存日期 ' + M.today],
         ['可用天数', it.days + ' 天（' + lv + '）', '当前库存 ÷ 日耗；沿用德龙版分档：25 天以上充裕、15–25 天偏紧、15 天以内危险'],
-        ['断料日', st.so != null ? mdCn(st.so) + '（距今 ' + (st.so - E.TODAY) + ' 天）' : '模拟期内不断料', '模拟库存首次降到 0 的那一天；模拟已经包含已排定的到货，所以这就是断料计划'],
+        ['断料日', st.so != null ? mdCn(st.so) + '（距今 ' + (st.so - E.TODAY) + ' 天）' : '模拟期内不断料', '模拟库存降到 0 的那一天（已包含已排定的到货）；若近期有赶不上且会被补回的短缺口，取补回后的下一次'],
+        ...(st.gap ? [['近期短缺口', mdCn(st.gap.from) + (st.gap.to > st.gap.from ? '–' + mdCn(st.gap.to) : ''), '首次降到 0 的缺口按最快航程已赶不上，且之后由已排定到货补回；只做提示，断料日取补回后的下一次（2026-11-05 确认）']] : []),
         ['缓冲天数', st.buffer + ' 天', '船到港后还要靠泊、卸货、入库，所以要提前留几天；原型默认 3 天，待确认'],
         ['最晚到港日', st.latest != null ? mdCn(st.latest) : '—', '断料日 − 缓冲天数。到港窗口的最后一天必须不晚于它，这是硬约束，不参与评分'],
       ];
