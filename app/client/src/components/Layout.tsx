@@ -23,6 +23,7 @@ const SHOW = new Set(['P01', 'P11', 'P02', 'P06', 'P04', 'P07', 'P08', 'P09', 'P
 export default function Layout() {
   const { data: me } = useMe(), loc = useLocation(), [open, setOpen] = useState(false);
   useEffect(() => setOpen(false), [loc.pathname]);
+  const detail = /^\/voyages\/[^/]+/.test(loc.pathname) ? '航次详情' : /^\/predictions\/[^/]+/.test(loc.pathname) ? '预测详情' : '';
   const cur = NAV.find((n) => (n.to === '/' ? loc.pathname === '/' : loc.pathname.startsWith(n.to)));
   let last = '';
   return (
@@ -40,7 +41,7 @@ export default function Layout() {
       {open && <div className="navmask on" onClick={() => setOpen(false)} />}
       <div className="main">
         <header id="topbar">
-          <div className="crumb"><button className="burger" onClick={() => setOpen(!open)} aria-label="菜单">☰</button><b>{cur?.name ?? ''}</b></div>
+          <div className="crumb"><button className="burger" onClick={() => setOpen(!open)} aria-label="菜单">☰</button><b>{detail || cur?.name || ''}</b></div>
           <div className="top-right">
             {me && <span className="top-date">{me.today} {wk(me.today)}</span>}
             {me && <span className="user"><span className="avatar">{me.name.slice(0, 1)}</span><span>{me.name}<small>{me.dept ? me.dept + ' · ' : ''}{me.role}</small></span></span>}
