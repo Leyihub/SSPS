@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { IsArray, IsBoolean, IsIn, IsInt, IsNumber, IsOptional, IsString, Max, Min, ValidateNested } from 'class-validator';
 import { FLAGS, ETA_BASIS, MILESTONE_FIELDS } from '../../domain/voyage';
 import { BIZ } from '../../domain/status';
@@ -67,6 +67,8 @@ export class ListQuery {
   @IsOptional() @IsString() to?: string;
   @IsOptional() @IsString() owner?: string;
   @IsOptional() @IsString() q?: string;
+  @IsOptional() @Transform(({ value }) => value === '1' || value === 'true' || value === true) @IsBoolean() mine?: boolean;
+  @IsOptional() @Transform(({ value }) => value === '1' || value === 'true' || value === true) @IsBoolean() focus?: boolean;
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) page?: number;
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(200) pageSize?: number;
 }

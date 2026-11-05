@@ -14,7 +14,7 @@ export class VoyageController {
   constructor(private readonly svc: VoyageService) {}
   private who(req: Request) { return this.svc.actor(req.userContext as any); }
 
-  @Get() list(@Query() q: ListQuery) { return this.svc.list(q); }
+  @Get() async list(@Query() q: ListQuery, @Req() req: Request) { return this.svc.list(q, await this.who(req)); }
   @Get(':id') async detail(@Param('id') id: string, @Req() req: Request) { return this.svc.get(id, await this.who(req)); }
   @Post() async create(@Body() dto: CreateVoyageDto, @Req() req: Request, @Headers(KEY) key?: string) { return this.svc.create(dto, await this.who(req), key); }
   @Patch(':id') async update(@Param('id') id: string, @Body() body: Record<string, unknown>, @Req() req: Request, @Headers(KEY) key?: string) { return this.svc.update(id, body, await this.who(req), key); }

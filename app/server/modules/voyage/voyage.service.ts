@@ -4,8 +4,10 @@ import { ResponseCode } from '../../common/constants/api_response_code';
 import { DIRECTORY_PORT, VOYAGE_STORE } from '../../ports/tokens';
 import type { DirectoryPort } from '../../ports/directory.port';
 import type { ChangeEntry, DataIssue, NewCargo, NewVoyage, VoyageStorePort } from '../../ports/voyage-store.port';
-import { deriveStatus } from '../../domain/status';
-import { validateChain } from '../../domain/validate';
+import { BIZ, STATUS, STATUS_CANCELLED, deriveStatus } from '../../domain/status';
+import { validateChain, missingDeparture } from '../../domain/validate';
+import { CONFIG } from '../../config';
+import { dn } from '../../lib/dates';
 import { parseDateTime, parseNumber } from '../../importers/common';
 import {
   Actor, CargoLine, ETA_BASIS, FLAGS, SALES_WAYS, MILESTONE_FIELDS, MONEY_KEYS, MONEY_LABEL, OPS_KEYS, VOYAGE_EDITABLE, Voyage, isBulk, isProduct, localDate,
@@ -41,6 +43,7 @@ export class VoyageService {
   /** 时钟：测试里替换 */
   clock: () => Date = () => new Date();
 
+  private today() { return this.clock().toISOString().slice(0, 10); }
   private now() { return this.clock().toISOString().slice(0, 16).replace('T', ' '); }
   actor(ctx: UserCtx): Promise<Actor> { return this.dir.resolve(ctx || {}); }
 
@@ -104,30 +107,42 @@ export class VoyageService {
 
   // ---------------- 查询 ----------------
 
-  /** A07：航次列表。未结束的在前、按本港日期升序；已结束的在后、按本港日期降序 */
-  async list(q: ListQuery) {
+  /**
+   * A07：航次列表。未结束的在前、按本港日期升序；已结束的在后、按本港日期降序。
+   * status 可以逗号分隔多个；mine / focus 是快捷筛选。返回 counts：页签数按「除业务类型外的所有条件」算，
+   * 状态数按「除状态外的所有条件」算（页面上的页签计数和指标卡用）。
+   */
+  async list(q: ListQuery, a?: Actor) {
     const all = (await this.store.list()).map((v) => ({ ...v, status: deriveStatus(v) }));
-    const kw = (q.q || '').trim().toLowerCase();
+    const kw = (q.q || '').trim().toLowerCase(), sts = q.status ? q.status.split(',').filter(Boolean) : [];
     const day = (v: Voyage) => { const d = localDate(v); return ((d.act || d.plan || '') as string).slice(0, 10); };
-    let rows = all.filter((v) => {
-      if (q.biz && v.biz !== q.biz) return false;
-      if (q.status && v.status !== q.status) return false;
+    const contracts = new Map<string, string>();
+    if (kw) for (const v of all) contracts.set(v.id, (await this.store.cargo(v.id)).map((c) => c.contract).join(' '));
+    const match = (v: Voyage, skip: 'biz' | 'status' | null) => {
+      if (skip !== 'biz' && q.biz && v.biz !== q.biz) return false;
+      if (skip !== 'status' && sts.length && !sts.includes(v.status!)) return false;
       if (q.owner && v.owner !== q.owner) return false;
+      if (q.mine && a && v.owner !== a.name) return false;
+      if (q.focus && !v.focus) return false;
       if (q.from && (!day(v) || day(v) < q.from)) return false;
       if (q.to && (!day(v) || day(v) > q.to)) return false;
-      if (kw && ![v.id, v.no, v.vessel, v.load, v.disch, v.owner, v.shipVoy].some((s) => (s || '').toLowerCase().includes(kw))) return false;
+      if (kw && ![v.id, v.no, v.vessel || '待宣船', v.load, v.disch, v.owner, v.shipVoy, contracts.get(v.id)].some((s) => (s || '').toLowerCase().includes(kw))) return false;
       return true;
-    });
+    };
+    const count = (skip: 'biz' | 'status', key: (v: Voyage) => string, keys: string[]) => { const o: Record<string, number> = Object.fromEntries(keys.map((k) => [k, 0])); let n = 0; for (const v of all) if (match(v, skip)) { o[key(v)] = (o[key(v)] || 0) + 1; n++; } return { ...o, all: n }; };
+    const counts = { biz: count('biz', (v) => v.biz, Object.values(BIZ)), status: count('status', (v) => v.status!, [...STATUS, STATUS_CANCELLED]) };
+    // 指标卡的状态数要在「当前业务类型」下算，页签数不受自身影响——上面已按此口径跳过对应条件
     const fin = (v: Voyage) => v.status === '已结束' || v.status === '已结束（取消）';
-    rows = rows.sort((a, b) => (fin(a) !== fin(b) ? (fin(a) ? 1 : -1) : fin(a) ? day(b).localeCompare(day(a)) : day(a).localeCompare(day(b)) || a.id.localeCompare(b.id)));
+    const rows = all.filter((v) => match(v, null)).sort((x, y) => (fin(x) !== fin(y) ? (fin(x) ? 1 : -1) : fin(x) ? day(y).localeCompare(day(x)) : day(x).localeCompare(day(y)) || x.id.localeCompare(y.id)));
     const page = q.page || 1, size = q.pageSize || 50, slice = rows.slice((page - 1) * size, page * size);
     const items = await Promise.all(slice.map(async (v) => {
       const cargo = await this.store.cargo(v.id), d = localDate(v);
       return { id: v.id, biz: v.biz, attr: v.attr, no: v.no, vessel: v.vessel, load: v.load, disch: v.disch, status: v.status, side: v.load === 'BAHODOPI' ? '装' : '卸',
         localPlan: d.plan, localAct: d.act, eta: v.eta, etaUpdated: v.etaUpdated, owner: v.owner, dept: v.dept, flags: v.flags, focus: v.focus, readonly: v.readonly,
-        tons: cargo.reduce((s, c) => s + (Number(c.tons) || 0), 0), pooled: cargo.length >= 2 };
+        tons: cargo.reduce((s, c) => s + (Number(c.tons) || 0), 0), pooled: cargo.length >= 2,
+        missingDeparture: missingDeparture(v), etaStale: !!(v.eta && !v.actDischArr && v.etaUpdated && dn(this.today()) - dn(v.etaUpdated) > CONFIG.ETA_STALE_DAYS) };
     }));
-    return { total: rows.length, page, pageSize: size, items };
+    return { total: rows.length, page, pageSize: size, items, counts, owners: [...new Set(all.map((v) => v.owner))].sort() };
   }
 
   /** A08：详情。金额字段对无权限的人整体不返回；同时给出当前用户在这条航次上能做什么 */

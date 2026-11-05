@@ -38,8 +38,11 @@ export class MasterService {
 
   actor(ctx: { userId?: string; userName?: string; roles?: string[] }) { return this.dir.resolve(ctx || {}); }
 
-  /** A01 */
-  me(a: Actor) { return { userId: a.userId, name: a.name, role: a.role, dept: a.dept }; }
+  /** 时钟：测试和演示里替换 */
+  clock: () => Date = () => new Date();
+
+  /** A01：当前用户；today 供前端判断「本周」「ETA 过期」，和服务端口径一致 */
+  me(a: Actor) { return { userId: a.userId, name: a.name, role: a.role, dept: a.dept, today: this.clock().toISOString().slice(0, 10) }; }
 
   // ---------------- 港口 ----------------
   async ports(q?: string) { const all = await this.store.ports(); return q ? all.filter((p) => portMatches(p, q)) : all; }

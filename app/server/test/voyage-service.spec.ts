@@ -191,3 +191,20 @@ test('详情：不存在 404；返回时间线所需的主表、明细、修订�
   assert.deepEqual(Object.keys(d).sort(), ['can', 'cargo', 'changeLog', 'etaRevisions', 'salesExt', 'settlement', 'voyage']);
   assert.equal(d.can.edit, true); assert.equal((await svc.get(voyage.id, other) as any).can.edit, false);
 });
+
+test('列表：多状态、只看我的、重点关注、合同号搜索；页签数与状态数各自不受自身条件影响', async () => {
+  const { svc } = mk();
+  const mkv = ({ contract, ...o }: any, who = lin) => svc.create({ ...bulk, cargo: [{ name: 'x', tons: 1, contract: contract || '' }], ...o } as any, who);
+  const a = await mkv({ contract: 'HT-100', planDischS: '2026-11-10' }), b = await mkv({ planDischS: '2026-11-11' }, other);
+  const c = await mkv({ vessel: undefined, planDischS: '2026-11-12', focus: true });
+  await mkv({ biz: '成品销售船', load: 'BAHODOPI', disch: 'HAIPHONG', laycanS: '2026-11-13' } as any, sale);
+  await svc.setFlag(b.voyage.id, '取消', true, other);
+  assert.deepEqual((await svc.list({ status: '待宣船,已结束（取消）' }, lin)).items.map((x) => x.id).sort(), [b.voyage.id, c.voyage.id].sort());
+  assert.deepEqual((await svc.list({ mine: true }, lin)).items.map((x) => x.id).sort(), [a.voyage.id, c.voyage.id].sort());
+  assert.deepEqual((await svc.list({ focus: true }, lin)).items.map((x) => x.id), [c.voyage.id]);
+  assert.deepEqual((await svc.list({ q: 'ht-100' }, lin)).items.map((x) => x.id), [a.voyage.id]);
+  assert.deepEqual((await svc.list({ q: '待宣船' }, lin)).items.map((x) => x.id), [c.voyage.id], '没有船名的航次可按「待宣船」搜到');
+  const r = await svc.list({ biz: '大宗采购船', status: '待宣船' }, lin);
+  assert.deepEqual([r.total, r.counts.biz['大宗采购船'], r.counts.biz['成品销售船'], r.counts.biz.all], [1, 1, 0, 1], '页签数受状态筛选影响，不受业务类型筛选影响');
+  assert.deepEqual([r.counts.status['未到装港'], r.counts.status['已结束（取消）'], r.counts.status.all], [1, 1, 3], '状态数在当前业务类型下，不受状态筛选影响');
+});

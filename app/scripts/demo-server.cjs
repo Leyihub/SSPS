@@ -24,7 +24,7 @@ Module({ imports: ['ports', 'prediction', 'capacity', 'voyage', 'master', 'impor
   const T = require(d + 'ports/tokens.js');
   const voyages = app.get(T.VOYAGE_STORE), master = app.get(T.MASTER_STORE), dir = app.get(T.DIRECTORY_PORT), snap = app.get(T.SNAPSHOT_PORT);
   const vsvc = app.get(pick('modules/voyage/voyage.service.js', 'VoyageService')), isvc = app.get(pick('modules/imports/imports.service.js', 'ImportsService'));
-  vsvc.clock = () => NOW; isvc.clock = () => NOW; snap.today = () => M.today;
+  vsvc.clock = () => NOW; isvc.clock = () => NOW; app.get(pick('modules/master/master.service.js', 'MasterService')).clock = () => NOW; snap.today = () => M.today;
 
   // 当前用户：按请求头切换
   for (const [name, p] of Object.entries(M.people)) dir.set(name, { name, role: p.role, dept: p.dept });
@@ -53,10 +53,12 @@ Module({ imports: ['ports', 'prediction', 'capacity', 'voyage', 'master', 'impor
   for (const it of M.inventory.items) for (const [dn, stock, daily] of it.series) inv.push({ 导入日期: M.today, 库存日期: iso(dn), 品名: it.name, 物料类型: it.type, 日耗: daily, 库存: stock, 可用天数: dn === it.series[0][0] ? it.days : null });
   await isvc.importInventory({ fileName: '库存消耗模拟（示例）.xlsx', rows: inv }, null);
 
-  const port = Number(process.argv[2] || process.env.PORT || 3100), dist = path.join(root, 'dist/client');
+  const port = Number(process.argv[2] || process.env.PORT || 3100), dist = path.join(root, fs.existsSync(path.join(root, 'dist/preview')) ? 'dist/preview' : 'dist/client');   // 优先托管不依赖平台的预览构建（npm run preview:build）
   if (fs.existsSync(dist)) {                                   // 有前端构建产物就一起托管（单端口预览）
     const x = app.getHttpAdapter().getInstance();
-    x.use(express.static(dist)); x.get(/^(?!\/api\/).*/, (_req, res) => res.sendFile(path.join(dist, 'index.html')));
+    const html = fs.existsSync(path.join(dist, 'client/preview/index.html')) ? 'client/preview/index.html' : 'client/index.html';
+    const tpl = fs.readFileSync(path.join(dist, html), 'utf8').replace('{{appName}}', '智慧发船预测系统').replace('{{{__platform__}}}', '{}');   // 平台运行时会替换这两处模板变量
+    x.use(express.static(dist, { index: false })); x.get(/^(?!\/api\/).*/, (_req, res) => res.type('html').send(tpl));
   }
   await app.listen(port);
   console.log('演示服务已启动：http://localhost:' + port + '（今天 = ' + M.today + '，当前用户 = ' + M.user.name + '）');

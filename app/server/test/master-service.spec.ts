@@ -23,7 +23,8 @@ const mk = () => {
 };
 const err = async (p: Promise<unknown>, http: number, re?: RegExp) => assert.rejects(p, (e: any) => { assert.equal(e.httpStatus, http, e.message); if (re) assert.match(e.message, re); return true; });
 
-test('A01 当前用户：角色和部门', () => { assert.deepEqual(mk().svc.me(boss), { userId: '主管甲', name: '主管甲', role: '部门主管', dept: '大宗采购部' }); });
+test('A01 当前用户：角色和部门', () => { const { svc } = mk(); svc.clock = () => new Date('2026-11-05T01:00:00Z');
+  assert.deepEqual(svc.me(boss), { userId: '主管甲', name: '主管甲', role: '部门主管', dept: '大宗采购部', today: '2026-11-05' }); });
 
 test('港口：别名模糊匹配；物流管理员可增改；别名不能与其他港口重复；本港唯一且不能停用', async () => {
   const { svc } = mk();
