@@ -9,7 +9,7 @@ export class MemoryVoyageStore implements VoyageStorePort {
   private sales = new Map<string, SalesExt>();
   private eta: EtaRevision[] = [];
   private log: ChangeEntry[] = [];
-  private issueList: Array<DataIssue & { id: string; status: string }> = [];
+  private issueList: Array<DataIssue & { id: string; status: string; closedBy?: string | null; closedAt?: string | null }> = [];
   private done = new Map<string, unknown>();
   private seq = 0;
 
@@ -57,4 +57,5 @@ export class MemoryVoyageStore implements VoyageStorePort {
     }
   }
   async issues() { return this.issueList; }
+  async closeIssue(id: string, by: string, at: string) { const i = this.issueList.find((x) => x.id === id); if (i) { i.status = '已关闭'; i.closedBy = by; i.closedAt = at; } }
 }

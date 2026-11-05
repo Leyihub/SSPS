@@ -1,4 +1,6 @@
-import { Body, Controller, Delete, Get, Headers, Param, Patch, Post, Query, Req } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Headers, HttpStatus, Param, Patch, Post, Query, Req } from '@nestjs/common';
+import { BusinessException } from '../../common/interfaces/exception.interface';
+import { ResponseCode } from '../../common/constants/api_response_code';
 import type { Request } from 'express';
 import { NeedLogin } from '@lark-apaas/fullstack-nestjs-core';
 import { VoyageService } from './voyage.service';
@@ -26,4 +28,15 @@ export class VoyageController {
 
   @Patch(':id/bulk-settlement') async settlement(@Param('id') id: string, @Body() body: Record<string, unknown>, @Req() req: Request, @Headers(KEY) key?: string) { return this.svc.patchSettlement(id, body, await this.who(req), key); }
   @Patch(':id/sales-ext') async sales(@Param('id') id: string, @Body() body: Record<string, unknown>, @Req() req: Request, @Headers(KEY) key?: string) { return this.svc.patchSalesExt(id, body, await this.who(req), key); }
+}
+
+@Controller('api/data-issues')
+@NeedLogin()
+export class DataIssueController {
+  constructor(private readonly svc: VoyageService) {}
+  @Get() list(@Query('status') status?: string, @Query('owner') owner?: string, @Query('type') type?: string) { return this.svc.issues({ status, owner, type }); }
+  @Patch(':id') async close(@Param('id') id: string, @Body() b: { status?: string }, @Req() req: Request) {
+    if (b?.status !== '已关闭') throw new BusinessException(ResponseCode.VALIDATION_ERROR, '目前只支持把问题关闭（status: 已关闭）', HttpStatus.UNPROCESSABLE_ENTITY);
+    return this.svc.closeIssue(id, await this.svc.actor(req.userContext as any));
+  }
 }

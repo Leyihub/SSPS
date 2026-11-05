@@ -314,5 +314,33 @@ export class VoyageService {
     return saved;
   }
 
-  async issues() { return this.store.issues(); }
+  /**
+   * A23 的航次侧：采纳预测方案。写回已有「待宣船」航次的计划窗口，或新建待宣船航次。
+   * 窗口落在本港侧：卸港在本港 → 计划抵卸港窗口；装港在本港（成品销售船）→ 受载期。
+   */
+  async adoptPlan(input: { biz: string; load: string; disch: string; tons: number; item: string | null }, win: { from: string; to: string }, a: Actor, voyageId?: string, key?: string) {
+    const local = input.load === 'BAHODOPI', patch: Bag = local ? { laycanS: win.from, laycanE: win.to } : { planDischS: win.from, planDischE: win.to };
+    if (voyageId) {
+      const prev = await this.needEdit(voyageId, a);
+      if (prev.status !== '待宣船') throw invalid('只能写回「待宣船」状态的航次，当前是「' + prev.status + '」');
+      if (prev.load !== input.load || prev.disch !== input.disch) throw invalid('航次的装卸港与这次预测不一致，请新建航次或换一条航次');
+      return { created: false, voyage: await this.apply(prev, this.clean(patch, VOYAGE_EDITABLE), a, key) };
+    }
+    const r = await this.create({ biz: input.biz, load: input.load, disch: input.disch, ...(patch as any), cargo: [{ name: input.item || '（待补充）', tons: input.tons }] } as any, a, key);
+    return { created: true, voyage: r.voyage };
+  }
+
+  /** A25：数据质量清单 */
+  async issues(q: { status?: string; owner?: string; type?: string } = {}) {
+    return (await this.store.issues()).filter((i) => (!q.status || i.status === q.status) && (!q.owner || i.owner === q.owner) && (!q.type || i.type === q.type));
+  }
+  /** 关闭需责任人本人或系统管理员 */
+  async closeIssue(id: string, a: Actor) {
+    const i = (await this.store.issues()).find((x) => x.id === id);
+    if (!i) throw fail(ResponseCode.NOT_FOUND, '找不到问题：' + id, HttpStatus.NOT_FOUND);
+    if (i.status === '已关闭') return i;
+    if (i.owner !== a.name && a.role !== '系统管理员') throw forbidden('只有责任人或系统管理员可以关闭');
+    await this.store.closeIssue(id, a.name, this.now());
+    return (await this.store.issues()).find((x) => x.id === id);
+  }
 }

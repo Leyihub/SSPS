@@ -9,6 +9,7 @@ import { buildRule } from '../../domain/routeRules';
 import { createEngine, toApiResult, toRunRecord, toPlanRecord, announceFromProvenance } from '../../engine';
 import { createParser } from '../../nlp/parse';
 import { dn } from '../../lib/dates';
+import { VoyageService } from '../voyage/voyage.service';
 import type { PredictDto } from './prediction.dto';
 
 export interface UserLite { userId?: string; userName?: string }
@@ -18,6 +19,7 @@ export class PredictionService {
   constructor(
     @Inject(SNAPSHOT_PORT) private readonly snap: SnapshotPort,
     @Inject(PREDICTION_STORE) private readonly store: PredictionStorePort,
+    private readonly voyages: VoyageService,
   ) {}
 
   private build(s: Snapshot) {
@@ -50,12 +52,15 @@ export class PredictionService {
     return r;
   }
 
-  /** A23：采纳方案。航次写回（改计划窗口或新建待宣船航次）由航次模块完成，这里先标记采纳 */
-  async adopt(runNo: string, label: string) {
-    const r = await this.detail(runNo);
-    if (!r.plans.find((p) => p.label === label)) throw new BusinessException(ResponseCode.NOT_FOUND, '这次预测没有方案 ' + label, HttpStatus.NOT_FOUND);
-    await this.store.adopt(runNo, label as 'A' | 'B', null);
-    return { runNo, label, adopted: true };
+  /** A23：采纳方案。写回已有待宣船航次的计划窗口，或新建待宣船航次；同一方案只能采纳一次 */
+  async adopt(runNo: string, label: string, user: UserLite, voyageId?: string, key?: string) {
+    const r = await this.detail(runNo), plan = r.plans.find((p) => p.label === label) as any;
+    if (!plan) throw new BusinessException(ResponseCode.NOT_FOUND, '这次预测没有方案 ' + label, HttpStatus.NOT_FOUND);
+    if (plan.adopted) throw new BusinessException(ResponseCode.CONFLICT, '方案 ' + label + ' 已经采纳过了（' + (plan.adopted_voyage || '') + '）', HttpStatus.CONFLICT);
+    const inp = (r.run as any).input, actor = await this.voyages.actor(user);
+    const res = await this.voyages.adoptPlan({ biz: inp.biz, load: inp.load, disch: inp.disch, tons: inp.tons, item: inp.item }, { from: plan.window_from, to: plan.window_to }, actor, voyageId, key);
+    await this.store.adopt(runNo, label as 'A' | 'B', res.voyage.id);
+    return { runNo, label, adopted: true, created: res.created, voyage: res.voyage };
   }
 
   /** A24：生成宣船文案。只引用方案保存时的数值，不重新计算 */

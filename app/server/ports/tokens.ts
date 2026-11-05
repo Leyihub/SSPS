@@ -3,3 +3,4 @@ export const SNAPSHOT_PORT = Symbol('SNAPSHOT_PORT');
 export const PREDICTION_STORE = Symbol('PREDICTION_STORE');
 export const VOYAGE_STORE = Symbol('VOYAGE_STORE');
 export const DIRECTORY_PORT = Symbol('DIRECTORY_PORT');
+export const MASTER_STORE = Symbol('MASTER_STORE');

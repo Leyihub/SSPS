@@ -17,6 +17,7 @@ export class PredictDto {
 
 export class AdoptDto {
   @IsIn(PLAN_LABELS as readonly string[]) label!: string;
+  @IsOptional() @IsString() voyageId?: string;             // 不传 = 新建待宣船航次
 }
 
 export class AnnounceDto {

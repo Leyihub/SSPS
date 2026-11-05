@@ -1,10 +1,13 @@
 import { Global, Module } from '@nestjs/common';
-import { SNAPSHOT_PORT, PREDICTION_STORE, VOYAGE_STORE, DIRECTORY_PORT } from '../../ports/tokens';
-import { MemorySnapshot } from '../../adapters/memory/memory-snapshot';
+import { SNAPSHOT_PORT, PREDICTION_STORE, VOYAGE_STORE, DIRECTORY_PORT, MASTER_STORE } from '../../ports/tokens';
 import { MemoryPredictionStore } from '../../adapters/memory/memory-prediction-store';
 import { MemoryVoyageStore } from '../../adapters/memory/memory-voyage-store';
 import { MemoryDirectory } from '../../adapters/memory/memory-directory';
-import { seedSnapshot } from '../../adapters/memory/seed';
+import { MemoryMasterStore } from '../../adapters/memory/memory-master-store';
+import { LiveSnapshot } from '../../adapters/memory/live-snapshot';
+import { seedMaster } from '../../adapters/memory/seed';
+import type { MasterStorePort } from '../../ports/master-store.port';
+import type { VoyageStorePort } from '../../ports/voyage-store.port';
 
 /**
  * 数据端口的提供者。现在用内存实现（本地开发、测试）；
@@ -13,11 +16,12 @@ import { seedSnapshot } from '../../adapters/memory/seed';
 @Global()
 @Module({
   providers: [
-    { provide: SNAPSHOT_PORT, useFactory: () => new MemorySnapshot(seedSnapshot(new Date().toISOString().slice(0, 10))) },
-    { provide: PREDICTION_STORE, useClass: MemoryPredictionStore },
+    { provide: MASTER_STORE, useFactory: () => new MemoryMasterStore(seedMaster()) },
     { provide: VOYAGE_STORE, useFactory: () => new MemoryVoyageStore() },
     { provide: DIRECTORY_PORT, useFactory: () => new MemoryDirectory() },
+    { provide: PREDICTION_STORE, useClass: MemoryPredictionStore },
+    { provide: SNAPSHOT_PORT, inject: [MASTER_STORE, VOYAGE_STORE], useFactory: (m: MasterStorePort, v: VoyageStorePort) => new LiveSnapshot(m, v) },
   ],
-  exports: [SNAPSHOT_PORT, PREDICTION_STORE, VOYAGE_STORE, DIRECTORY_PORT],
+  exports: [SNAPSHOT_PORT, PREDICTION_STORE, VOYAGE_STORE, DIRECTORY_PORT, MASTER_STORE],
 })
 export class PortsModule {}

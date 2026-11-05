@@ -27,5 +27,6 @@ export interface VoyageStorePort {
   addChangeLog(entries: ChangeEntry[]): Promise<void>;
   /** 数据质量问题：同一对象同类问题只保留一条未关闭的 */
   addIssues(issues: DataIssue[]): Promise<void>;
-  issues(): Promise<Array<DataIssue & { id: string; status: string }>>;
+  issues(): Promise<Array<DataIssue & { id: string; status: string; closedBy?: string | null; closedAt?: string | null }>>;
+  closeIssue(id: string, by: string, at: string): Promise<void>;
 }

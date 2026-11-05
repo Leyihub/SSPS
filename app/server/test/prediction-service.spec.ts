@@ -8,6 +8,9 @@ import { PredictionService } from '../modules/prediction/prediction.service';
 import { CapacityService } from '../modules/capacity/capacity.service';
 import { MemorySnapshot } from '../adapters/memory/memory-snapshot';
 import { MemoryPredictionStore } from '../adapters/memory/memory-prediction-store';
+import { MemoryVoyageStore } from '../adapters/memory/memory-voyage-store';
+import { MemoryDirectory } from '../adapters/memory/memory-directory';
+import { VoyageService } from '../modules/voyage/voyage.service';
 import { seedSnapshot } from '../adapters/memory/seed';
 import { createEngine, announce, announceFromProvenance } from '../engine';
 import { buildRule } from '../domain/routeRules';
@@ -20,7 +23,10 @@ for (const f of ['mock-data.js']) vm.runInContext('var window=this.window;' + fs
 const M = ctx.window.MOCK;
 const snapshot = () => ({ today: M.today, berths: M.berths, planRows: M.berthPlanRows, berthPlanBatch: { batchNo: M.batch.batchNo, planDate: M.batch.planDate, source: M.batch.source, coverTo: null },
   voyages: M.voyages, routeRules: M.routeRules, inventory: { batchNo: 'IV-1', items: M.inventory.items }, ports: M.ports });
-const mk = () => { const snap = new MemorySnapshot(snapshot() as any), store = new MemoryPredictionStore(); return { snap, store, svc: new PredictionService(snap, store), cap: new CapacityService(snap) }; };
+const mk = () => {
+  const snap = new MemorySnapshot(snapshot() as any), store = new MemoryPredictionStore(), vstore = new MemoryVoyageStore(), voyages = new VoyageService(vstore, new MemoryDirectory());
+  return { snap, store, vstore, voyages, svc: new PredictionService(snap, store, voyages), cap: new CapacityService(snap) };
+};
 const user = { userId: 'u1', userName: '林海川' };
 const dto = (o: any = {}) => ({ biz: '大宗采购船', tons: 50000, load: 'SURIGAO', disch: 'BAHODOPI', winStart: '2026-11-08', winEnd: '2026-11-18', ...o });
 
@@ -79,11 +85,30 @@ test('宣船文案：成品船、库存、低可信、告急场景下，从溯�
   }
 });
 
-test('采纳方案：标记采纳；不存在的运行或方案返回 404 语义', async () => {
-  const { svc, store } = mk(); const r: any = await svc.predict(dto(), user);
-  assert.deepEqual(await svc.adopt(r.runNo, 'A'), { runNo: r.runNo, label: 'A', adopted: true });
-  assert.equal((await store.get(r.runNo))!.plans.find((p: any) => p.label === 'A')!.adopted, true);
-  await assert.rejects(svc.adopt('PR-X', 'A'), (e: any) => e instanceof BusinessException);
+test('采纳方案：没选航次 → 新建待宣船航次，窗口写进计划抵卸港；同一方案不能采纳两次', async () => {
+  const { svc, store, vstore } = mk(); const r: any = await svc.predict(dto(), user);
+  const a: any = await svc.adopt(r.runNo, 'A', user);
+  assert.equal(a.created, true); assert.equal(a.voyage.status, '待宣船'); assert.equal(a.voyage.owner, '林海川');
+  const plan = r.result.plans[0];
+  assert.equal(a.voyage.planDischS.slice(0, 10), (await store.get(r.runNo))!.plans[0].window_from);
+  assert.equal((await vstore.cargo(a.voyage.id))[0].tons, 50000);
+  const saved: any = (await store.get(r.runNo))!.plans.find((p: any) => p.label === 'A');
+  assert.equal(saved.adopted, true); assert.equal(saved.adopted_voyage, a.voyage.id); assert.ok(plan);
+  await assert.rejects(svc.adopt(r.runNo, 'A', user), (e: any) => e.httpStatus === 409);
+  await assert.rejects(svc.adopt('PR-X', 'A', user), (e: any) => e instanceof BusinessException && e.httpStatus === 404);
+  await assert.rejects(svc.adopt(r.runNo, 'C', user), (e: any) => e.httpStatus === 404);
+});
+
+test('采纳方案：写回已有待宣船航次；装卸港不一致、非待宣船、非本人航次都拒绝', async () => {
+  const { svc, voyages } = mk(); const r: any = await svc.predict(dto(), user);
+  const mine = await voyages.create({ biz: '大宗采购船', load: 'SURIGAO', disch: 'BAHODOPI', cargo: [{ name: '镍矿', tons: 50000 }] } as any, { userId: 'u1', name: '林海川', role: '业务员', dept: '大宗采购部' });
+  const wrongPort = await voyages.create({ biz: '大宗采购船', load: 'TAGANITO', disch: 'BAHODOPI', cargo: [{ name: '镍矿', tons: 1 }] } as any, { userId: 'u1', name: '林海川', role: '业务员', dept: '大宗采购部' });
+  const named = await voyages.create({ biz: '大宗采购船', load: 'SURIGAO', disch: 'BAHODOPI', vessel: 'MV X', cargo: [{ name: '镍矿', tons: 1 }] } as any, { userId: 'u1', name: '林海川', role: '业务员', dept: '大宗采购部' });
+  await assert.rejects(svc.adopt(r.runNo, 'A', user, wrongPort.voyage.id), (e: any) => e.httpStatus === 422);
+  await assert.rejects(svc.adopt(r.runNo, 'A', user, named.voyage.id), (e: any) => e.httpStatus === 422);
+  await assert.rejects(svc.adopt(r.runNo, 'A', { userId: 'u9', userName: '外人' }, mine.voyage.id), (e: any) => e.httpStatus === 403);
+  const a: any = await svc.adopt(r.runNo, 'A', user, mine.voyage.id);
+  assert.equal(a.created, false); assert.equal(a.voyage.id, mine.voyage.id); assert.ok(a.voyage.planDischS);
 });
 
 test('自然语言解析：只返回解析结果，不含预测数值；手工修改优先', async () => {
