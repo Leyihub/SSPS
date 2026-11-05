@@ -75,6 +75,15 @@ export class PredictionService {
     return a;
   }
 
+  /** 库存测算（P11 阶段 3）：有效断料日（含短缺口回弹）、最晚到港日、这条航线的 P80 航程。数值全部来自引擎 */
+  async stockPlan(dto: { item: string; buffer?: number; load: string; disch: string; biz: string }) {
+    const s = await this.snap.load(), item = s.inventory.items.find((x) => x.name === dto.item);
+    if (!item) throw new BusinessException(ResponseCode.NOT_FOUND, '库存里没有这个物料：' + dto.item, HttpStatus.NOT_FOUND);
+    const engine = this.build(s), buffer = dto.buffer ?? 3, plan: any = engine.effStockout(item, buffer, dto.load, dto.disch, dto.biz), rule: any = engine.ruleFor(dto.load, dto.disch, dto.biz);
+    const so = plan.so ?? null;
+    return { so, gap: plan.gap ?? null, latest: so != null ? so - buffer : null, buffer, p80: rule && dto.biz !== '成品销售船' ? Math.ceil(rule.effP80) : null };
+  }
+
   /** A29：自然语言解析。只解析、不生成数值（锁定规则 10、11） */
   async parse(text: string, overrides?: { biz?: string; item?: string; tons?: number; load?: string; disch?: string; b?: string }) {
     const s = await this.snap.load();

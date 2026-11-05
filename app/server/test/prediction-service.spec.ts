@@ -131,3 +131,11 @@ test('容量日历：默认数据下无靠船计划 → 全部是无数据，绝
   assert.equal(day.berths.length, M.berths.length); assert.ok(day.berths.some((b: any) => b.state === 'occ'));
   await assert.rejects(cap.day('2026-11-01', 50000), (e: any) => e instanceof BusinessException);
 });
+
+test('库存测算：有效断料日、最晚到港日、P80 航程来自引擎；未知物料 404', async () => {
+  const { svc } = mk(); const name = M.inventory.items[0].name;
+  const r: any = await svc.stockPlan({ item: name, biz: '大宗采购船', load: 'SURIGAO', disch: 'BAHODOPI', buffer: 3 });
+  assert.equal(r.buffer, 3); assert.ok(r.p80 > 0);
+  if (r.so != null) assert.equal(r.latest, r.so - 3);
+  await assert.rejects(svc.stockPlan({ item: '没有', biz: '大宗采购船', load: 'SURIGAO', disch: 'BAHODOPI' }), (e: any) => e.httpStatus === 404);
+});

@@ -54,6 +54,7 @@ export const api = {
   settlement: (id: string, b: unknown, key?: string) => send('patch', `/api/voyages/${id}/bulk-settlement`, b, key),
   salesExt: (id: string, b: unknown, key?: string) => send('patch', `/api/voyages/${id}/sales-ext`, b, key),
   predict: (b: unknown) => send<any>('post', '/api/predictions', b),
+  stockPlan: (b: unknown) => send<any>('post', '/api/predictions/stock-plan', b),
   parse: (text: string, overrides?: unknown) => send<any>('post', '/api/predictions/parse', { text, overrides }),
   adopt: (runNo: string, label: string, voyageId?: string, key?: string) => send<any>('post', `/api/predictions/${runNo}/adopt`, { label, voyageId }, key),
   announce: (runNo: string, label: string) => send<any>('post', `/api/predictions/${runNo}/announcement`, { label }),

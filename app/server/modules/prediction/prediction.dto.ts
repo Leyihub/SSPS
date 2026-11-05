@@ -28,3 +28,11 @@ export class ParseDto {
   @IsString() text!: string;
   @IsOptional() overrides?: { biz?: string; item?: string; tons?: number; load?: string; disch?: string; b?: string };
 }
+
+export class StockPlanDto {
+  @IsString() item!: string;
+  @IsString() biz!: string;
+  @IsString() load!: string;
+  @IsString() disch!: string;
+  @IsOptional() @Type(() => Number) @IsInt() @Min(0) @Max(14) buffer?: number;
+}

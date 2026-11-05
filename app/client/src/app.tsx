@@ -3,6 +3,7 @@ import { Route, Routes } from 'react-router-dom';
 
 import Layout from './components/Layout';
 import WorkbenchPage from './pages/Workbench/WorkbenchPage';
+import AskPage from './pages/Ask/AskPage';
 import PredictionDetailPage from './pages/Predict/PredictionDetailPage';
 import PredictPage from './pages/Predict/PredictPage';
 import VoyageListPage from './pages/Voyages/VoyageListPage';
@@ -14,6 +15,7 @@ const RoutesComponent = () => {
     <Routes>
       <Route element={<Layout />}>
         <Route index element={<WorkbenchPage />} />
+        <Route path="ask" element={<AskPage />} />
         <Route path="predict" element={<PredictPage />} />
         <Route path="predictions/:runNo" element={<PredictionDetailPage />} />
         <Route path="voyages" element={<VoyageListPage />} />

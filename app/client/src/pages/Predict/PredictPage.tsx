@@ -50,7 +50,7 @@ export default function PredictPage() {
   const { data: me } = useMe(), { data: ports } = usePorts(), { data: inv } = useInventory(), { data: berths } = useBerths(), zh = usePortName();
   const [sp] = useSearchParams(), today = me ? dayNum(me.today) : 0;
   const [f, setF] = useState<Form | null>(null), [out, setOut] = useState<R>(null), [busy, setBusy] = useState(false), [err, setErr] = useState('');
-  const [buffer] = useState(3), ran = useRef(false);
+  const [buffer] = useState(Number(sp.get('buf') ?? 3) || 3), ran = useRef(false);
   const set = (p: Partial<Form>) => setF((x) => (x ? { ...x, ...p } : x));
 
   useEffect(() => {
