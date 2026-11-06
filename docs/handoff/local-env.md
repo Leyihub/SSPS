@@ -203,6 +203,14 @@
 
 **未验证**：妙搭 AppContainer 内的表现；真实网关传来的角色是 ID 还是名称；其他角色（业务员、部门主管、物流管理员）看到的页面差异（只用了 `ssps_admin`）；航次列表 / 航次详情 / 工作台有航次数据时的样子（开发库航次表是空的，要等阶段 8 迁移）；手机宽度；写入类按钮（采纳方案、录入航次等）在页面上的点击（后端写入已在阶段 3、4 验证）；视觉上与原型的逐像素对照（我看了截图，没有做对照工具）。
 
+## 5J. 首次发布（2026-11-06，Leyinet 明确授权「推送、设置并发布」）
+
+- **推送**：`sprint/default` 推到妙搭远端，提交 `0c9c784`；推送前七项质量门全绿（测试 205 项 199 通过、0 失败、6 跳过）。开发库与线上库表结构 `+db-env-diff` 无差异。
+- **线上环境变量**（之前是空的）：用 `+env-set --environment online` 设了 5 个：`SSPS_STORE=real`、`LARK_APP_ID`、`LARK_APP_SECRET`、`BITABLE_APP_TOKEN`、`BITABLE_TABLE_IDS`；值取自本机 `.env.local`，通过临时文件传入、全程未打印、临时文件已删；`+env-list` 回读 5 个键齐全。其余变量由平台注入。`DRIVE_FOLDER_TOKEN_BERTH_PLAN` 未设（阶段 5 再设）。**Leyinet 确认过本机的 App Secret 是重置后的新值。**
+- **发布**：`+release-create`（发布理由：SSPS 智慧发船预测系统首次发布：真实飞书多维表格联调通过，导入、预测、采纳方案、前端逐页验证完成），release_id `7705064424877804548`，异步，约 1 分钟后 `+release-get` 返回 `finished`，无错误日志，部署的提交是 `0c9c784`。线上地址 `https://qcn9bmywvny1.feishuapp.com/app/app_17heqwc44fd`（需要飞书登录）。
+- **部署脚本的 bug**：`miaoda-deploy.ps1 -Mode release` 里的函数 `Cli` 撞上 PowerShell 自带别名 `cli`（= Clear-Item），报 "Cannot find path ...apps"，release 没有创建。已把函数改名为 `LarkCli`（语法检查通过）；本次是直接用 `lark-cli apps +release-create` 发的。
+- **还没验证（线上）**：我没法替你登录飞书，所以**没有打开线上页面验证**；发布后 20 分钟内平台日志里也没有请求。待验证：能否打开、角色（请求头里是 ID 还是名称）、右上角显示姓名还是 ID、日历和库存页的速度、线上没有靠船计划和库存（需要在页面上导入）。
+
 ## 6. 尚未验证（留给阶段 1 后续步骤）
 
 - `AuthorizationSDK` 是否可用、`members.list` 返回形状（手册 §8 第 2 条）：要先建角色并分配成员。

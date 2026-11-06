@@ -81,7 +81,7 @@ function Invoke-Git([string[]]$Argv) {
     return Invoke-Tool -Exe $script:GitExe -Argv $Argv -WorkDir $script:RepoPath
 }
 
-function Cli([string[]]$Argv) {
+function LarkCli([string[]]$Argv) {
     return Invoke-Tool -Exe $script:CliExe -Argv $Argv -WorkDir $script:RepoPath
 }
 
@@ -301,7 +301,7 @@ function Invoke-Push {
     $push = Invoke-Git @('push', 'origin', $Branch)
     if (($push.Code -ne 0) -and (Is-AuthError $push.Out)) {
         Say 'git auth failed, refreshing platform credential once'
-        $ref = Cli @('apps', '+git-credential-init', '--app-id', $script:AppId, '--as', 'user')
+        $ref = LarkCli @('apps', '+git-credential-init', '--app-id', $script:AppId, '--as', 'user')
         if ($ref.Code -ne 0) { Die "credential refresh failed:`n$(Tail $ref.Out 12)" }
         $push = Invoke-Git @('push', 'origin', $Branch)
     }
@@ -315,7 +315,7 @@ function Invoke-Release {
     }
     Invoke-Push
 
-    $r = Cli @('apps', '+release-create', '--as', 'user', '--app-id', $script:AppId,
+    $r = LarkCli @('apps', '+release-create', '--as', 'user', '--app-id', $script:AppId,
                '--branch', $Branch, '--apply-reason', $Reason)
     if ($r.Code -ne 0) { Die "release-create failed:`n$(Tail $r.Out 20)" }
 
@@ -331,7 +331,7 @@ function Invoke-Release {
     $deadline = (Get-Date).AddSeconds(300)
     while ((Get-Date) -lt $deadline) {
         Start-Sleep -Seconds 20
-        $q = Cli @('apps', '+release-get', '--as', 'user', '--app-id', $script:AppId, '--release-id', $rid)
+        $q = LarkCli @('apps', '+release-get', '--as', 'user', '--app-id', $script:AppId, '--release-id', $rid)
         $t = $q.Out
         if ($t -match '"status"\s*:\s*"finished"') { Say 'release finished'; return }
         if ($t -match '"status"\s*:\s*"failed"') { Die "release failed:`n$(Tail $t 20)" }
