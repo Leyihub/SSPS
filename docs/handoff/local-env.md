@@ -81,6 +81,14 @@
 - 注意：用管理员 PowerShell（路径 `C:\Windows\system32`）跑 lark-cli 会报 `dpop_key_missing`——登录密钥存在普通账号的密钥库里，管理员窗口读不到。请在普通窗口运行。
 - 未验证：角色是否 dev / 线上共用（`+role-*` 命令没有环境参数，推测共用，分配成员后用线上身份验证）。
 
+## 5D. 阶段 3 前置检查：多维表格连通（2026-11-06）——**不通，阻塞写入**
+
+- 本机起 real 模式后端，`/api/health`（管理员）：应用数据库正常，镜像表 m_port 10 / m_berth 23 / m_route_rule 10 正常，m_voyage 0 行（提醒），`DRIVE_FOLDER_TOKEN_BERTH_PLAN` 未配置（提醒）。注意健康检查对飞书凭证只说「环境变量已配置（有效性未检测）」，并没有真连。
+- 直接用 `.env.local` 的应用凭证调飞书 OpenAPI（只读）：**取 tenant_access_token 成功**（App ID / Secret 有效）；但 `GET bitable/v1/apps/{BITABLE_APP_TOKEN}` 和 `.../tables` 都返回 **91402 NOTEXIST**；把它当知识库节点查返回 131005 not found。令牌是 27 位、无空格引号，形状正常。
+- 可能原因（按可能性）：① 该飞书应用没有被加为这个 Base 的「文档应用」（可管理）；② 填的令牌不是 Base 的 app_token（比如抄成了别的链接）；③ Base 建在别的租户。需要 Leyinet 核对（见 base-build-agent-prompt §1 第 2、3 步）。
+- 没有往多维表格写任何东西。读接口走镜像库不受影响；**所有写接口（新建航次、修订 ETA 等）在真实模式下会因此失败或进入重试队列**。
+- 经验：不要只看 health 的「通过」，凭证和 Base 要用探测脚本真连一次。后续可把「真连一次 Base」加进 health 检查（待办）。
+
 ## 6. 尚未验证（留给阶段 1 后续步骤）
 
 - `AuthorizationSDK` 是否可用、`members.list` 返回形状（手册 §8 第 2 条）：要先建角色并分配成员。
