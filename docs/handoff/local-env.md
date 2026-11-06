@@ -72,6 +72,12 @@
 - 质量门：`npm test` 177 项（171 通过、0 失败、6 跳过）、类型检查、eslint、冒烟全绿。**代码改动还没提交、没推送。**
 - 页面路由在本机返回 500，是因为 `dist/client/index.html` 还没构建（前端未构建），与守卫无关（守卫拦的话是 403）；阶段 7 处理。
 
+## 5C. 平台角色已建（2026-11-06）
+
+- 在 `app_17heqwc44fd` 用 `lark-cli apps +role-create --role-id ... --name ...` 建了 4 个角色：`ssps_salesman`（业务员）、`ssps_manager`（部门主管）、`ssps_logistics`（物流管理员）、`ssps_admin`（系统管理员）。`role_id` 直接用代码约定的 ID，名称用中文；`+role-list` 回读 total=4。**还没分配任何成员**。
+- Leyinet 确认：业务线不建角色，靠飞书组织架构部门识别；物资备件的业务员属于商务海运部。
+- 未验证：角色是否 dev / 线上共用（`+role-*` 命令没有环境参数，推测共用，分配成员后用线上身份验证）。
+
 ## 6. 尚未验证（留给阶段 1 后续步骤）
 
 - `AuthorizationSDK` 是否可用、`members.list` 返回形状（手册 §8 第 2 条）：要先建角色并分配成员。
