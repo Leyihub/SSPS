@@ -51,10 +51,31 @@
 - 镜像同步：8 个 streaming 任务（T01–T08 → `m_port/m_berth/m_vessel/m_voyage/m_cargo/m_bulk_settle/m_sales_ext/m_route_rule`）状态全部 `active`。
 - 平台角色：`+role-list` 返回 0 个，**`ssps_*` 四个角色还没建**。
 
+## 5A. 阶段 1 进展（2026-11-06，已在真实平台验证）
+
+1. **应用库拆成了开发库 + 线上库**（Leyinet 授权，不可逆，`--sync-data`）。原因：单库应用没有 dev 分支，`+env-pull` 报「Multi-environment database is not initialized」，本机拿不到数据库连接。拆分后两库的 `m_port` 10 / `m_berth` 23 / `m_route_rule` 10 / `m_vessel` 0 / `m_voyage` 0 行一致（`+db-table-list` 的 estimated_row_count 是旧估算值，会显示 0，要用 `SELECT count(*)` 核对）。之后改表结构必须先在 dev 库做，再 `+db-env-migrate` 到线上。
+2. **开发库里的镜像表是拆分那一刻的快照**，现有 8 个同步任务只写线上库；要在 dev 看到实时数据需另建 dev 环境的同步任务（未做）。
+3. `+env-pull` 是**合并写入** `.env.local`：不会冲掉手填的键，会新增 `SUDA_DATABASE_URL`、`SUDA_WEBUSER`、`CLIENT_BASE_PATH`、`FORCE_*`、`MIAODA_*` 等。`SUDA_DATABASE_URL` 会过期（本次的到期时间约 11 月 10 日），过期后重跑 `+env-pull`。
+4. **本机能拿到平台注入的数据库连接**（手册 §8 第 4 条，`DRIZZLE_DATABASE` 部分：已验证）。`AuthorizationSDK` 部分未验证（我的账号没有角色，在读成员列表之前就被拒了）。
+5. **接口路径要带前缀**：平台把所有路由挂在 `CLIENT_BASE_PATH`（本应用是 `/app/app_17heqwc44fd`）下，即 `/app/app_17heqwc44fd/api/...`；另有 CSRF 双提交校验（cookie `suda-csrf-token` = 请求头 `x-suda-csrf-token`）；身份来自网关注入的请求头 `x-larkgw-suda-webuser`（URL 编码的 JSON，字段 `user_id/tenant_id/app_id/env/roles/user_type/user_name`，本机由 Vite 开发代理按 `SUDA_WEBUSER` 注入）。`roles` 是数组，未分配时为 `[]`（手册 §8 第 1 条：数组形状已确认，元素是 bizID 还是角色名**仍待建角色后确认**）。
+6. **`npm run dev` 会改仓库文件**：启动前会联网执行 `miaoda app sync`、`action-plugin init`、`skills sync`，可能改写 `package.json` 脚本。阶段 1 只验证后端，用的是临时启动器（加载 `.env.local` 后直接 `nest start`），没有跑官方 dev 脚本。起前端联调（阶段 7）之前要先想好怎么处理这些同步。
+7. **`SSPS_STORE=real` 后端读通**（对开发库，账号无角色）：`/ports` 10 条、`/berths` 23 条、`/route-rules` 10 条、`/vessels` 0 条，与 Base 一致；`/capacity/calendar` 30 天**全部是 `nodata`**（无一天带数值，不会显示成 0%），5 万吨档泊位池 11 / 共 23，与锁定规则一致。
+8. **发现一处与设计不一致**（详见 open-questions）：没有任何 `ssps_*` 角色的账号，`/voyages`、`/admin/*`、`/health`、`/me` 正确返回 403，但 `/ports /berths /vessels /route-rules`、`/capacity/calendar`、`/data-issues`、`/berth-plans/batches`、`/inventory`、`/inventory/batches` 返回 200。现在这些表是空的所以暂无泄露，导入真实库存和靠船计划后就会暴露。
+
+## 5B. 角色漏洞修复（2026-11-06，Leyinet 确认先修）
+
+- 新增 `server/common/guards/ssps-role.guard.ts`，在 `PortsModule` 注册为全局守卫：控制器路径以 `api` 开头的接口一律先过身份目录（没登录 401，没有 SSPS 角色 403）；页面路由和平台内部路由不受影响。新增接口默认就被保护，不靠每个控制器自己记得。
+- 测试：`server/test/role-guard.spec.ts`（守卫逻辑、控制器路径检查，3 项）；`scripts/smoke.cjs` 新增遍历全部 51 个接口的检查（真起 Nest）。**tsx 不生成装饰器元数据，所以真起 Nest 的测试只能放在冒烟里，不能放在 `npm test` 里。**
+- 反向验证：关掉守卫，28 个接口漏网；打开后 51 个接口「没角色」全 403、「没登录」全 401。
+- 真实环境复测（开发库，无角色账号）：之前漏网的 `ports/berths/vessels/route-rules`、`capacity/calendar`、`capacity/day`、`data-issues`、`berth-plans/batches`、`inventory`、`inventory/batches` 全部 403。
+- 顺带修了一个与本改动无关、但今天零点后才暴露的测试：`issue-scan.spec.ts` 里「ETA 超期未更新」的真实仓储版把「建航次那天」写死成 2026-11-05（真实仓储取行创建时间 = 运行当天），换一天跑就红。已改成从航次实际日期往后推。**以后写测试不要依赖系统当天日期。**
+- 质量门：`npm test` 177 项（171 通过、0 失败、6 跳过）、类型检查、eslint、冒烟全绿。**代码改动还没提交、没推送。**
+- 页面路由在本机返回 500，是因为 `dist/client/index.html` 还没构建（前端未构建），与守卫无关（守卫拦的话是 403）；阶段 7 处理。
+
 ## 6. 尚未验证（留给阶段 1 后续步骤）
 
-- 本机 `npm run dev` 下能否拿到平台注入的 `DRIZZLE_DATABASE`、`AuthorizationSDK`（手册 §8 第 4 条）。需要先有 `.env.local`（`+env-pull`），本次没做。
-- real 模式启动、读接口行数与 Base 对照、日历全灰色斜线。
+- `AuthorizationSDK` 是否可用、`members.list` 返回形状（手册 §8 第 2 条）：要先建角色并分配成员。
+- 前端页面在妙搭 AppContainer 里的表现（阶段 7）。
 - 同步延迟（约 6 秒）和同步内容与 Base 是否逐行一致（只核对了任务状态和估算行数）。
 - 建 4 个平台角色并分配成员（阶段 2）。
 
