@@ -76,6 +76,9 @@
 
 - 在 `app_17heqwc44fd` 用 `lark-cli apps +role-create --role-id ... --name ...` 建了 4 个角色：`ssps_salesman`（业务员）、`ssps_manager`（部门主管）、`ssps_logistics`（物流管理员）、`ssps_admin`（系统管理员）。`role_id` 直接用代码约定的 ID，名称用中文；`+role-list` 回读 total=4。**还没分配任何成员**。
 - Leyinet 确认：业务线不建角色，靠飞书组织架构部门识别；物资备件的业务员属于商务海运部。
+- Leyinet 的账号已加入 `ssps_admin`（`+role-member-list` 回读确认）。**异常：`+role-match-list` 显示该账号同时命中 `ssps_salesman`，但 `ssps_salesman` 的成员列表是空的**，原因未明（可能是应用所有者/创建者的隐含命中，也可能是任意账号都会命中），需要用另一个无角色账号对照。若是任意账号都命中，「没有角色就 403」的保护会失效，必须查清。
+- 本机模拟验证（连开发库，请求头里手填 roles）：`["ssps_admin"]` → `/me` 200，角色「系统管理员」，`/ports` `/voyages` `/health` 均 200；`[]` → 403「没有 SSPS 角色」；`["系统管理员"]`（中文名）→ 403，说明代码只认角色 ID；`["ssps_salesman"]` → 403「无法确定所属部门」（因为该角色没有成员，符合预期）。**网关真实传的是 ID 还是中文名仍未确认**——本机 `SUDA_WEBUSER` 里的 roles 是拉取时的静态样本（分配后重新 `+env-pull` 仍是 `[]`），只有线上请求才能看到真实值。
+- 注意：用管理员 PowerShell（路径 `C:\Windows\system32`）跑 lark-cli 会报 `dpop_key_missing`——登录密钥存在普通账号的密钥库里，管理员窗口读不到。请在普通窗口运行。
 - 未验证：角色是否 dev / 线上共用（`+role-*` 命令没有环境参数，推测共用，分配成员后用线上身份验证）。
 
 ## 6. 尚未验证（留给阶段 1 后续步骤）
