@@ -85,7 +85,8 @@
 
 - 本机起 real 模式后端，`/api/health`（管理员）：应用数据库正常，镜像表 m_port 10 / m_berth 23 / m_route_rule 10 正常，m_voyage 0 行（提醒），`DRIVE_FOLDER_TOKEN_BERTH_PLAN` 未配置（提醒）。注意健康检查对飞书凭证只说「环境变量已配置（有效性未检测）」，并没有真连。
 - 直接用 `.env.local` 的应用凭证调飞书 OpenAPI（只读）：**取 tenant_access_token 成功**（App ID / Secret 有效）；但 `GET bitable/v1/apps/{BITABLE_APP_TOKEN}` 和 `.../tables` 都返回 **91402 NOTEXIST**；把它当知识库节点查返回 131005 not found。令牌是 27 位、无空格引号，形状正常。
-- 可能原因（按可能性）：① 该飞书应用没有被加为这个 Base 的「文档应用」（可管理）；② 填的令牌不是 Base 的 app_token（比如抄成了别的链接）；③ Base 建在别的租户。需要 Leyinet 核对（见 base-build-agent-prompt §1 第 2、3 步）。
+- **Leyinet 核对后（同日）**：Base 地址是 `/base/` 格式，令牌与 `.env.local` 逐字一致；URL 里的表 `tbl5POTzcu79CO66` 就是 T04；文档应用里「德信智慧海运」（= `cli_aa2584bb95f89bef`，与 `.env.local` 的 LARK_APP_ID 一致）**已授予「可管理」权限**。所以「没加应用 / 令牌错」都被排除，原来的猜测作废。仍返回 NOTEXIST 的原因未明；线索：Base 带 **L3 密级标签**，且挂在「刘浩阳」名下目录，2026-11-05 21:36 有过修改。排查提示词见 `docs/handoff/base-connect-diagnose-prompt.md`（交给另一个 AI 只读排查）。
+- 原先列的可能原因（已排除 ① 没加应用 ② 令牌抄错）：③ Base 建在别的租户（待排除）。
 - 没有往多维表格写任何东西。读接口走镜像库不受影响；**所有写接口（新建航次、修订 ETA 等）在真实模式下会因此失败或进入重试队列**。
 - 经验：不要只看 health 的「通过」，凭证和 Base 要用探测脚本真连一次。后续可把「真连一次 Base」加进 health 检查（待办）。
 
