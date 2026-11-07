@@ -160,7 +160,7 @@
 | `voyage` | jsonb | 航次 | 双向关联 | 关联 T04 航次主表 |
 | `contract_no` | text | 合同号 | 文本 | 合同编号 |
 | `ea_purchase_order_no` | text | EA 采购订单号 | 文本 | 订单号 |
-| `material_category` | text | 物资大类 | 单选 | 原料/燃料/辅料/成品/工程辅料 |
+| `material_category` | text | 物资大类 | 单选 | 原料/燃料/辅料/成品/工程辅料/备件 |
 | `goods_name` | text | 货物名称 | 文本 | 品名 |
 | `material_alias` | text | 物资别名 | 文本 | 别名 |
 | `user_unit` | text | 使用单位 | 单选 | DSI/DCI/DXI/金瑞 |
