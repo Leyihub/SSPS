@@ -250,6 +250,8 @@
 - **人员映射**：提示词在 `docs/handoff/people-mapping-agent-prompt.md`，交本机 AI 用 `lark-cli contact +search-user` 按 100 个姓名查飞书 open_id（Leyinet 已开通讯录权限）；多个候选、未找到、疑似非人名的会列出来等确认。**这一步没完成之前，迁移的正式写入不能做**（dry-run 不受影响）。
 - 数据文件（含真实写法和姓名，只在本机 scratchpad，不进仓库）：`迁移-剩余未匹配港口写法-本机已填.csv`、`ports-expansion-2.json`、`ports-v4.json`、`ignore-ports-v2.json`、`迁移-人员映射模板.csv`，已交 Leyinet。
 
+**2026-11-07：迁移写入计划（只读，没写飞书）**。详见 `docs/handoff/migration-write-plan.md`。平台仓库新增 `scripts/migrate-write-plan.ts` + `server/importers/migrate-records.ts`（提交 acec0e6，**未推送**），把清洗结果拼成 T03 / T04 / T05 / T07 的待写记录并统计：T01 新增 178 + 别名更新 78 组、T03 2129、T04 3410、T05 4304、T07 98，另有 T06（第二阶段）约 3147，合计约 13344 条 / 31 批，数字与 dry-run 对得上。计划中发现并修了拉博塔泊位写法没识别（「LABOTA L7」「LABOTA N18」「N4」等，1938 → 1435 个航次的泊位被当池外）。测试 217 项（211 通过、0 失败、6 跳过），类型检查通过。**写入前必须有人员映射和你的授权**；要你决定的 6 件事（必填补不齐的历史数据、物资备件船的物资大类、T03 的 MMSI 必填、船型、新增选项值验证、人员映射）见该文档第 5 节。
+
 ## 6. 尚未验证（留给阶段 1 后续步骤）
 
 - `AuthorizationSDK` 是否可用、`members.list` 返回形状（手册 §8 第 2 条）：要先建角色并分配成员。
