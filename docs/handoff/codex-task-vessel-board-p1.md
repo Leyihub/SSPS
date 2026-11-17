@@ -19,7 +19,7 @@
 - 不新增业务字段、不新增船舶状态（`docs/schema/` 里没有的一律不加）。字段只用规格里已有的。
 - 规则引擎输出（`server/engine/`）和预测相关代码一个字不改。CMR、无数据灰色斜线等业务规则不碰。
 - 金额字段隔离不能退步：没有读权限的人，接口响应里**不能出现**该字段（不是置空、不是前端隐藏）。变更日志里金额只记「已修改」。
-- 越权写入返回 403，**不静默丢弃**字段；校验不通过返回 400。
+- 越权写入返回 403，**不静默丢弃**字段；校验不通过返回 **422**（本代码库一贯用 422 表示校验失败，`invalid()` 不要改，已有测试和客户端依赖它；DTO 层的入参校验仍是 400）。
 - 代码风格：中文注释，沿用现有 NestJS + Drizzle 模式；内存适配器和 Drizzle 适配器行为必须一致（参考 `parity.spec.ts`、`drizzle-voyage.spec.ts`）。
 
 ## 2. 本期要做的事（后端，按顺序）
@@ -51,7 +51,7 @@
 
 1. `voyage.service.ts` 里 A10（改基础字段）、A11（登记节点）、A12（修订 ETA）、A13（货物明细）、A14（卸船结算）、A15（销售扩展）、A16（异常标记）的鉴权，全部改为「字段 → 字段组 → `canWriteGroup`」。A14 分成 G07 / G08 / G09 三组分别鉴权：一次请求里混着有权和无权的字段，整体 403。
 2. 读路径：航次详情、列表、变更日志、导出、错误信息里，G08、G09 字段按 `canReadGroup` 裁剪，**对 G08 和 G09 分别判断**（以前是一个 `canSeeMoney`）。
-3. 新增 **A36** `PATCH /api/voyages/:id/fields`：请求体 `{ changes: [{ key, value }], etaBasis? }`。流程：（a）逐项鉴权 → 403；（b）逐项取值校验、整体时间先后校验（复用 `validate.ts`）、改了 ETA 必须有 `etaBasis` → 400；（c）全部通过后，按字段组分发到现有的写入方法，复用写队列、状态推导、变更日志、`x-idempotency-key`；（d）任何一项不通过则**一项都不写**。响应：更新后的航次详情 + `{ before, after }` 状态 + `relay` 待办。
+3. 新增 **A36** `PATCH /api/voyages/:id/fields`：请求体 `{ changes: [{ key, value }], etaBasis? }`。流程：（a）逐项鉴权 → 403；（b）逐项取值校验、整体时间先后校验（复用 `validate.ts`）、改了 ETA 必须有 `etaBasis` → 422；（c）全部通过后，按字段组分发到现有的写入方法，复用写队列、状态推导、变更日志、`x-idempotency-key`；（d）任何一项不通过则**一项都不写**。响应：更新后的航次详情 + `{ before, after }` 状态 + `relay` 待办。
 4. 现有的 A10–A16 的**对外接口形状不变**。
 
 ### 2.5 授权数据：D14 与 A34，字段目录 A31
@@ -59,7 +59,7 @@
 1. 在 `db/` 下新增 `005-vessel-board.sql`：D13 `view_profile`、D14 `field_grant`、D15 `ops_log` 三张表，字段见 `docs-spec/D-app-db.md`；**完全仿照 `001-ssps-core.sql` 的写法**（4 个审计列、RLS、策略）并带上 `002` 的「去掉 anon 读」处理；只生成文件，不执行。D13、D15 本期只建表，不写代码。
 2. 用 `npm run gen:db-schema:local` 重新生成 `server/database/schema.ts`；如果这个脚本跑不通，手写与现有风格一致的 Drizzle 定义，并在最终报告里说明。
 3. 新增端口 `server/ports/field-grant-store.port.ts`，内存适配器和 Drizzle 适配器各一份：读当前生效的授权（没有记录时用 `DEFAULT_GRANTS`）、写一次修改（旧记录置失效、新记录生效，不删除）。仿照 `master-store.port.ts` 的注册方式。授权结果给 `canWriteGroup` 用：服务层取到授权后传入。
-4. **A34** `GET /api/admin/field-grants`（返回字段组、岗位、当前格子、默认值、不可勾的格子）与 `PUT /api/admin/field-grants`（body `{ changes: [{ group, post, scope }] }`，仅系统管理员，经 `validateGrantChange` 校验，违反返回 400 并指明哪一项，修改人和时间留痕）。
+4. **A34** `GET /api/admin/field-grants`（返回字段组、岗位、当前格子、默认值、不可勾的格子）与 `PUT /api/admin/field-grants`（body `{ changes: [{ group, post, scope }] }`，仅系统管理员，经 `validateGrantChange` 校验，违反返回 422 并指明哪一项，修改人和时间留痕）。
 5. **A31** `GET /api/ui/fields?voyageId=`：返回已按当前岗位裁剪的字段目录，每个字段 `{ key, label, group, groupName, type, source, write }`；没有读权限的组的字段**不出现在响应里**；带 `voyageId` 时 `write` 是对这条航次的实际可写性，不带则按岗位的一般可写性（范围含 `own` / `dept` 的算 `true`）。
 
 ### 2.6 权限矩阵文档
@@ -71,7 +71,7 @@
 1. `field-groups.spec.ts`：目录完整性；实际节点按本港侧分组（装 / 卸各一）。
 2. `grants.spec.ts`：**8 个岗位 × 13 个字段组 × {本人 / 本部门他人 / 别的部门} × {大宗 / 成品}** 的写权限矩阵，逐格断言（可用表驱动）；G12 永远否；历史只读永远否；G07–G09 未抵卸港为否；G08、G09 读名单；`validateGrantChange` 的每条底线至少一个违反用例。
 3. `relay.spec.ts`：规格第 6 节两张表的每一行至少一个用例（含「轮到我 / 轮到别人」）。
-4. `voyage-service.spec.ts` 里补：仓储业务员能登记**他人**大宗航次的卸港靠泊、不能改合同号；商务海运部业务员能登记**自己**成品船的装港靠泊、仓储物流部**不能**；仓储能写 G08 不能写 G09；大宗业务员能写 G09 不能写 G08；A36 混合有权和无权字段时整行不写（读回确认一项都没变）；A36 改 ETA 不带依据返回 400；越权字段返回 403 而不是被忽略。
+4. `voyage-service.spec.ts` 里补：仓储业务员能登记**他人**大宗航次的卸港靠泊、不能改合同号；商务海运部业务员能登记**自己**成品船的装港靠泊、仓储物流部**不能**；仓储能写 G08 不能写 G09；大宗业务员能写 G09 不能写 G08；A36 混合有权和无权字段时整行不写（读回确认一项都没变）；A36 改 ETA 不带依据返回 422；越权字段返回 403 而不是被忽略。
 5. 金额隔离测试：商务海运部业务员读航次详情，响应 JSON 里**不存在** G08、G09 的任何字段名；仓储业务员能看到 G08、看不到 G09；变更日志里金额只记「已修改」。
 6. 授权存储：内存与 Drizzle（PGlite）两套适配器各一组用例（无记录时返回默认值；写入后读回；旧记录置失效且不删除）。
 7. A31、A34 的控制器级用例，并确认没有 SSPS 角色的用户仍然 401 / 403（`role-guard.spec.ts` 的遍历测试要覆盖新增的路由）。
@@ -80,6 +80,8 @@
 已有测试中编码了旧口径（例如「仓储物流部不能改别人航次的时间节点」「费用结算整组只有大宗采购部可见」）的断言，**只在规格 `field-groups.md` 明确改变了的地方**修改，并在最终报告里逐条列出「哪个测试、原来断言什么、现在断言什么、对应规格哪一条」。除此之外不要为了让测试通过而改断言。
 
 ## 4. 验收（全部必须通过，贴出真实输出的最后几行）
+
+> Windows 提示：`npm test` 和 `npm run smoke` 在 cmd 下不能直接用（带引号的通配符、`NODE_ENV=` 前缀都不认）。改用：`node node_modules/tsx/dist/cli.mjs --tsconfig tsconfig.node.json --test --test-concurrency=3 --test-reporter=spec server/test/*.spec.ts`（并发别开太大，会把 esbuild 内存撑爆，出现大量「文件加载失败」的假象），冒烟用 bash 手动 `NODE_ENV=production npx nest build` 再 `node scripts/smoke.cjs`。主线基线里「缺 MMSI」一条本来就是红的。
 
 ```
 npm test

@@ -86,7 +86,7 @@
 | 真实身份目录 | `app/server/adapters/platform/` | 已写好并用假平台 SDK 测试：平台角色 `ssps_*` → 业务角色，飞书部门 → 部门，没角色的用户 403；权限矩阵由代码生成（`docs/handoff/permission-matrix.md`）。**没在真实平台验证过，需本机核对（提示词 9）** |
 | 迁移 dry-run（读 Excel，只出统计和待确认清单） | `server/importers/migrate-plan.ts`、`scripts/migrate-dryrun.ts` | 已写好并用虚构样本测试；待你在本机用真实 Excel 跑（提示词 7）。正式写入、港口信息表→T01、靠船计划首批次、人员映射**还没做** |
 | 安全与性能检查 | `docs/handoff/{security-review,performance-notes}.md` | 云端部分已做（堆栈不外泄、CSV 注入、压缩炸弹上限、航次批量读）；真实环境验证待做 |
-| 船舶动态协作台（P04 重构，2026-11-16 确认） | 规格 `docs/schema/field-groups.md`；方案与分期 `docs/handoff/vessel-dynamics-rebuild-plan.md`；原型 `prototype/P04-vessel-board.html` | **计划中，代码未开始**。原型 2026-11-17 评审通过，规格已同步。待做：字段目录与字段组鉴权（A31、A34、D14，替换按航次归属的鉴权并重新生成权限矩阵）、视图配置（A32、D13）、协作台取数与前端（A33）、作业日志（A35、D15）、预警栏；分期见方案第 11 节 |
+| 船舶动态协作台（P04 重构，2026-11-16 确认；第一期后端 2026-11-17 完成于平台仓库分支 `feat/vessel-board`，提交 `dcaf054`，未合并、未发布） | 规格 `docs/schema/field-groups.md`；方案与分期 `docs/handoff/vessel-dynamics-rebuild-plan.md`；原型 `prototype/P04-vessel-board.html` | **计划中，代码未开始**。原型 2026-11-17 评审通过，规格已同步。待做：字段目录与字段组鉴权（A31、A34、D14，替换按航次归属的鉴权并重新生成权限矩阵）、视图配置（A32、D13）、协作台取数与前端（A33）、作业日志（A35、D15）、预警栏；分期见方案第 11 节 |
 | 前端 React 重写（P01–P11） | `app/client/src/{ssps,pages,components}` | **11 个页面已全部用 React 重写**（P01 工作台、P02 预测、P03 预测详情、P04 航次列表、P05 航次详情、P06 容量日历、P07 靠船计划、P08 主数据、P09 数据质量、P10 系统管理、P11 智能提问），全部接后端 `/api/*`，在云端用演示服务 + Playwright 截图验证（截图 `prototype/screenshots/react-P*.png`）。P10 的兼容表与迁移页签只是说明，对应后端（A26、A27）未开发；云空间拉取（A18）也未开发。没有连过真实飞书和数据库 |
 
 冒烟（真起 Nest，走完整条 HTTP 主线）：`cd app && npm run smoke`；运行测试：`cd app && npm test`（168 个）；类型检查：`npm run type:check:server`；代码检查：`npx eslint server --quiet`。
