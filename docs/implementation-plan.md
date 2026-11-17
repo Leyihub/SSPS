@@ -417,6 +417,7 @@ m\_port、m\_berth、m\_vessel、m\_voyage、m\_cargo、m\_bulk\_settle、m\_sal
 | A32 | GET / PUT / DELETE | /api/ui/views | 视图配置读取与保存（D13）；部门模板、岗位模板仅系统管理员可写（计划中） | 全 / 系 |
 | A33 | GET | /api/board | 协作台一次取数：按视图的列分页返回航次行、每行的待办、汇总带计数、预警摘要、数据更新时间（计划中） | 全（按字段组读权限裁剪） |
 | A34 | GET / PUT | /api/admin/field-grants | 岗位对字段组的授权（D14）；修改留痕（计划中） | 全可读 / 系可写 |
+| A36 | PATCH | /api/voyages/:id/fields | 协作台一行多项改动一次提交：逐项字段组鉴权与校验，全部通过才写，按字段组分发到 A10–A16、A35（计划中） | 按字段组授权 |
 | A35 | GET / POST / PATCH / DELETE | /api/voyages/:id/ops-logs | 作业日志：装船记录、卸船记录（D15）（计划中） | 全可读 / 仓储物流部业、主可写 |
 
 **2026-11-16 起的修改鉴权口径**：A10–A16 权限列里的「业、主」是按航次归属的旧写法。新口径是每个字段先归到字段组，再按「岗位对字段组的授权」判断，见 `docs/schema/field-groups.md` 第 3、5 节；协作台的行内保存不新增写入接口，按字段组分发到 A10–A16 和 A35，一行的多项改动一次提交。
