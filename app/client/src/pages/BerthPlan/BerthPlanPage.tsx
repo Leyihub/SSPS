@@ -99,9 +99,9 @@ function UploadModal({ open, onClose, onDone }: { open: boolean; onClose: () => 
       ) : (
         <div className="rep">
           <div><span>批次</span><b>{rep.batch.batchNo}</b></div><div><span>文件</span><b>{rep.batch.fileName}</b></div><div><span>总行数</span><b>{s.total}</b></div>
-          <div><span>有效（参与泊位余量）</span><b style={{ color: '#237804' }}>{s.active}</b></div><div><span>标「非德信池」</span><b>{s.offPool}</b></div><div><span>已卸完的历史行</span><b>{s.history}</b></div>
-          <div><span>日期异常</span><b style={{ color: s.anomaly ? '#ad4e00' : undefined }}>{s.anomaly}</b></div><div><span>覆盖到</span><b>{rep.coverTo ?? '—'}</b></div>
-          {s.anomalies?.slice(0, 8).map((a: R) => <div key={a.line}><span>第 {a.line} 行 {a.vessel}</span><b style={{ color: '#ad4e00' }}>{a.text}</b></div>)}
+          <div><span>有效（参与泊位余量）</span><b style={{ color: 'var(--ok)' }}>{s.active}</b></div><div><span>标「非德信池」</span><b>{s.offPool}</b></div><div><span>已卸完的历史行</span><b>{s.history}</b></div>
+          <div><span>日期异常</span><b style={{ color: s.anomaly ? '#a86a2e' : undefined }}>{s.anomaly}</b></div><div><span>覆盖到</span><b>{rep.coverTo ?? '—'}</b></div>
+          {s.anomalies?.slice(0, 8).map((a: R) => <div key={a.line}><span>第 {a.line} 行 {a.vessel}</span><b style={{ color: 'var(--caution)' }}>{a.text}</b></div>)}
         </div>
       )}
     </Modal>

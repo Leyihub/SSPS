@@ -22,9 +22,10 @@
 原型已由 Leyinet 评审确认，业务代码已合并进妙搭平台仓库，现在是**在本机用真实飞书和妙搭联调、补齐剩余功能、迁移、验收、发布**的阶段。原型仍是前端的视觉与交互基线、预测引擎的对照基准，下面几条继续有效：
 
 1. 原型位置：`prototype/`（原生 HTML/CSS/JS，每页一个文件，`prototype/index.html` 导航）；页面范围以 `docs/implementation-plan.md` 第 9 节为准，字段以 `docs/schema/` 为准，状态以 `docs/schema/status-rules.md` 为准，不得自创字段或状态。示例数据（`prototype/mock-data.js`）里的船名、合同号、人名一律虚构，不使用真实业务数据。
-2. 视觉基线：1920px 宽的密集 ERP 布局；导航 #26394f（渐变到 #203348）；主色 #1677ff；卡片圆角 8–12px、轻阴影；参考 SAP Fiori / Oracle TMS 的风格。
-3. 必须体现：无数据灰色斜线、CMR 口径与色阶、≤15 天 / ＞15 天两条路径的不同显示、Plan A/B 卡片、S1 溯源区块、航程「经验值 / 统计值」标签、「低可信」标签。
-4. 前端页面在真实平台联调完一页，用 Playwright 截图交给 Leyinet 看，等反馈后再改（截图可放 `prototype/screenshots/`）。
+2. 视觉基线（2026-11-15 起改为 Design System v2「Warm Paper / Ink」，替换原深蓝 ERP 基线）：暖中性纸感 + 墨黑强调。页面 `#faf9f6`、侧栏 `#f1eee9`、卡片 `#ffffff`、边框 `#e6e2da`、墨黑 `#1a1a18`；语义色仅绿 `#2f7d55` / 砖红 `#c0452f` / 暖橙 `#a86a2e` / 冷灰蓝 `#4a6b8a`。四级字阶：大数字 KPI 32px/500/-.03em、页面标题 22px/600、正文 12–13px、眉标与页脚 10px 全大写 +.14em；卡片一律「眉标行 → 结论+大数字+趋势+微图表 → 细线页脚」三段式；圆角 8px、1px 细边框、几乎无阴影；断点 1440 / 1100 / 900 / 640。参考仪表盘设计语言，完整规范见 `docs/design-system.md`。原型展示态带陶土色画布与圆角应用窗口，React 嵌入态全屏铺满。本次换肤同时落在 `prototype/` 与 `app/client/`（后者在本仓库仍属冻结备份副本，仅为保持两份样式一致），**未触碰** `C:\Users\董金\ssps-miaoda` 主线。
+3. 三皮肤（2026-11-16 起）：视觉基线扩展为三套可切换皮肤——`paper`（上条所述暖纸语言，默认）、`midnight`（夜墨：与暖纸完全同构，仅替换配色，正文对比度 ≥AA）、`legacy`（2025 版深蓝 ERP）。切换入口在每页右上角下拉，值存 `localStorage['ssps-skin']`，机制是切 `<html data-skin>`；全部覆盖集中在 `prototype/assets/skin.css`（与 `app/client/src/ssps/skin.css` 逐字一致），不改 `app.css` / `ssps.css` 的单一源约定。新增皮肤只允许覆盖颜色 / 阴影 / 边框色，几何与断点必须复用暖纸。**CMR 四档色阶、无数据灰色斜线、低可信标签在任何皮肤下都不允许变化**。细则与配色映射见 `docs/design-system.md` 第 8 节。
+4. 必须体现：无数据灰色斜线、CMR 口径与色阶、≤15 天 / ＞15 天两条路径的不同显示、Plan A/B 卡片、S1 溯源区块、航程「经验值 / 统计值」标签、「低可信」标签。
+5. 前端页面在真实平台联调完一页，用 Playwright 截图交给 Leyinet 看，等反馈后再改（截图可放 `prototype/screenshots/`）。
 
 ## 已锁定业务规则（沿用德龙版，不重新讨论）
 

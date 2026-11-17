@@ -34,13 +34,13 @@ export default function WorkbenchPage() {
 
   const sum = (cls: string, n: number, label: string, tip: string, target: string, note: string) => (
     <div className={'card sm ' + cls} onClick={() => go(target)}>
-      <span className="ico"><Icon k={target} col={cls === 'warn' ? '#cf1322' : cls === 'ok' ? '#389e0d' : '#1677ff'} /></span>
+      <span className="ico"><Icon k={target} col={cls === 'warn' ? '#c0452f' : cls === 'ok' ? '#2f7d55' : '#1a1a18'} /></span>
       <div className="tx"><span className="lb">{label}<Info text={tip} /></span><b>{n}</b><div className="nt">{note}</div></div>
     </div>
   );
   const panel = (id: string, title: string, n: number, hot: boolean, tip: string, empty: string, body: ReactNode) => (
     <section className={'card pn' + (hot && n ? ' hotp' : '')} id={id}>
-      <div className="card-h"><h2><span style={{ width: 18, height: 18, display: 'inline-grid' }}><Icon k={id} col={hot && n ? '#cf1322' : '#1677ff'} /></span>{title}<span className={'cnt' + (hot && n ? ' hot' : '')}>{n}</span><Info text={tip} /></h2></div>
+      <div className="card-h"><h2><span style={{ width: 18, height: 18, display: 'inline-grid' }}><Icon k={id} col={hot && n ? '#c0452f' : '#1a1a18'} /></span>{title}<span className={'cnt' + (hot && n ? ' hot' : '')}>{n}</span><Info text={tip} /></h2></div>
       {n ? <ul className="todo">{body}</ul> : <div className="nothing">{empty}</div>}
     </section>
   );
@@ -51,7 +51,7 @@ export default function WorkbenchPage() {
   return (
     <div className="pg-p01">
       <div className="card hello">
-        <div className="ht"><div className="av"><svg width="30" height="30" viewBox="0 0 40 40"><path d="M6 26h28l-4 7H10z" fill="#1677ff" /><path d="M11 25V15h14l4 10z" fill="#69b1ff" /><rect x="14" y="9" width="7" height="6" rx="1" fill="#0958d9" /></svg></div>
+        <div className="ht"><div className="av"><svg width="30" height="30" viewBox="0 0 40 40"><path d="M6 26h28l-4 7H10z" fill="#1a1a18" /><path d="M11 25V15h14l4 10z" fill="#c9c5bd" /><rect x="14" y="9" width="7" height="6" rx="1" fill="#35342f" /></svg></div>
           <div><h1>你好，{me.name}</h1><p>{me.dept ? me.dept + ' · ' : ''}{me.role} · 今天 {mdCn(me.today)} {wk(me.today)}</p></div></div>
         <div className="go"><Link className="btn primary" to="/ask">智能提问</Link><Link className="btn" to="/voyages">全部航次</Link></div>
       </div>

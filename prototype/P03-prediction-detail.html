@@ -12,18 +12,18 @@
 .hd{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:12px;flex-wrap:wrap}
 .hd h1{margin:0;font-size:20px;white-space:nowrap}
 .hd .ctx{display:flex;flex-wrap:wrap;gap:6px 8px;margin-top:6px}
-.tabs{display:flex;border:1px solid #d3d9e1;border-radius:8px;overflow:hidden;background:#fff}
-.tabs button{border:0;background:#fff;padding:7px 18px;cursor:pointer;border-right:1px solid #d3d9e1;color:var(--muted);white-space:nowrap}
+.tabs{display:flex;border:1px solid var(--line-strong);border-radius:8px;overflow:hidden;background:var(--surface)}
+.tabs button{border:0;background:var(--surface);padding:7px 18px;cursor:pointer;border-right:1px solid var(--line-strong);color:var(--muted);white-space:nowrap}
 .tabs button:last-child{border-right:0}
-.tabs button.on{background:var(--primary);color:#fff}
-.tabs button:disabled{color:#c0c8d2;cursor:not-allowed;background:#fafbfc}
+.tabs button.on{background:var(--primary);color:var(--on-ink)}
+.tabs button:disabled{color:var(--faint);cursor:not-allowed;background:var(--surface-2)}
 .work{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:16px;align-items:start}
 .side{position:sticky;top:64px}
 .stack > section{margin-bottom:16px}
 /* 灰色提示 */
-.i{display:inline-grid;place-items:center;width:15px;height:15px;border-radius:50%;background:#c9d0d9;color:#fff;font:600 10px/1 Georgia,serif;font-style:italic;cursor:help;vertical-align:1px;margin-left:5px;flex:none;user-select:none}
-.i:hover{background:#8a97a8}
-#tipbox{position:fixed;z-index:400;background:#1f2d3d;color:#fff;border-radius:8px;padding:9px 12px;font-size:12.5px;line-height:1.7;max-width:340px;box-shadow:0 8px 24px rgba(16,24,40,.3);display:none;pointer-events:none}
+.i{display:inline-grid;place-items:center;width:15px;height:15px;border-radius:50%;background:var(--line-strong);color:var(--on-ink);font:600 10px/1 Georgia,serif;font-style:italic;cursor:help;vertical-align:1px;margin-left:5px;flex:none;user-select:none}
+.i:hover{background:var(--muted)}
+#tipbox{position:fixed;z-index:400;background:var(--ink);color:var(--on-ink);border-radius:8px;padding:9px 12px;font-size:12.5px;line-height:1.7;max-width:340px;box-shadow:0 8px 24px rgba(26,26,24,.3);display:none;pointer-events:none}
 .card-h h2{display:flex;align-items:center;white-space:nowrap}
 .card-h .muted{white-space:nowrap;font-size:12px}
 /* 结论 */
@@ -33,49 +33,49 @@
 .m .sub{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .big{display:inline-flex;align-items:baseline;gap:6px;border:1px solid;border-radius:8px;padding:1px 12px;margin:2px 0;white-space:nowrap}
 .big b{font-size:22px;line-height:1.35}.big span{font-size:12px}
-.lowbox{margin:4px 16px 0;background:#fff2e8;border:1px solid #ffbb96;border-radius:8px;padding:8px 12px;color:#ad2102;font-size:13px}
+.lowbox{margin:4px 16px 0;background:var(--surface-2);border:1px solid var(--warn-line);border-radius:8px;padding:8px 12px;color:var(--warn);font-size:13px}
 /* 时间轴 */
 .tl{display:grid;gap:3px;padding:12px 16px 16px;align-items:center}
 .tl .lab{font-size:12px;color:var(--muted);text-align:right;padding-right:8px;white-space:nowrap}
 .tl .dt{text-align:center;font-size:11.5px;line-height:1.25;white-space:nowrap;color:var(--muted)}
 .tl .dt b{display:block;font-size:12px;color:var(--text)}
-.tl .dt.we b{color:#cf1322}
-.tl .gl{border-left:1px dashed #e1e5eb;height:100%}
-.bar{height:24px;border-radius:5px;font-size:12px;display:flex;align-items:center;padding:0 8px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.bar.go{background:#597ef7}.bar.go2{background:#adc6ff;color:#1d39c4}
-.bar.win{background:var(--primary)}.bar.win.B{background:#08979c}
-.bar.sub{background:#d0d7e2;color:#44546a}
-.bar.eta{background:#9254de}
-.bar.dead{background:#cf1322}
+.tl .dt.we b{color:var(--warn)}
+.tl .gl{border-left:1px dashed var(--line);height:100%}
+.bar{height:24px;border-radius:5px;font-size:12px;display:flex;align-items:center;padding:0 8px;color:var(--on-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar.go{background:var(--info)}.bar.go2{background:var(--line-strong);color:var(--primary)}
+.bar.win{background:var(--primary)}.bar.win.B{background:var(--info)}
+.bar.sub{background:var(--line-strong);color:var(--text)}
+.bar.eta{background:var(--info)}
+.bar.dead{background:var(--warn)}
 .bar.low{background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.28) 0,rgba(255,255,255,.28) 4px,transparent 4px,transparent 8px)}
 /* 数据依据 */
 .step{display:flex;gap:12px;padding:14px 16px;border-top:1px solid var(--line-2)}
 .step:first-of-type{border-top:0}
-.step .no{flex:none;width:24px;height:24px;border-radius:50%;background:#26394f;color:#fff;font-size:12px;display:grid;place-items:center;margin-top:1px}
+.step .no{flex:none;width:24px;height:24px;border-radius:50%;background:var(--ink);color:var(--on-ink);font-size:12px;display:grid;place-items:center;margin-top:1px}
 .step .bd{flex:1;min-width:0}
 .step h3{margin:0 0 6px;font-size:14px;display:flex;align-items:center}
 .step .lead{margin:0 0 8px;color:var(--muted);font-size:12.5px}
 table.kv{width:100%;border-collapse:collapse;font-size:13px}
 table.kv th,table.kv td{padding:6px 10px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line-2);line-height:1.6}
-table.kv th{background:#f7f9fb;color:var(--muted);font-weight:500;font-size:12px;white-space:nowrap}
+table.kv th{background:var(--surface-2);color:var(--muted);font-weight:500;font-size:12px;white-space:nowrap}
 table.kv td:first-child{color:var(--muted);white-space:nowrap;width:130px}
 table.kv td:nth-child(2){font-weight:600;white-space:nowrap}
-table.kv td:last-child{color:#4a596b}
-table.kv tr.hl td{background:#fffbe6}
-table.kv .src{color:#4a596b}
+table.kv td:last-child{color:var(--text)}
+table.kv tr.hl td{background:var(--caution-bg)}
+table.kv .src{color:var(--text)}
 .mono{font-family:ui-monospace,Menlo,Consolas,"WenQuanYi Zen Hei",monospace;font-size:12px}
 .day{border:1px solid;border-radius:5px;padding:0 7px;font-size:12px;line-height:20px;white-space:nowrap}
 .cands{display:flex;flex-wrap:wrap;gap:6px;font-size:12px;margin-top:8px}
 .cand{display:inline-flex;gap:5px;align-items:center;border:1px solid;border-radius:6px;padding:1px 8px;line-height:20px;white-space:nowrap}
-.cand i{font-style:normal;font-weight:600;color:#fff;background:var(--primary);border-radius:3px;padding:0 5px;font-size:11px}
-.cand i.b{background:#08979c}
+.cand i{font-style:normal;font-weight:600;color:var(--on-ink);background:var(--primary);border-radius:3px;padding:0 5px;font-size:11px}
+.cand i.b{background:var(--info)}
 .cand.sp{border-style:dashed}
 .ct{width:100%;color:var(--muted);font-size:12.5px;white-space:nowrap}
 .tech{margin:0 16px 14px;border:1px dashed var(--line);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 22px}
 .tech span{white-space:nowrap}
 /* 泊位 */
 .dtabs{display:flex;flex-wrap:wrap;gap:8px;padding:12px 16px 0}
-.dtab{border:1px solid var(--line);background:#fff;border-radius:8px;padding:4px 12px;cursor:pointer;white-space:nowrap;display:flex;gap:8px;align-items:center}
+.dtab{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:4px 12px;cursor:pointer;white-space:nowrap;display:flex;gap:8px;align-items:center}
 .dtab.on{border-color:var(--primary);background:var(--primary-bg)}
 .dtab small{color:var(--muted)}
 .bm{padding:12px 16px 4px}
@@ -88,9 +88,9 @@ table.kv .src{color:#4a596b}
 .bt b{font-size:13px}.bt small{font-size:11px;opacity:.85}
 .bt.free{background:var(--c1-bg);color:var(--c1-fg);border-color:var(--c1-bd)}
 .bt.occ{background:var(--c3-bg);color:var(--c3-fg);border-color:var(--c3-bd)}
-.bt.cap{background:#e6f4ff;color:#0958d9;border-color:#91caff}
-.bt.nd{background:var(--stripe);color:#5b6878;border-color:#c4cad3}
-.bt.off{background:#eef0f3;color:#a7b0bc;border-color:#dfe3e8}
+.bt.cap{background:var(--primary-bg);color:var(--primary-hover);border-color:var(--line-strong)}
+.bt.nd{background:var(--stripe);color:var(--muted);border-color:var(--line-strong)}
+.bt.off{background:var(--surface-2);color:var(--faint);border-color:var(--line-strong)}
 .bt:hover{outline:2px solid var(--primary);z-index:2}
 .bm-l{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:12px;font-size:12px;color:var(--muted)}
 .bm-l .g{display:flex;align-items:center;gap:5px;white-space:nowrap}
@@ -98,15 +98,15 @@ table.kv .src{color:#4a596b}
 .ships{padding:6px 16px 16px}
 table.tb{width:100%;border-collapse:collapse;font-size:13px}
 table.tb th,table.tb td{padding:7px 10px;text-align:left;border-bottom:1px solid var(--line-2);white-space:nowrap}
-table.tb th{background:#f7f9fb;color:var(--muted);font-weight:500;font-size:12px}
+table.tb th{background:var(--surface-2);color:var(--muted);font-weight:500;font-size:12px}
 .empty{padding:18px 4px;color:var(--muted);text-align:left}
 /* 侧栏 */
-.annc{background:#f7f9fb;border:1px solid var(--line);border-radius:8px;padding:12px 14px;line-height:2;font-size:13.5px}
-.annc .v{background:#e6f4ff;color:#0958d9;border-radius:3px;padding:0 3px;font-weight:600}
+.annc{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:12px 14px;line-height:2;font-size:13.5px}
+.annc .v{background:var(--primary-bg);color:var(--primary-hover);border-radius:3px;padding:0 3px;font-weight:600}
 .side .tabs{margin-bottom:12px}
 .side .tabs button{flex:1}
 .fnote{font-size:12px;color:var(--muted);margin-top:8px}
-.msg{padding:28px;color:#3b4a5c}
+.msg{padding:28px;color:var(--text)}
 @media(max-width:1700px){.bt{width:50px}}
 /* —— 2026-11-05 按 P02 新风格重排（业务逻辑不变） —— */
 .qbar{margin-bottom:16px}
@@ -115,46 +115,48 @@ table.tb th{background:#f7f9fb;color:var(--muted);font-weight:500;font-size:12px
 .qbar .back{margin:0}
 .frow{display:flex;flex-wrap:wrap;gap:12px 14px;align-items:flex-end;padding:6px 16px 14px}
 .ro .f-lab{font-size:12px;color:var(--muted);margin-bottom:4px;white-space:nowrap;display:flex;align-items:center}
-.ro .rv{height:34px;display:flex;align-items:center;gap:6px;border:1px solid #e3e8ef;border-radius:6px;padding:0 12px;background:#f7f9fc;white-space:nowrap;font-weight:500}
+.ro .rv{height:34px;display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:6px;padding:0 12px;background:var(--surface-2);white-space:nowrap;font-weight:500}
 .ro .rv.lock{border-style:dashed;color:var(--muted)}
 .plan-sum{position:relative}
-.plan-sum.A{background:linear-gradient(180deg,#f3f8ff 0,#fff 130px);border:1px solid #91caff}
-.plan-sum.B{background:linear-gradient(180deg,#f2fbfa 0,#fff 130px);border:1px solid #87e8de}
-.plan-sum.low{border:1.5px dashed #ff9c6e}
+.plan-sum.A{background:var(--surface-2);border:1px solid var(--line-strong)}
+.plan-sum.B{background:var(--surface-2);border:1px solid var(--info-line)}
+.plan-sum.low{border:1.5px dashed var(--warn-line)}
 .plan-sum .card-h{background:transparent}
-.concl .m+.m{border-left:1px solid #e6ebf2;padding-left:16px}
+.concl .m+.m{border-left:1px solid var(--line);padding-left:16px}
 .ev{padding:2px 16px 14px}
-.ev .step{border:1px solid #e6ebf2;border-radius:10px;margin-top:10px;background:#fff;position:relative}
-.ev .step:first-of-type{border-top:1px solid #e6ebf2}
-.ev .step .no{background:#1677ff}
+.ev .step{border:1px solid var(--line);border-radius:10px;margin-top:10px;background:var(--surface);position:relative}
+.ev .step:first-of-type{border-top:1px solid var(--line)}
+.ev .step .no{background:var(--primary)}
 .ev .lowbox{margin:10px 0 0 !important}
 .stk-b{display:grid;grid-template-columns:260px minmax(0,1fr);gap:16px;padding:6px 16px 12px}
 .stk-l{display:flex;flex-direction:column;gap:8px}
-.sr{display:flex;align-items:center;justify-content:space-between;gap:8px;border:1px solid #e6ebf2;border-radius:8px;padding:9px 12px;background:#fbfcfe;white-space:nowrap}
+.sr{display:flex;align-items:center;justify-content:space-between;gap:8px;border:1px solid var(--line);border-radius:8px;padding:9px 12px;background:var(--surface-2);white-space:nowrap}
 .sr .k{color:var(--muted);font-size:13px}.sr .v{font-weight:700;font-size:16px}.sr .v small{font-size:12px;font-weight:500;color:var(--muted);margin-left:3px}
-.sr.red{background:#fff1f0;border-color:#ffccc7}.sr.red .v{color:#cf1322}
-.sr.grn{background:#f6ffed;border-color:#d9f7be}.sr.grn .v{color:#237804}
+.sr.red{background:var(--warn-bg);border-color:var(--warn-line)}.sr.red .v{color:var(--warn)}
+.sr.grn{background:var(--ok-bg);border-color:var(--ok-line)}.sr.grn .v{color:var(--ok)}
 .lvl{display:inline-block;border-radius:4px;padding:0 8px;font-size:12px;line-height:20px;font-weight:600;margin-left:6px}
-.lvl.ok{background:#f6ffed;color:#237804;border:1px solid #b7eb8f}.lvl.mid{background:#fff7e6;color:#ad4e00;border:1px solid #ffd591}.lvl.bad{background:#fff1f0;color:#a8071a;border:1px solid #ffa39e}
-.stk-r{border:1px solid #e6ebf2;border-radius:10px;min-width:0}
+.lvl.ok{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-line)}.lvl.mid{background:var(--caution-bg);color:var(--caution);border:1px solid var(--caution-line)}.lvl.bad{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-line)}
+.stk-r{border:1px solid var(--line);border-radius:10px;min-width:0}
 .stk-r > div > svg{padding:0 8px 8px}
 .tabs2{display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid var(--line-2)}
-.tabs2 .tb{border:0;background:none;padding:8px 6px;font-size:14px;color:#5b6878;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
-.tabs2 .tb.on{color:#0958d9;border-bottom-color:#1677ff;font-weight:600}
+.tabs2 .tb{border:0;background:none;padding:8px 6px;font-size:14px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.tabs2 .tb.on{color:var(--primary-hover);border-bottom-color:var(--primary);font-weight:600}
 .tabs2 .sp{flex:1}
 .rseg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
-.rseg button{border:0;background:#fff;padding:3px 12px;font-size:13px;cursor:pointer;color:#3b4a5c;border-left:1px solid var(--line);white-space:nowrap}
-.rseg button:first-child{border-left:0}.rseg button.on{background:#1677ff;color:#fff}
-.lgd{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;font-size:12px;color:#5b6878;padding:8px 12px 0}
+.rseg button{border:0;background:var(--surface);padding:3px 12px;font-size:13px;cursor:pointer;color:var(--text);border-left:1px solid var(--line);white-space:nowrap}
+.rseg button:first-child{border-left:0}.rseg button.on{background:var(--primary);color:var(--on-ink)}
+.lgd{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;font-size:12px;color:var(--muted);padding:8px 12px 0}
 .lgd i{display:inline-block;width:22px;height:0;border-top:2.4px solid;vertical-align:middle;margin-right:5px}
 .dtw{max-height:300px;overflow:auto;margin:10px 12px}
 .dtt{width:100%;border-collapse:collapse;font-size:13px}
-.dtt th{text-align:left;color:var(--muted);font-weight:500;padding:6px 8px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff}
+.dtt th{text-align:left;color:var(--muted);font-weight:500;padding:6px 8px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--surface)}
 .dtt td{padding:5px 8px;border-bottom:1px solid var(--line-2);white-space:nowrap}
-.dtt .r{text-align:right}.dtt tr.k td{background:#fffbe6}.dtt tr.so td{background:#fff1f0;color:#a8071a}
+.dtt .r{text-align:right}.dtt tr.k td{background:var(--caution-bg)}.dtt tr.so td{background:var(--warn-bg);color:var(--warn)}
 .bn{margin:0 16px 12px;border-radius:8px;padding:8px 12px;font-size:13px;line-height:1.7}
-.bn.red{background:#fff1f0;border:1px solid #ffa39e;color:#a8071a}.bn.blu{background:#f0f7ff;border:1px solid #b7d8ff;color:#0958d9}
+.bn.red{background:var(--warn-bg);border:1px solid var(--warn-line);color:var(--warn)}.bn.blu{background:var(--surface-2);border:1px solid var(--line);color:var(--primary-hover)}
 </style>
+<link rel="stylesheet" href="assets/skin.css">
+<script data-skin-init>(function(){var s="paper";try{var v=localStorage.getItem("ssps-skin");if(v==="legacy"||v==="midnight")s=v;}catch(e){}document.documentElement.setAttribute("data-skin",s);})();</script>
 </head>
 <body>
 <div class="app">
@@ -360,8 +362,8 @@ table.tb th{background:#f7f9fb;color:var(--muted);font-weight:500;font-size:12px
       return '<div><div class="bm-t">' + name + ' · ' + g.length + ' 个</div><div class="bm-r">' + g.map((x) => '<div class="bt ' + x.state + '" data-tip="' + esc(x.tip) + '"><b>' + x.b.code + '</b><small>' + (x.b.capacity / 10000) + '万</small></div>').join('') + '</div></div>'; };
     let h = '<div class="dtabs">' + tabs + '</div><div class="bm"><div class="bm-h"><b>' + M.berths.length + ' 个泊位 · ' + mdCn(d) + ' ' + wk(d) + '</b>' + chips + '</div><div class="bm-g">' + grp('北区码头') + grp('拉博塔码头') + '</div>' +
       '<div class="bm-l"><span class="g"><span class="sw c1">空闲</span>能装下且当天空着</span><span class="g"><span class="sw c3">占用</span>能装下但当天有船</span>' +
-      '<span class="g"><span class="sw" style="background:#eef0f3;color:#a7b0bc;border-color:#dfe3e8">灰色</span>装不下本次货量</span><span class="g"><span class="sw nd">&nbsp;&nbsp;</span>无数据</span>' +
-      '<span class="g"><span class="sw" style="background:#e6f4ff;color:#0958d9;border-color:#91caff">能装下</span>15 天后只判断能否装下</span></div></div>';
+      '<span class="g"><span class="sw" style="background:var(--surface-2);color:var(--faint);border-color:var(--line-strong)">灰色</span>装不下本次货量</span><span class="g"><span class="sw nd">&nbsp;&nbsp;</span>无数据</span>' +
+      '<span class="g"><span class="sw" style="background:var(--sidebar);color:var(--primary-hover);border-color:var(--line-strong)">能装下</span>15 天后只判断能否装下</span></div></div>';
     // 当天船只明细
     const det = E.dayDetail(d, tons);
     h += '<div class="ships">';
@@ -378,7 +380,7 @@ table.tb th{background:#f7f9fb;color:var(--muted);font-weight:500;font-size:12px
   function stockCard(p) {
     const st = res.stock; if (!st) return '';
     const it = st.item, so = st.so, l = it.days >= 25 ? ['ok', '充裕'] : it.days >= 15 ? ['mid', '偏紧'] : ['bad', '危险'];
-    const marks = [{ d: p.c.e, tons: res.input.tons, label: p.label, color: p.label === 'A' ? '#1677ff' : '#08979c' }];
+    const marks = [{ d: p.c.e, tons: res.input.tons, label: p.label, color: p.label === 'A' ? 'var(--ink)' : 'var(--info)' }];
     const sr = (k, v, cls) => '<div class="sr ' + (cls || '') + '"><span class="k">' + k + '</span><span class="v">' + v + '</span></div>';
     const left = sr('当前库存', fmt(it.stock) + '<small>吨</small>') + sr('日耗', fmt(it.daily) + '<small>吨/天</small>') + sr('可用天数', it.days + '<small>天</small><span class="lvl ' + l[0] + '">' + l[1] + '</span>') +
       sr('断料日', so != null ? mdCn(so) + '<small>' + (so <= E.TODAY ? '已断料' : '距今 ' + (so - E.TODAY) + ' 天') + '</small>' : '不断料<small>模拟期内</small>', so != null ? 'red' : 'grn') +
@@ -390,7 +392,7 @@ table.tb th{background:#f7f9fb;color:var(--muted);font-weight:500;font-size:12px
       ic('只改变显示范围，不改变计算。断料日、最晚到港日或方案到港日超出所选范围时不画出来，选「全部」可以看到。') + '</div>';
     let body;
     if (stkView === 'trend') {
-      body = '<div class="lgd"><span><i style="border-color:#1677ff"></i>模拟库存</span><span><i style="border-color:' + marks[0].color + ';border-top-style:dashed"></i>加入' + (p.label === 'A' ? '推荐' : '备选') + '方案后</span><span><i style="border-color:#fa8c16;border-top-style:dashed"></i>危险线（15 天用量）</span></div>' +
+      body = '<div class="lgd"><span><i style="border-color:var(--ink)"></i>模拟库存</span><span><i style="border-color:' + marks[0].color + ';border-top-style:dashed"></i>加入' + (p.label === 'A' ? '推荐' : '备选') + '方案后</span><span><i style="border-color:var(--caution);border-top-style:dashed"></i>危险线（15 天用量）</span></div>' +
         '<div>' + window.StockChart.html(it, { latest: st.latest, so: st.so, gap: st.gap, marks, warnDays: 15, until: stkRange ? until : undefined, width: Math.max(480, (document.getElementById('page').clientWidth || 1400) - 380 - 16 - 340) }) + '</div>';
     } else {
       let prev = null;
@@ -402,7 +404,7 @@ table.tb th{background:#f7f9fb;color:var(--muted);font-weight:500;font-size:12px
     }
     let note = st.gap ? '<div class="bn blu"><b>' + mdCn(st.gap.from) + ' 有一个短缺口</b>，按最快航程已经赶不上，之后由已排定的到货补回；本次以补回后的下一次断料日为目标。</div>' : '';
     if (res.urgent) note += '<div class="bn red"><b>按最快航程也赶不上断料日。</b>已改为「最快到港」优先，不再比较港口余量；请同时联系供应商或调拨。</div>';
-    return '<section class="card"><div class="card-h"><h2 class="nw"><svg width="18" height="18" viewBox="0 0 24 24" style="margin-right:6px"><path d="M4 20V10h4v10zM10 20V4h4v16zM16 20v-7h4v7z" fill="#1677ff"/></svg>库存保障与趋势 · ' + it.name + ic('断料日来自库存消耗模拟表（已包含已排定的到货）。到港窗口的最后一天必须不晚于「断料日 − 缓冲天数」。虚线是本方案到港后的库存。') + '</h2><span class="muted">' + M.inventory.source + ' · 更新于 ' + M.inventory.updated.slice(0, 10) + '</span></div>' +
+    return '<section class="card"><div class="card-h"><h2 class="nw"><svg width="18" height="18" viewBox="0 0 24 24" style="margin-right:6px"><path d="M4 20V10h4v10zM10 20V4h4v16zM16 20v-7h4v7z" fill="#1a1a18"/></svg>库存保障与趋势 · ' + it.name + ic('断料日来自库存消耗模拟表（已包含已排定的到货）。到港窗口的最后一天必须不晚于「断料日 − 缓冲天数」。虚线是本方案到港后的库存。') + '</h2><span class="muted">' + M.inventory.source + ' · 更新于 ' + M.inventory.updated.slice(0, 10) + '</span></div>' +
       '<div class="stk-b"><div class="stk-l">' + left + '</div><div class="stk-r">' + tabs + body + '</div></div>' + note + '</section>';
   }
 
@@ -412,8 +414,8 @@ table.tb th{background:#f7f9fb;color:var(--muted);font-weight:500;font-size:12px
     const ctx0 = '<span class="tag blue">' + i.biz + '</span>' + (i.item ? '<span class="tag blue">' + i.item.name + '</span>' : '') + '<span class="tag blue">' + fmt(i.tons) + ' 吨</span><span class="tag blue">' + zh(i.load) + ' → ' + zh(i.disch) + '</span><span class="tag blue">' + (i.biz === '成品销售船' ? '受载期 ' : '期望到港 ') + md(E.dn(i.winStart)) + ' – ' + md(E.dn(i.winEnd)) + '</span>';
     const prod0 = i.biz === '成品销售船', R0 = res.run || {}, le0 = R0.mode === 'cmr', mixed0 = R0.mode === 'mixed';
     const ro = (lab, v, cls) => '<div class="ro"><div class="f-lab">' + lab + '</div><div class="rv ' + (cls || '') + '">' + v + '</div></div>';
-    const pathTag = R0.mode ? '<span class="tag ' + (le0 || mixed0 ? 'blue' : '') + '"' + (le0 || mixed0 ? '' : ' style="background:#f9f0ff;color:#531dab;border-color:#d3adf7"') + '>' + (mixed0 ? '各候选日期分别计算' : le0 ? '近 15 天 · 靠船计划' : '15 天后 · 航次计划') + '</span>' : '—';
-    let h = '<section class="card qbar"><div class="card-h"><h2 class="nw"><svg width="16" height="16" viewBox="0 0 24 24" style="margin-right:6px"><path d="M4 6h16M4 12h16M4 18h10" stroke="#1677ff" stroke-width="2.2" stroke-linecap="round"/></svg>预测详情</h2><a class="back" href="' + backUrl + '">← 返回智能发船预测</a><span class="sp"></span>' +
+    const pathTag = R0.mode ? '<span class="tag ' + (le0 || mixed0 ? 'blue' : '') + '"' + (le0 || mixed0 ? '' : ' style="background:var(--surface-2);color:var(--info);border-color:var(--info-line)"') + '>' + (mixed0 ? '各候选日期分别计算' : le0 ? '近 15 天 · 靠船计划' : '15 天后 · 航次计划') + '</span>' : '—';
+    let h = '<section class="card qbar"><div class="card-h"><h2 class="nw"><svg width="16" height="16" viewBox="0 0 24 24" style="margin-right:6px"><path d="M4 6h16M4 12h16M4 18h10" stroke="#1a1a18" stroke-width="2.2" stroke-linecap="round"/></svg>预测详情</h2><a class="back" href="' + backUrl + '">← 返回智能发船预测</a><span class="sp"></span>' +
       '<div class="tabs" id="ptabs"><button data-p="0"' + (which === 0 ? ' class="on"' : '') + '>推荐方案</button><button data-p="1"' + (which === 1 ? ' class="on"' : '') + (res.plans && res.plans[1] ? '' : ' disabled') + '>备选方案</button></div></div>' +
       '<div class="frow">' + ro('业务类型', i.biz) + ro('货量（吨）', fmt(i.tons)) + ro('物料库存', i.item ? i.item.name : '不关联库存') +
       ro('装港', (prod0 ? '🔒 ' : '') + zh(i.load), prod0 ? 'lock' : '') + ro('卸港', (prod0 ? '' : '🔒 ') + zh(i.disch), prod0 ? '' : 'lock') +
@@ -433,10 +435,10 @@ table.tb th{background:#f7f9fb;color:var(--muted);font-weight:500;font-size:12px
       m1 = '<div class="m"><div class="lb">建议装船窗口（装港 · 本港侧）</div><div class="v">' + mdCn(p.c.s) + ' – ' + Number(E.iso(p.c.e).slice(8)) + '日</div><div class="sub">' + wk(p.c.s) + ' 起 · 共 ' + p.c.len + ' 天</div></div>';
       m2 = '<div class="m"><div class="lb">最晚装船日</div><div class="v">' + mdCn(p.deadline) + '</div><div class="sub">窗口后还剩 ' + p.slack + ' 天余量</div></div>';
     }
-    m3 = le ? '<div class="m"><div class="lb">最低泊位余量' + ic('窗口里每天算一次泊位余量率，取最低的一天。') + '</div><div class="big ' + cmrCls(p.c.metric) + '"><b>' + pct(p.c.metric) + '</b><span>' + cmrLab(p.c.metric) + '</span></div><div class="sub">' + (p.qualifies ? '<span style="color:#237804">✓ 不低于 30%</span>' : '<span style="color:#ad2102">✗ 低于 30%</span>') + '</div></div>'
-      : '<div class="m"><div class="lb">同期最多船数' + ic('窗口内每天与你的货量竞争同吨级泊位的船数，取最多的一天。') + '</div><div class="big ' + denCls(p.c.metric, P.n) + '"><b>' + p.c.metric + ' 艘</b><span>' + denLab(p.c.metric, P.n) + '</span></div><div class="sub">' + (p.qualifies ? '<span style="color:#237804">✓ 余量不低于 30%</span>' : '<span style="color:#ad2102">✗ 余量低于 30%</span>') + '</div></div>';
+    m3 = le ? '<div class="m"><div class="lb">最低泊位余量' + ic('窗口里每天算一次泊位余量率，取最低的一天。') + '</div><div class="big ' + cmrCls(p.c.metric) + '"><b>' + pct(p.c.metric) + '</b><span>' + cmrLab(p.c.metric) + '</span></div><div class="sub">' + (p.qualifies ? '<span style="color:var(--ok)">✓ 不低于 30%</span>' : '<span style="color:var(--warn)">✗ 低于 30%</span>') + '</div></div>'
+      : '<div class="m"><div class="lb">同期最多船数' + ic('窗口内每天与你的货量竞争同吨级泊位的船数，取最多的一天。') + '</div><div class="big ' + denCls(p.c.metric, P.n) + '"><b>' + p.c.metric + ' 艘</b><span>' + denLab(p.c.metric, P.n) + '</span></div><div class="sub">' + (p.qualifies ? '<span style="color:var(--ok)">✓ 余量不低于 30%</span>' : '<span style="color:var(--warn)">✗ 余量低于 30%</span>') + '</div></div>';
     const trust = p.trust === '低可信' ? '<span class="tag lowtrust">⚠ 低可信</span>' : '<span class="tag green">可信度 正常</span>';
-    const concl = '<section class="card plan-sum ' + p.label + (p.trust === '低可信' ? ' low' : '') + '"><div class="card-h"><h2 class="nw"><svg width="18" height="18" viewBox="0 0 24 24" style="margin-right:6px"><path d="M3 15h18l-3 5H6z" fill="#1677ff"/><path d="M6 14V8h8l3 6z" fill="#69b1ff"/></svg>方案结论 · ' + (p.label === 'A' ? '推荐方案' : '备选方案') + '</h2><span style="display:flex;gap:8px;align-items:center">' + trust + '<span class="tag ' + (le ? 'blue' : '') + '"' + (le ? '' : ' style="background:#f9f0ff;color:#531dab;border-color:#d3adf7"') + '>' + (le ? '近 15 天 · 靠船计划' : '15 天后 · 航次计划') + '</span></span></div>' +
+    const concl = '<section class="card plan-sum ' + p.label + (p.trust === '低可信' ? ' low' : '') + '"><div class="card-h"><h2 class="nw"><svg width="18" height="18" viewBox="0 0 24 24" style="margin-right:6px"><path d="M3 15h18l-3 5H6z" fill="#1a1a18"/><path d="M6 14V8h8l3 6z" fill="#c9c5bd"/></svg>方案结论 · ' + (p.label === 'A' ? '推荐方案' : '备选方案') + '</h2><span style="display:flex;gap:8px;align-items:center">' + trust + '<span class="tag ' + (le ? 'blue' : '') + '"' + (le ? '' : ' style="background:#f5f3ee;color:#4a6b8a;border-color:#d6e0e8"') + '>' + (le ? '近 15 天 · 靠船计划' : '15 天后 · 航次计划') + '</span></span></div>' +
       '<div class="concl">' + m1 + m2 + m3 + '</div>' + timeline(p) + '</section>';
     // 数据依据
     const ev = '<section class="card"><div class="card-h"><h2>数据依据（参数匹配溯源）' + ic('每个数字来自哪张表、哪个批次、哪条航程规则。数值全部由规则计算得出，不经过任何生成式模型改写；德龙版称为 S1 溯源。') + '</h2><span class="muted">每个数字都能对出来</span></div><div class="ev">' + evidence(p) + '</div>' +

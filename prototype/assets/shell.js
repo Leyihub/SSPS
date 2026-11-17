@@ -48,7 +48,9 @@
       '<div class="crumb"><button class="burger" id="burger" aria-label="菜单">☰</button><a href="index.html">原型导航</a><i>/</i><b>' + (opts.title || '') + '</b></div>' +
       '<div class="top-right"><span class="proto-flag">原型 · 示例数据，非真实业务</span>' +
       '<span class="top-date">2026-11-04 周三</span>' +
+      '<span data-skin-slot></span>' +
       '<span class="user"><span class="avatar">' + (opts.user ? opts.user[0][0] : '林') + '</span><span>' + (opts.user ? opts.user[0] : '林海川') + '<small>' + (opts.user ? opts.user[2] + ' · ' + opts.user[1] : '业务员 · 大宗采购部') + '</small></span></span></div>';
+    bootSkin();
   }
   document.addEventListener('click', (e) => {
     const nav = document.getElementById('nav'); if (!nav) return;
@@ -56,5 +58,97 @@
     if (e.target.closest('#burger')) { nav.classList.toggle('open'); m.classList.toggle('on', nav.classList.contains('open')); }
     else if (e.target.classList.contains('navmask')) { nav.classList.remove('open'); m.classList.remove('on'); }
   });
-  window.SHELL = { PAGES, BUILT, mount };
+  /* ---------- 皮肤切换：paper 暖纸 / midnight 夜墨 / legacy 经典深蓝 ----------
+     属性落在 <html data-skin>，首屏由各页 <head> 的内联脚本提前设定，避免闪烁。
+     这里只负责「右上角下拉」的渲染与交互，不碰任何业务状态。 */
+  const SKIN_KEY = 'ssps-skin';
+  const SKINS = [
+    { id: 'paper', name: '暖纸 · 墨黑', short: '暖纸', desc: '默认设计语言' },
+    { id: 'midnight', name: '夜墨 · 纸白', short: '夜墨', desc: '暗色，同一结构' },
+    { id: 'legacy', name: '经典 · 深蓝', short: '经典', desc: '2025 版 ERP 风格' },
+  ];
+  const SKIN_IDS = SKINS.map((s) => s.id);
+  const skinNow = () => {
+    const cur = document.documentElement.getAttribute('data-skin');
+    return SKIN_IDS.indexOf(cur) >= 0 ? cur : 'paper';
+  };
+
+  function syncSkin(box) {
+    const cur = skinNow();
+    const pop = box.querySelector('.skin-sw-pop');
+    const btn = box.querySelector('.skin-sw-btn');
+    const lab = box.querySelector('.skin-sw-label');
+    if (lab) lab.textContent = (SKINS.find((s) => s.id === cur) || SKINS[0]).short;
+    btn.setAttribute('aria-expanded', pop.hidden ? 'false' : 'true');
+    box.querySelectorAll('.skin-sw-opt').forEach((o) => {
+      o.setAttribute('aria-selected', o.dataset.skin === cur ? 'true' : 'false');
+    });
+  }
+  function applySkin(id, remember) {
+    const next = SKIN_IDS.indexOf(id) >= 0 ? id : 'paper';
+    document.documentElement.setAttribute('data-skin', next);
+    if (remember) { try { localStorage.setItem(SKIN_KEY, next); } catch (e) { /* 无存储时忽略 */ } }
+    document.querySelectorAll('.skin-sw').forEach(syncSkin);
+  }
+  function closeSkin(except) {
+    document.querySelectorAll('.skin-sw').forEach((box) => {
+      if (box === except) return;
+      box.querySelector('.skin-sw-pop').hidden = true;
+      box.querySelector('.skin-sw-btn').setAttribute('aria-expanded', 'false');
+    });
+  }
+  function mountSkin(el) {
+    el.classList.add('skin-sw');
+    el.innerHTML =
+      '<button class="skin-sw-btn" type="button" aria-haspopup="listbox" aria-expanded="false" aria-label="切换界面皮肤">' +
+        '<span class="skin-sw-ico"></span><span class="skin-sw-label"></span><span class="skin-sw-car"></span>' +
+      '</button>' +
+      '<div class="skin-sw-pop" role="listbox" aria-label="界面皮肤" hidden>' +
+        '<div class="skin-sw-t">界面皮肤</div>' +
+        SKINS.map((s) =>
+          '<button class="skin-sw-opt" type="button" role="option" data-skin="' + s.id + '" aria-selected="false">' +
+            '<span class="skin-sw-pv pv-' + s.id + '"><i></i><i></i></span>' +
+            '<span class="skin-sw-tx"><b>' + s.name + '</b><small>' + s.desc + '</small></span>' +
+            '<span class="skin-sw-ck"></span>' +
+          '</button>').join('') +
+      '</div>';
+    syncSkin(el);
+  }
+  function bootSkin() {
+    document.querySelectorAll('[data-skin-slot]').forEach((el) => {
+      if (!el.classList.contains('skin-sw')) mountSkin(el);
+    });
+  }
+  document.addEventListener('click', (e) => {
+    const box = e.target.closest('.skin-sw');
+    const opt = e.target.closest('.skin-sw-opt');
+    const btn = e.target.closest('.skin-sw-btn');
+    if (opt && box) {
+      applySkin(opt.dataset.skin, true);
+      box.querySelector('.skin-sw-pop').hidden = true;
+      box.querySelector('.skin-sw-btn').setAttribute('aria-expanded', 'false');
+      return;
+    }
+    if (btn && box) {
+      const pop = box.querySelector('.skin-sw-pop');
+      closeSkin(box);
+      pop.hidden = !pop.hidden;
+      btn.setAttribute('aria-expanded', pop.hidden ? 'false' : 'true');
+      return;
+    }
+    closeSkin(null);
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    closeSkin(null);
+  });
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bootSkin);
+  else bootSkin();
+  // 外部（含浏览器插件、调试工具）改动 data-skin 时，下拉标签跟着同步
+  if (window.MutationObserver) {
+    new MutationObserver(() => document.querySelectorAll('.skin-sw').forEach(syncSkin))
+      .observe(document.documentElement, { attributes: true, attributeFilter: ['data-skin'] });
+  }
+
+  window.SHELL = { PAGES, BUILT, mount, skin: { apply: applySkin, current: skinNow, boot: bootSkin } };
 })();

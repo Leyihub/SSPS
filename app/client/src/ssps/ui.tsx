@@ -54,7 +54,7 @@ export function Pager({ page, total, size, onPage }: { page: number; total: numb
 export const Empty = ({ children = '没有符合条件的数据' }: { children?: ReactNode }) => <div className="empty">{children}</div>;
 export const Loading = () => <div className="empty">加载中…</div>;
 export function ErrorBox({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
-  return <div className="empty" style={{ color: '#cf1322' }}>{getApiErrorMessage(error, '加载失败')}{onRetry && <> <button className="btn" onClick={onRetry}>重试</button></>}</div>;
+  return <div className="empty" style={{ color: 'var(--warn)' }}>{getApiErrorMessage(error, '加载失败')}{onRetry && <> <button className="btn" onClick={onRetry}>重试</button></>}</div>;
 }
 /** 页面顶部标题条 */
 export const PageTitle = ({ title, desc, right }: { title: string; desc?: ReactNode; right?: ReactNode }) => (
@@ -66,7 +66,7 @@ export function StaleNotice({ stale }: { stale?: { stale: boolean; since: string
   if (!stale?.stale) return null;
   const list = stale.changes.slice(0, 3).map((c) => `${c.item} · ${c.vessel || c.voyageNo || c.voyageId}（${c.field}，${c.at}）`).join('；');
   return (
-    <div role="alert" style={{ margin: '8px 0', padding: '8px 10px', background: '#fffbe6', border: '1px solid #ffe58f', borderRadius: 6, color: '#ad6800', fontSize: 12, lineHeight: 1.6 }}>
+    <div role="alert" style={{ margin: '8px 0', padding: '8px 10px', background: 'var(--caution-bg)', border: '1px solid #e8dcc4', borderRadius: 6, color: 'var(--caution)', fontSize: 12, lineHeight: 1.6 }}>
       <b>库存表可能已过时，请重新导入。</b>自 {stale.since} 导入之后，有 {stale.changes.length} 处相关航次改了到港时间：{list}{stale.changes.length > 3 ? ' 等' : ''}。
     </div>
   );

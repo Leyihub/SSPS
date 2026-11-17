@@ -70,7 +70,7 @@ export default function CapacityPage() {
   return (
     <div className="pg-p06">
       <div className="card hero">
-        <div className="ht"><div className="av"><svg width="28" height="28" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2.5" fill="none" stroke="#1677ff" strokeWidth="2" /><path d="M3 10h18M8 3v4M16 3v4" stroke="#1677ff" strokeWidth="2" strokeLinecap="round" /></svg></div>
+        <div className="ht"><div className="av"><svg width="28" height="28" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2.5" fill="none" stroke="#1a1a18" strokeWidth="2" /><path d="M3 10h18M8 3v4M16 3v4" stroke="#1a1a18" strokeWidth="2" strokeLinecap="round" /></svg></div>
           <div><h1>港口容量日历</h1><p>全员可看。近 15 天看每日泊位余量，15 天后看同期船数；点任意一天看当天的泊位分布和在港、预抵的船。</p></div></div>
         <div className="ctl"><span className="lab">货量档<Info text={<>按这个货量算「能装下的泊位」作为基数，默认 5 万吨。<br />吨级档的划分还没有确认，先按泊位容量档位列出。</>} /></span>
           <div className="seg">{TONS.map(([n2, l]) => <button key={n2} className={n2 === tons ? 'on' : ''} onClick={() => setTons(n2)}>{l}</button>)}</div>
@@ -88,7 +88,7 @@ export default function CapacityPage() {
       <div className="layout">
         <section className="card">
           <div className="calh"><h2>{nMdCn(today)} – {nMdCn(last)} · 能装下的泊位 {P.n} / {berths.length} 个</h2>
-            <div className="phase"><span><i />近 15 天：泊位余量（靠船计划）</span><span><i style={{ borderStyle: 'dashed', borderColor: '#b37feb', background: '#f4ebff' }} />15 天后：同期船数（航次计划，估算）</span></div></div>
+            <div className="phase"><span><i />近 15 天：泊位余量（靠船计划）</span><span><i style={{ borderStyle: 'dashed', borderColor: 'var(--info)', background: 'var(--surface-2)' }} />15 天后：同期船数（航次计划，估算）</span></div></div>
           <div className="cal">{['一', '二', '三', '四', '五', '六', '日'].map((x, i) => <div key={x} className={'wd' + (i > 4 ? ' we' : '')}>周{x}</div>)}{grid}</div>
           <div className="legend">
             <div className="g"><b style={{ color: 'var(--text)' }}>近 15 天泊位余量</b><span className="sw c1">≥50%</span>充裕<span className="sw c2">30–50%</span>适中<span className="sw c3">10–30%</span>偏紧<span className="sw c4">&lt;10%</span>紧张</div>
@@ -98,14 +98,14 @@ export default function CapacityPage() {
         </section>
 
         <aside className="side card">
-          <div className="dh"><h2>{nMdCn(sel)}（{nWk(sel)}）{le ? <span className="tag blue">近 15 天 · 靠船计划</span> : <span className="tag" style={{ background: '#f9f0ff', color: '#531dab', borderColor: '#d3adf7' }}>15 天后 · 航次计划</span>}</h2></div>
+          <div className="dh"><h2>{nMdCn(sel)}（{nWk(sel)}）{le ? <span className="tag blue">近 15 天 · 靠船计划</span> : <span className="tag" style={{ background: 'var(--surface-2)', color: 'var(--info)', borderColor: 'var(--info-line)' }}>15 天后 · 航次计划</span>}</h2></div>
           <div className="st3">{le
             ? <><div><div className="k">在港船舶</div><div className="v">{nodata ? '—' : list.length}<small>艘</small></div></div><div><div className="k">空闲泊位</div><div className="v">{nodata ? '—' : free}<small>/ {n} 个</small></div></div>
-                <div><div className="k">泊位余量</div><div className="v">{nodata ? <span style={{ color: 'var(--muted)' }}>无数据</span> : <span style={{ color: det.cmr >= 0.5 ? '#237804' : det.cmr >= 0.3 ? '#ad6800' : det.cmr >= 0.1 ? '#d4380d' : '#a8071a' }}>{Math.round(det.cmr * 100)}%</span>}</div></div></>
+                <div><div className="k">泊位余量</div><div className="v">{nodata ? <span style={{ color: 'var(--muted)' }}>无数据</span> : <span style={{ color: det.cmr >= 0.5 ? '#2f7d55' : det.cmr >= 0.3 ? '#a86a2e' : det.cmr >= 0.1 ? '#c0452f' : '#c0452f' }}>{Math.round(det.cmr * 100)}%</span>}</div></div></>
             : <><div><div className="k">同期船数</div><div className="v">{nodata ? '—' : det.count}<small>艘</small></div></div><div><div className="k">能装下的泊位</div><div className="v">{n}<small>个</small></div></div><div><div className="k">拥挤程度</div><div className="v" style={{ fontSize: 18 }}>{nodata ? '无数据' : denLab(det.count, P.n)}</div></div></>}</div>
           <div className="sec">泊位分布<Info text={`23 个德信泊位。货量档 ${fmt(tons)} 吨：灰色表示装不下，不计入余量基数。${le ? '' : '15 天后没有逐泊位数据，只判断能否装下。'}`} /></div>
           {grp('北区码头')}{grp('拉博塔码头')}
-          <div className="bl"><span className="g"><span className="sw c1">空闲</span></span><span className="g"><span className="sw c3">占用</span></span><span className="g"><span className="sw" style={{ background: '#eef0f3', color: '#a7b0bc', borderColor: '#dfe3e8' }}>装不下</span>不计入基数</span><span className="g"><span className="sw nd">&nbsp;&nbsp;</span>无数据</span></div>
+          <div className="bl"><span className="g"><span className="sw c1">空闲</span></span><span className="g"><span className="sw c3">占用</span></span><span className="g"><span className="sw" style={{ background: 'var(--surface-2)', color: 'var(--faint)', borderColor: 'var(--line-strong)' }}>装不下</span>不计入基数</span><span className="g"><span className="sw nd">&nbsp;&nbsp;</span>无数据</span></div>
           <div className="ships"><div className="sec" style={{ margin: '12px 0 0' }}>{le ? '当日在港和预抵的船' : '当日同期的船'}（{nodata ? 0 : list.length} 艘）<Info text="只列出会占用同吨级泊位的船。" /></div>
             {nodata ? <div className="none">这一天还没有数据（灰色斜线，不是 0 艘）。{le ? `靠船计划目前只到 ${cal.planCoverTo != null ? nMd(cal.planCoverTo) : '—'}。` : `航次计划目前只到 ${cal.voyHorizon != null ? nMd(cal.voyHorizon) : '—'}。`}</div>
               : !list.length ? <div className="none">这一天没有占用同吨级泊位的船。</div>

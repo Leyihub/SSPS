@@ -8,23 +8,25 @@
 <style>
 .btns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .viewer{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:12px;white-space:nowrap}
-.viewer select{height:28px;padding:0 6px;border:1px solid #d3d9e1;border-radius:6px;background:#fff}
+.viewer select{height:28px;padding:0 6px;border:1px solid var(--line-strong);border-radius:6px;background:var(--surface)}
 .fbar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line-2)}
 .fbar .inp{width:auto}
 .tbl td,.tbl th{white-space:nowrap}
 .tbl td.wrap{white-space:normal;min-width:180px}
-.note{margin:12px 16px 0;border-radius:8px;padding:8px 12px;font-size:13px;background:#fffbe6;border:1px solid #ffe58f;color:#ad6800}
+.note{margin:12px 16px 0;border-radius:8px;padding:8px 12px;font-size:13px;background:var(--caution-bg);border:1px solid var(--caution-line);color:var(--caution)}
 .alias{display:flex;flex-wrap:wrap;gap:4px}
-.alias span{background:#f2f4f7;border-radius:4px;padding:0 6px;font-size:12px;color:#4a596b;white-space:nowrap}
+.alias span{background:var(--surface-2);border-radius:4px;padding:0 6px;font-size:12px;color:var(--text);white-space:nowrap}
 .prog{display:inline-flex;align-items:center;gap:6px}
-.prog i{display:inline-block;width:56px;height:6px;border-radius:3px;background:#e8ebef;overflow:hidden;vertical-align:middle}
+.prog i{display:inline-block;width:56px;height:6px;border-radius:3px;background:var(--line);overflow:hidden;vertical-align:middle}
 .prog i b{display:block;height:100%;background:var(--primary)}
-.prog i b.ok{background:#52c41a}
+.prog i b.ok{background:var(--ok)}
 .f-lab2{color:var(--muted);font-size:12px;margin-bottom:4px}
 textarea.inp{height:auto;min-height:80px;padding:6px 9px}
 .mut{color:var(--faint)}
-.denied{color:#98a4b3;font-size:12px}
+.denied{color:var(--faint);font-size:12px}
 </style>
+<link rel="stylesheet" href="assets/skin.css">
+<script data-skin-init>(function(){var s="paper";try{var v=localStorage.getItem("ssps-skin");if(v==="legacy"||v==="midnight")s=v;}catch(e){}document.documentElement.setAttribute("data-skin",s);})();</script>
 </head>
 <body>
 <div class="app"><aside id="nav"></aside>
@@ -60,7 +62,7 @@ textarea.inp{height:auto;min-height:80px;padding:6px 9px}
     return '<div class="fbar"><input class="inp" id="kw" placeholder="港口名 / 别名" value="' + C.esc(S.kw) + '" style="width:220px"><span class="muted nw" style="font-size:12px">别名用来匹配导入和旧表里的各种写法，一行一个。</span><span style="flex:1"></span><button class="btn primary" id="addPort"' + (can.master() ? '' : deny('只有物流管理员和系统管理员能维护港口')) + '>新增港口</button></div>' +
       '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>港口编码</th><th>中文名称</th><th>英文标准名</th><th>别名</th><th>国家</th><th>地区</th><th>性质</th><th>本港</th><th>状态</th><th></th></tr></thead><tbody>' +
       L.map((p) => '<tr><td>' + p.code + '</td><td><b>' + p.cn + '</b></td><td>' + p.en + '</td><td class="wrap"><div class="alias">' + (p.alias.length ? p.alias.map((a) => '<span>' + a + '</span>').join('') : '<span class="mut">—</span>') + '</div></td><td>' + p.country + '</td><td>' + (p.region || '—') + '</td><td>' + p.nature + '</td><td>' + (p.isLocal ? '<span class="tag blue">本港</span>' : '') + '</td><td><span class="tag ' + (p.status === '启用' ? 'green' : 'gray') + '">' + p.status + '</span></td><td><button class="btn ghost" data-ep="' + p.code + '"' + (can.master() ? '' : deny('没有修改权限')) + '>编辑</button></td></tr>').join('') + '</tbody></table></div>' +
-      '<div class="note" style="background:#f5f6f8;border-color:#d9dee5;color:#5b6878;margin-bottom:14px">原「物料信息」「标准航行周期」「船型」三列整列为空，已删除；航程是航线属性，放在「航程规则」页签。</div>';
+      '<div class="note" style="background:var(--surface-2);border-color:var(--line-strong);color:var(--muted);margin-bottom:14px">原「物料信息」「标准航行周期」「船型」三列整列为空，已删除；航程是航线属性，放在「航程规则」页签。</div>';
   }
   function portModal(code) {
     const p = code ? M.ports.find((x) => x.code === code) : null;
@@ -87,7 +89,7 @@ textarea.inp{height:auto;min-height:80px;padding:6px 9px}
     const miss = M.vessels.filter((v) => !v.mmsi).length;
     return '<div class="fbar"><input class="inp" id="kw" placeholder="船名 / MMSI" value="' + C.esc(S.kw) + '" style="width:220px"><button class="chipf' + (S.noMmsi ? ' on' : '') + '" id="nm">只看缺 MMSI（' + miss + '）</button><span style="flex:1"></span><button class="btn primary" id="addVessel"' + (can.vessel() ? '' : deny('没有权限')) + '>新增船舶</button></div>' +
       '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>船舶编号</th><th>MMSI' + C.ic('MMSI 必填且唯一；拖驳组合取拖轮的 MMSI。') + '</th><th>IMO</th><th>标准船名</th><th>船名别名</th><th>船型</th><th style="text-align:right">载重吨 DWT</th><th style="text-align:right">船长（米）</th><th>吨级档' + C.ic('吨级档的划分还没有确认，暂不填写。') + '</th><th></th></tr></thead><tbody>' +
-      L.map((v) => '<tr><td>' + v.id + '</td><td>' + (v.mmsi ? v.mmsi : '<span class="tag red">缺 MMSI</span>') + '</td><td>' + (v.imo || '<span class="mut">—</span>') + '</td><td><b>' + v.name + '</b></td><td>' + (v.alias.join('、') || '<span class="mut">—</span>') + '</td><td>' + v.type + '</td><td style="text-align:right">' + C.fmt(v.dwt) + '</td><td style="text-align:right">' + v.loa + '</td><td><span class="mut">待确认</span></td><td><button class="btn ghost" data-ev="' + v.id + '"' + (can.vessel() ? '' : deny('没有权限')) + '>编辑</button></td></tr>').join('') + '</tbody></table></div><div class="note" style="background:#f5f6f8;border-color:#d9dee5;color:#5b6878;margin-bottom:14px">共 ' + L.length + ' / ' + M.vessels.length + ' 条。航次里引用的是这里的标准船名，旧表的各种写法收在别名里。</div>';
+      L.map((v) => '<tr><td>' + v.id + '</td><td>' + (v.mmsi ? v.mmsi : '<span class="tag red">缺 MMSI</span>') + '</td><td>' + (v.imo || '<span class="mut">—</span>') + '</td><td><b>' + v.name + '</b></td><td>' + (v.alias.join('、') || '<span class="mut">—</span>') + '</td><td>' + v.type + '</td><td style="text-align:right">' + C.fmt(v.dwt) + '</td><td style="text-align:right">' + v.loa + '</td><td><span class="mut">待确认</span></td><td><button class="btn ghost" data-ev="' + v.id + '"' + (can.vessel() ? '' : deny('没有权限')) + '>编辑</button></td></tr>').join('') + '</tbody></table></div><div class="note" style="background:var(--surface-2);border-color:var(--line-strong);color:var(--muted);margin-bottom:14px">共 ' + L.length + ' / ' + M.vessels.length + ' 条。航次里引用的是这里的标准船名，旧表的各种写法收在别名里。</div>';
   }
   function vesselModal(vid) {
     const v = vid ? M.vessels.find((x) => x.id === vid) : null;
@@ -108,14 +110,14 @@ textarea.inp{height:auto;min-height:80px;padding:6px 9px}
     return '<div class="fbar"><span class="muted" style="font-size:12.5px">同航线实际样本 ≥ 5 条后，自动从「经验估算」切换为「历史统计」；每日自动重算一次。</span><span style="flex:1"></span><button class="btn primary" id="addRule"' + (can.route() ? '' : deny('只有部门主管和系统管理员能维护经验航程')) + '>新增规则</button></div>' +
       '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>规则编号</th><th>装港 → 卸港</th><th>适用业务类型' + C.ic('物资备件船借用大宗采购船同一航线的样本。') + '</th><th>吨级档</th><th>经验航程 / 上限（天）</th><th>维护人</th><th>样本数</th><th>统计 P50 / P80（天）</th><th>采用口径</th><th>生效航程（天）</th><th>最近重算</th><th>状态</th><th></th></tr></thead><tbody>' +
       L.map((r) => { const hist = r.samples >= 5, w = Math.min(100, r.samples / 5 * 100); return '<tr><td class="mono"><b>' + r.id + '</b></td><td><b>' + C.zh(r.load) + ' → ' + C.zh(r.disch) + '</b></td><td>' + r.biz.join('、') + '</td><td>' + (r.tier || '<span class="mut">未分档</span>') + '</td><td>' + r.exp + ' / ' + r.expMax + '</td><td>' + r.owner + '</td><td><span class="prog">' + r.samples + '<i><b class="' + (hist ? 'ok' : '') + '" style="width:' + w + '%"></b></i><span class="mut">/ 5</span></span></td><td>' + (r.p50 != null ? r.p50 + ' / ' + r.p80 : '<span class="mut">—</span>') + '</td><td>' + (hist ? '<span class="tag blue">历史统计</span>' : '<span class="tag amber">经验估算</span>') + '</td><td><b>' + r.effP50 + ' ～ ' + r.effP80 + '</b></td><td>' + r.recomputed + '</td><td><span class="tag ' + (r.status === '启用' ? 'green' : 'gray') + '">' + r.status + '</span></td><td><button class="btn ghost" data-er="' + r.id + '"' + (can.route() ? '' : deny('只有部门主管和系统管理员能修改经验航程')) + '>编辑</button></td></tr>'; }).join('') + '</tbody></table></div>' +
-      '<div class="note" style="background:#f5f6f8;border-color:#d9dee5;color:#5b6878;margin-bottom:14px">经验值冷启动：业务员先填常用航线的经验航程和上限，对应统计里的 P50（一半的船不超过）和 P80（八成的船不超过）。「吨级档」的枚举还没有确认，先不强制。</div>';
+      '<div class="note" style="background:var(--surface-2);border-color:var(--line-strong);color:var(--muted);margin-bottom:14px">经验值冷启动：业务员先填常用航线的经验航程和上限，对应统计里的 P50（一半的船不超过）和 P80（八成的船不超过）。「吨级档」的枚举还没有确认，先不强制。</div>';
   }
   function ruleModal(rid) {
     const r = rid ? M.routeRules.find((x) => x.id === rid) : null, ports = M.ports.map((p) => '<option value="' + p.en + '">' + p.cn.replace(/（.*?）/g, '') + '</option>').join('');
     C.modal({ title: r ? '编辑航程规则 · ' + r.id : '新增航程规则', ok: '保存', width: 540, body:
       '<div class="row2"><div class="field"><div class="f-lab2">装港</div><select class="inp" id="r1"' + (r ? ' disabled' : '') + '>' + ports + '</select></div><div class="field"><div class="f-lab2">卸港</div><select class="inp" id="r2"' + (r ? ' disabled' : '') + '>' + ports + '</select></div></div>' +
       '<div class="row2"><div class="field"><div class="f-lab2">经验航程（天）</div><input class="inp" id="r3" type="number" step="0.5" value="' + (r ? r.exp : '') + '"></div><div class="field"><div class="f-lab2">经验航程上限（天）</div><input class="inp" id="r4" type="number" step="0.5" value="' + (r ? r.expMax : '') + '"></div></div>' +
-      '<div class="field"><div class="f-lab2">适用业务类型</div><div style="display:flex;gap:14px;flex-wrap:wrap">' + ['大宗采购船', '成品销售船', '物资备件船'].map((b) => '<label><input type="checkbox" value="' + b + '"' + (!r || r.biz.includes(b) ? (r || b === '大宗采购船' ? ' checked' : '') : '') + '> ' + b + '</label>').join('') + '</div></div><div class="errtxt" id="re" style="color:#cf1322;font-size:12.5px"></div>' +
+      '<div class="field"><div class="f-lab2">适用业务类型</div><div style="display:flex;gap:14px;flex-wrap:wrap">' + ['大宗采购船', '成品销售船', '物资备件船'].map((b) => '<label><input type="checkbox" value="' + b + '"' + (!r || r.biz.includes(b) ? (r || b === '大宗采购船' ? ' checked' : '') : '') + '> ' + b + '</label>').join('') + '</div></div><div class="errtxt" id="re" style="color:var(--warn);font-size:12.5px"></div>' +
       (r ? '<div style="color:var(--muted);font-size:12px">样本 ' + r.samples + ' 条' + (r.samples >= 5 ? '，已使用历史统计，经验值仅作参考' : '，不足 5 条，仍使用这里填的经验值') + '。</div>' : ''),
       onOpen: (m) => { if (r) { m.querySelector('#r1').value = r.load; m.querySelector('#r2').value = r.disch; } else { m.querySelector('#r2').value = 'BAHODOPI'; } },
       onOk: (m) => { const q = (i) => m.querySelector('#' + i).value, a = +q('r3'), b = +q('r4'), biz = [...m.querySelectorAll('input[type=checkbox]:checked')].map((x) => x.value);

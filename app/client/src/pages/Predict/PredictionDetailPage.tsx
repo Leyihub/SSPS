@@ -45,8 +45,8 @@ export default function PredictionDetailPage() {
   // —— 结论 ——
   const c = pv.metric.value, depDn = pv.depart ? toDn(pv.depart) : null;
   const m3 = le
-    ? <div className="m"><div className="lb">最低泊位余量<Info text="窗口里每天算一次泊位余量率，取最低的一天。" /></div><div className={'big ' + cmrCls(c)}><b>{pct(c)}</b><span>{cmrLab(c)}</span></div><div className="sub">{c >= 0.3 ? <span style={{ color: '#237804' }}>✓ 不低于 30%</span> : <span style={{ color: '#ad2102' }}>✗ 低于 30%</span>}</div></div>
-    : <div className="m"><div className="lb">同期最多船数<Info text="窗口内每天与你的货量竞争同吨级泊位的船数，取最多的一天。" /></div><div className={'big ' + denCls(c, P.n)}><b>{c} 艘</b><span>{denLab(c, P.n)}</span></div><div className="sub">{c <= P.n * 0.7 ? <span style={{ color: '#237804' }}>✓ 余量不低于 30%</span> : <span style={{ color: '#ad2102' }}>✗ 余量低于 30%</span>}</div></div>;
+    ? <div className="m"><div className="lb">最低泊位余量<Info text="窗口里每天算一次泊位余量率，取最低的一天。" /></div><div className={'big ' + cmrCls(c)}><b>{pct(c)}</b><span>{cmrLab(c)}</span></div><div className="sub">{c >= 0.3 ? <span style={{ color: 'var(--ok)' }}>✓ 不低于 30%</span> : <span style={{ color: 'var(--warn)' }}>✗ 低于 30%</span>}</div></div>
+    : <div className="m"><div className="lb">同期最多船数<Info text="窗口内每天与你的货量竞争同吨级泊位的船数，取最多的一天。" /></div><div className={'big ' + denCls(c, P.n)}><b>{c} 艘</b><span>{denLab(c, P.n)}</span></div><div className="sub">{c <= P.n * 0.7 ? <span style={{ color: 'var(--ok)' }}>✓ 余量不低于 30%</span> : <span style={{ color: 'var(--warn)' }}>✗ 余量低于 30%</span>}</div></div>;
   const m1 = !prod
     ? <div className="m"><div className="lb">推荐发船日（离装港）<Info text="发船日就是船从装港出发的日期。系统用 P80（八成的船不超过的航程天数）从到港窗口的最后一天往前推。" /></div><div className="v">{pv.depart ? mdCn(pv.depart) : '—'}</div><div className="sub">{pv.depart ? wk(pv.depart) + ' · 按 P80 反推最晚到港日' : '缺少航程，无法推算'}</div></div>
     : <div className="m"><div className="lb">建议装船窗口（装港 · 本港侧）</div><div className="v">{mdCn(pv.window.from)} – {Number(pv.window.to.slice(8))}日</div><div className="sub">{wk(pv.window.from)} 起</div></div>;
@@ -157,7 +157,7 @@ export default function PredictionDetailPage() {
       </section>
       <div className="work"><div className="stack">
         <section className={'card plan-sum ' + plan.label + (trust ? ' low' : '')}>
-          <div className="card-h"><h2 className="nw">方案结论 · {plan.label === 'A' ? '推荐方案' : '备选方案'}</h2><span style={{ display: 'flex', gap: 8, alignItems: 'center' }}>{trust ? <span className="tag lowtrust">⚠ 低可信</span> : <span className="tag green">可信度 正常</span>}<span className={'tag ' + (le ? 'blue' : '')} style={le ? undefined : { background: '#f9f0ff', color: '#531dab', borderColor: '#d3adf7' }}>{le ? '近 15 天' : '15 天后'}</span></span></div>
+          <div className="card-h"><h2 className="nw">方案结论 · {plan.label === 'A' ? '推荐方案' : '备选方案'}</h2><span style={{ display: 'flex', gap: 8, alignItems: 'center' }}>{trust ? <span className="tag lowtrust">⚠ 低可信</span> : <span className="tag green">可信度 正常</span>}<span className={'tag ' + (le ? 'blue' : '')} style={le ? undefined : { background: 'var(--surface-2)', color: 'var(--info)', borderColor: 'var(--info-line)' }}>{le ? '近 15 天' : '15 天后'}</span></span></div>
           <div className="concl">{m1}{m2}{m3}</div>{timeline()}
         </section>
         {stockRes && <StockCard res={stockRes} today={today} inventorySource={(inv?.batch as R)?.fileName} />}

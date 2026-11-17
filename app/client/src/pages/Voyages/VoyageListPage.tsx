@@ -10,10 +10,10 @@ import './p04.css';
 
 const TABS: Array<[string, string | null]> = [['大宗', '大宗采购船'], ['成品', '成品销售船'], ['物资', '物资备件船'], ['全部', null]];
 const GROUPS: Array<{ k: string; label: string; sts: string[]; col: string; bg: string }> = [
-  { k: 'all', label: '当前页签航次', sts: [], col: '#1677ff', bg: '#e6f4ff' },
-  { k: 'sail', label: '航行中', sts: ['航行中'], col: '#0958d9', bg: '#e6f4ff' },
-  { k: 'port', label: '在港（等泊 / 作业）', sts: ['装港等泊', '装港装货', '卸港等泊', '卸港卸货'], col: '#d46b08', bg: '#fff7e6' },
-  { k: 'done', label: '已结束', sts: ['已结束', '已结束（取消）'], col: '#389e0d', bg: '#f6ffed' },
+  { k: 'all', label: '当前页签航次', sts: [], col: '#1a1a18', bg: '#f1eee9' },
+  { k: 'sail', label: '航行中', sts: ['航行中'], col: '#35342f', bg: '#f1eee9' },
+  { k: 'port', label: '在港（等泊 / 作业）', sts: ['装港等泊', '装港装货', '卸港等泊', '卸港卸货'], col: '#a86a2e', bg: '#f8f1e6' },
+  { k: 'done', label: '已结束', sts: ['已结束', '已结束（取消）'], col: '#2f7d55', bg: '#eef4ef' },
 ];
 const PAGE = 15;
 
@@ -57,7 +57,7 @@ export default function VoyageListPage() {
     <div className="pg-p04">
       <div className="card hero">
         <div className="ht">
-          <div className="av"><svg width="28" height="28" viewBox="0 0 40 40"><path d="M6 26h28l-4 7H10z" fill="#1677ff" /><path d="M11 25V15h14l4 10z" fill="#69b1ff" /><rect x="14" y="9" width="7" height="6" rx="1" fill="#0958d9" /></svg></div>
+          <div className="av"><svg width="28" height="28" viewBox="0 0 40 40"><path d="M6 26h28l-4 7H10z" fill="#1a1a18" /><path d="M11 25V15h14l4 10z" fill="#c9c5bd" /><rect x="14" y="9" width="7" height="6" rx="1" fill="#35342f" /></svg></div>
           <div><h1>航次列表</h1><p>全员可看全部航次；金额类字段按部门隔离，列表里不显示。</p></div>
         </div>
         <div className="btns"><button className="btn" onClick={exportAll}>导出 Excel</button>{me?.role !== '物流管理员' && <button className="btn primary" onClick={() => setShowNew(true)}>＋ 新建航次</button>}</div>

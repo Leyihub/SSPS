@@ -193,7 +193,7 @@ function BaseTab({ data, side, total, pooled, mmsi, focus, editing, setEditing, 
         {F('attr', <>业务属性<Info text="业务属性的枚举（内贸 / 外贸 / 雅加达物资 / 国内物资 / 本地 / 国际）是否合并为一套，待确认。" /></>, v.attr || <Dash />, <select className="inp" value={d.attr ?? ''} onChange={(e) => set('attr', e.target.value)}>{ATTRS.map((o) => <option key={o}>{o}</option>)}</select>)}
         {F('no', '船次号', v.no || <Dash />, txt('no'))}
         {F('vessel', '船舶', v.vessel ? <b>{v.vessel}</b> : <span className="mut">待宣船（可空）</span>, <select className="inp" value={d.vessel ?? ''} onChange={(e) => set('vessel', e.target.value)}><option value="">（待宣船）</option>{vessels.map((n) => <option key={n}>{n}</option>)}</select>)}
-        {F('mmsi', <>MMSI<Info text="MMSI 为必填（一期手工更新 ETA，船讯网用 MMSI 定位）。缺 MMSI 会进入数据质量清单。" /></>, v.vessel ? (mmsi || <span className="lock" style={{ color: '#cf1322' }}>缺 MMSI，请到主数据补录</span>) : <Dash />)}
+        {F('mmsi', <>MMSI<Info text="MMSI 为必填（一期手工更新 ETA，船讯网用 MMSI 定位）。缺 MMSI 会进入数据质量清单。" /></>, v.vessel ? (mmsi || <span className="lock" style={{ color: 'var(--warn)' }}>缺 MMSI，请到主数据补录</span>) : <Dash />)}
         {F('carrier', '承运方', v.carrier || <Dash />, txt('carrier'))}{F('shipVoy', '船方航次号', v.shipVoy || <Dash />, txt('shipVoy'))}
         {F('load', '装港', zh(v.load))}{F('disch', '卸港', zh(v.disch))}
         {F('disch2', '第二卸港', v.disch2 ? zh(v.disch2) : <Dash />, <select className="inp" value={d.disch2 ?? ''} onChange={(e) => set('disch2', e.target.value)}><option value="">（无）</option>{portList.map((p) => <option key={p} value={p}>{zh(p)}</option>)}</select>)}
@@ -205,7 +205,7 @@ function BaseTab({ data, side, total, pooled, mmsi, focus, editing, setEditing, 
         {prod && <>{F('laycanS', '受载期始', full(v.laycanS), dtin('laycanS'))}{F('laycanE', '受载期止', full(v.laycanE), dtin('laycanE'))}</>}
         {F('planLoadArr', '计划抵装港', full(v.planLoadArr), dtin('planLoadArr'))}{F('actLoadArr', '实际抵装港', full(v.actLoadArr))}{F('loadBerth', '装港靠泊', full(v.loadBerth))}
         {F('planLoadDep', '计划离装港', full(v.planLoadDep), dtin('planLoadDep'))}
-        {F('actLoadDep', <>实际离装港<Info text="状态进入「航行中」即必填。这是学习航程的关键样本。" /></>, v.actLoadDep ? v.actLoadDep : v.actDischArr ? <span className="lock" style={{ color: '#cf1322' }}>缺失，待补</span> : '—')}
+        {F('actLoadDep', <>实际离装港<Info text="状态进入「航行中」即必填。这是学习航程的关键样本。" /></>, v.actLoadDep ? v.actLoadDep : v.actDischArr ? <span className="lock" style={{ color: 'var(--warn)' }}>缺失，待补</span> : '—')}
         {!prod && <>{F('planDischS', '计划抵卸港窗口始', full(v.planDischS), dtin('planDischS'))}{F('planDischE', '计划抵卸港窗口止', full(v.planDischE), dtin('planDischE'))}</>}
         {F('eta', '当前 ETA（卸港）', v.eta ? <>{v.eta}{etaStale && <> <span className="tag red">已超 3 天未更新</span></>}</> : '—')}
         {F('actDischArr', '实际抵卸港', full(v.actDischArr))}{F('dischBerth', '卸港靠泊', full(v.dischBerth))}{F('dischDep', '卸港离港', full(v.dischDep))}
@@ -249,7 +249,7 @@ function CargoTab({ data, bulk, prod, onEdit }: { data: VoyageDetail; bulk: bool
             <td className="nw">{c.big || '—'}</td><td className="nw">{c.kind || '—'}</td><td className="nw">{c.name || '—'}</td>
             {bulk && <><td className="nw">{c.unit || '—'}</td><td className="nw">{c.dept2 || '—'}</td></>}
             <td className="nw">{c.party || '—'}</td><td style={{ textAlign: 'right' }}>{fmt(c.tons)}</td><td style={{ textAlign: 'right' }}>{fmt(c.loadTons)}</td><td className="nw">{c.over || '—'}</td><td className="nw">{c.exec || '—'}</td>
-            {can.edit && <td className="nw"><button className="btn ghost" onClick={() => onEdit(c)}>编辑</button><button className="btn ghost" style={{ color: '#cf1322' }} onClick={() => { if (L.length <= 1) return toast.error('至少保留一行货物明细'); setAsk(c); }}>删除</button></td>}</tr>
+            {can.edit && <td className="nw"><button className="btn ghost" onClick={() => onEdit(c)}>编辑</button><button className="btn ghost" style={{ color: 'var(--warn)' }} onClick={() => { if (L.length <= 1) return toast.error('至少保留一行货物明细'); setAsk(c); }}>删除</button></td>}</tr>
         )) : <tr><td colSpan={11}><Empty>没有货物明细</Empty></td></tr>}</tbody></table></div>
       <div className="sumline"><span>共 <b>{L.length}</b> 行</span><span>总货量 <b>{fmt(tot)}</b> 吨</span><span>拼船：<b>{L.length >= 2 ? '是' : '否'}</b><Info text="货物明细有 2 行及以上就是拼船。" /></span></div>
       {can.edit && <div className="bar2"><span className="note2">一份合同或一类货物一行；多个合同的船要拆成多行。</span><button className="btn primary" onClick={() => onEdit(null)}>新增明细</button></div>}

@@ -26,18 +26,18 @@ export function StockChart({ trend, daily, latest, gap, marks, warnDays = 15 }: 
   const endRed = marks.length ? Math.min(...marks.map((m) => m.d)) : until;
   return (
     <div ref={box}><svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ display: 'block', maxWidth: '100%', height: 'auto' }} role="img" aria-label="库存消耗模拟曲线">
-      {[0, 1, 2, 3, 4].map((k) => { const v = (ymax / 1.08 * k) / 4; return <g key={k}><line x1={L} x2={W - R} y1={y(v)} y2={y(v)} stroke="#eef0f3" /><text x={L - 6} y={y(v) + 4} textAnchor="end" fontSize="11" fill="#98a4b3">{fmtW(v)}</text></g>; })}
-      {Array.from({ length: Math.floor((until - T) / step) + 1 }, (_, i) => T + i * step).map((d) => <text key={d} x={x(d)} y={H - 12} textAnchor="middle" fontSize="11" fill="#98a4b3">{nMd(d)}</text>)}
-      {inR(so) && endRed > so! && <rect x={x(so!)} y={Tp} width={Math.max(0, x(Math.min(endRed, until)) - x(so!))} height={H - Tp - B} fill="#fff1f0" opacity=".75" />}
-      <line x1={L} x2={W - R} y1={y(warn)} y2={y(warn)} stroke="#fa8c16" strokeDasharray="5 4" />
-      <text x={W - R - 4} y={y(warn) - 5} textAnchor="end" fontSize="11" fill="#d46b08">危险线（{warnDays} 天用量）</text>
-      <path d={`${path(trend.base)} L${x(until)} ${y(0)} L${x(T)} ${y(0)} Z`} fill="#e6f4ff" opacity=".8" />
-      <path d={path(trend.base)} fill="none" stroke="#1677ff" strokeWidth="2.2" />
-      {trend.lines.map((l, i) => <path key={i} d={path(l.pts.filter((p) => p[0] >= l.d - 1))} fill="none" stroke={marks[i]?.color ?? '#1677ff'} strokeWidth="2.4" strokeDasharray="6 4" />)}
-      {vline(T, '#8c8c8c', '今天', 0, true)}
-      {inR(latest) && so != null && vline(latest!, '#fa8c16', '最晚到港 ' + nMd(latest!), 16, true, latest! >= T + 8)}
-      {gap && inR(gap.from) && vline(gap.from, '#fa8c16', '短缺口 ' + nMd(gap.from), 0, false)}
-      {inR(so) && vline(so!, '#cf1322', '断料日 ' + nMd(so!), 0, false)}
+      {[0, 1, 2, 3, 4].map((k) => { const v = (ymax / 1.08 * k) / 4; return <g key={k}><line x1={L} x2={W - R} y1={y(v)} y2={y(v)} stroke="#f5f3ee" /><text x={L - 6} y={y(v) + 4} textAnchor="end" fontSize="11" fill="#aaa49a">{fmtW(v)}</text></g>; })}
+      {Array.from({ length: Math.floor((until - T) / step) + 1 }, (_, i) => T + i * step).map((d) => <text key={d} x={x(d)} y={H - 12} textAnchor="middle" fontSize="11" fill="#aaa49a">{nMd(d)}</text>)}
+      {inR(so) && endRed > so! && <rect x={x(so!)} y={Tp} width={Math.max(0, x(Math.min(endRed, until)) - x(so!))} height={H - Tp - B} fill="#faeeea" opacity=".75" />}
+      <line x1={L} x2={W - R} y1={y(warn)} y2={y(warn)} stroke="#a86a2e" strokeDasharray="5 4" />
+      <text x={W - R - 4} y={y(warn) - 5} textAnchor="end" fontSize="11" fill="#a86a2e">危险线（{warnDays} 天用量）</text>
+      <path d={`${path(trend.base)} L${x(until)} ${y(0)} L${x(T)} ${y(0)} Z`} fill="#f1eee9" opacity=".8" />
+      <path d={path(trend.base)} fill="none" stroke="#1a1a18" strokeWidth="2.2" />
+      {trend.lines.map((l, i) => <path key={i} d={path(l.pts.filter((p) => p[0] >= l.d - 1))} fill="none" stroke={marks[i]?.color ?? '#1a1a18'} strokeWidth="2.4" strokeDasharray="6 4" />)}
+      {vline(T, '#8a857d', '今天', 0, true)}
+      {inR(latest) && so != null && vline(latest!, '#a86a2e', '最晚到港 ' + nMd(latest!), 16, true, latest! >= T + 8)}
+      {gap && inR(gap.from) && vline(gap.from, '#a86a2e', '短缺口 ' + nMd(gap.from), 0, false)}
+      {inR(so) && vline(so!, '#c0452f', '断料日 ' + nMd(so!), 0, false)}
       {marks.filter((m) => inR(m.d)).map((m) => (
         <g key={m.label}><line x1={x(m.d)} x2={x(m.d)} y1={H - B - 40} y2={H - B} stroke={m.color} strokeWidth="2.4" /><circle cx={x(m.d)} cy={H - B - 40} r="9" fill={m.color} /><text x={x(m.d)} y={H - B - 36} textAnchor="middle" fontSize="11" fontWeight="700" fill="#fff">{m.label}</text></g>
       ))}

@@ -12,7 +12,7 @@
 .tile.on{border-color:var(--primary);background:var(--primary-bg)}
 .tile b{font-size:24px;line-height:1.2;display:block}
 .tile span{color:var(--muted);font-size:13px;display:flex;align-items:center;white-space:nowrap}
-.tile.hot b{color:#d4380d}
+.tile.hot b{color:var(--warn)}
 .fbar{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line-2)}
 .fbar .inp{width:auto}
 .fbar .lab{color:var(--muted);font-size:12px;white-space:nowrap}
@@ -22,8 +22,10 @@
 .obj a{color:var(--primary);text-decoration:none;font-weight:600}.obj a:hover{text-decoration:underline}
 .obj small{display:block;color:var(--muted);font-size:12px;font-weight:400}
 .viewer{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:12px;white-space:nowrap}
-.viewer select{height:28px;padding:0 6px;border:1px solid #d3d9e1;border-radius:6px;background:#fff}
+.viewer select{height:28px;padding:0 6px;border:1px solid var(--line-strong);border-radius:6px;background:var(--surface)}
 </style>
+<link rel="stylesheet" href="assets/skin.css">
+<script data-skin-init>(function(){var s="paper";try{var v=localStorage.getItem("ssps-skin");if(v==="legacy"||v==="midnight")s=v;}catch(e){}document.documentElement.setAttribute("data-skin",s);})();</script>
 </head>
 <body>
 <div class="app"><aside id="nav"></aside>

@@ -18,37 +18,37 @@
 .hints{display:flex;flex-wrap:wrap;gap:6px 22px;align-items:center;padding:0 16px 10px}
 .hints .mini{margin:0}.hints .pathbox{margin:0}.hints .err{margin:0}
 #sumbar:empty{display:none}
-#sumbar{border-top:1px solid var(--line-2);background:#fafbfd;border-radius:0 0 12px 12px}
+#sumbar{border-top:1px solid var(--line-2);background:var(--surface-2);border-radius:0 0 12px 12px}
 /* 示例场景 */
 .pbar{display:grid;grid-template-columns:repeat(auto-fit,minmax(196px,1fr));gap:8px;padding:10px 16px 12px}
-.preset{display:flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:8px;background:#fafbfc;padding:6px 10px;cursor:pointer;text-align:left;min-width:0}
-.preset:hover{border-color:var(--primary);background:#f5faff}
+.preset{display:flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);padding:6px 10px;cursor:pointer;text-align:left;min-width:0}
+.preset:hover{border-color:var(--primary);background:var(--surface-2)}
 .preset.on{border-color:var(--primary);background:var(--primary-bg)}
-.preset .no{flex:none;width:18px;height:18px;border-radius:50%;background:#26394f;color:#fff;font-size:11px;display:grid;place-items:center}
+.preset .no{flex:none;width:18px;height:18px;border-radius:50%;background:var(--ink);color:var(--on-ink);font-size:11px;display:grid;place-items:center}
 .preset b{font-weight:500;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* 灰色提示图标：悬停显示浮窗 */
-.i{display:inline-grid;place-items:center;width:15px;height:15px;border-radius:50%;background:#c9d0d9;color:#fff;font:600 10px/1 Georgia,serif;font-style:italic;cursor:help;vertical-align:1px;margin-left:5px;flex:none;user-select:none}
-.i:hover{background:#8a97a8}
-#tipbox{position:fixed;z-index:400;background:#1f2d3d;color:#fff;border-radius:8px;padding:9px 12px;font-size:12.5px;line-height:1.7;max-width:320px;box-shadow:0 8px 24px rgba(16,24,40,.3);display:none;pointer-events:none}
+.i{display:inline-grid;place-items:center;width:15px;height:15px;border-radius:50%;background:var(--line-strong);color:var(--on-ink);font:600 10px/1 Georgia,serif;font-style:italic;cursor:help;vertical-align:1px;margin-left:5px;flex:none;user-select:none}
+.i:hover{background:var(--muted)}
+#tipbox{position:fixed;z-index:400;background:var(--ink);color:var(--on-ink);border-radius:8px;padding:9px 12px;font-size:12.5px;line-height:1.7;max-width:320px;box-shadow:0 8px 24px rgba(26,26,24,.3);display:none;pointer-events:none}
 /* 左：输入 */
 .f-lab{display:flex;align-items:center;margin-bottom:4px;color:var(--muted);font-size:12px;white-space:nowrap}
 .field{margin-bottom:12px}
-.lockedv{display:flex;align-items:center;gap:6px;height:32px;border:1px dashed #c4cad3;border-radius:6px;padding:0 9px;background:#f7f8fa;color:var(--muted);white-space:nowrap}
+.lockedv{display:flex;align-items:center;gap:6px;height:32px;border:1px dashed var(--line-strong);border-radius:6px;padding:0 9px;background:var(--surface-2);color:var(--muted);white-space:nowrap}
 .mini{font-size:12px;color:var(--muted);margin-top:4px;display:flex;align-items:center;white-space:nowrap}
 .pathbox{border-radius:8px;padding:6px 10px;margin:2px 0 12px;border:1px solid;font-size:12.5px;display:flex;align-items:center;white-space:nowrap}
-.pathbox.le{background:#f0f7ff;border-color:#b7d8ff;color:#0958d9}.pathbox.gt{background:#f9f0ff;border-color:#d3adf7;color:#531dab}
+.pathbox.le{background:var(--surface-2);border-color:var(--line);color:var(--primary-hover)}.pathbox.gt{background:var(--surface-2);border-color:var(--info-line);color:var(--info)}
 /* 右：结果概览 */
 .sum{padding:12px 16px}
 .sum-t{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
 .sum-t h2{margin:0;font-size:15px;white-space:nowrap}
 .sum-t span{color:var(--muted);white-space:nowrap}
-.sum-m{display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap;color:#3b4a5c}
+.sum-m{display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap;color:var(--text)}
 .sum-m .sp{flex:1}
 .cands{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);font-size:12px}
 .cands .ct{width:100%;color:var(--muted);font-size:12.5px;white-space:nowrap}
 .cand{display:inline-flex;gap:5px;align-items:center;border:1px solid;border-radius:6px;padding:1px 8px;line-height:20px;white-space:nowrap}
-.cand i{font-style:normal;font-weight:600;color:#fff;background:var(--primary);border-radius:3px;padding:0 5px;font-size:11px}
-.cand i.b{background:#08979c}
+.cand i{font-style:normal;font-weight:600;color:var(--on-ink);background:var(--primary);border-radius:3px;padding:0 5px;font-size:11px}
+.cand i.b{background:var(--info)}
 .cand.sp{border-style:dashed}
 .link{border:0;background:none;color:var(--primary);cursor:pointer;padding:0;font-size:13px;white-space:nowrap}
 /* 方案卡片 */
@@ -56,19 +56,19 @@
 /* 发船方案建议 */
 .pcard{margin-bottom:16px}
 .pcard .plans{margin:0;padding:4px 16px 16px}
-.pcard .plan{box-shadow:none;border:1px solid #e3e8ef}
+.pcard .plan{box-shadow:none;border:1px solid var(--line)}
 .pcard .plan:before{display:none}
-.pcard .plan.A{background:linear-gradient(180deg,#f3f8ff 0,#fff 120px);border-color:#91caff}
-.pcard .plan.B{background:linear-gradient(180deg,#f2fbfa 0,#fff 120px);border-color:#87e8de}
-.pcard .plan.low{border:1.5px dashed #ff9c6e}
-.pcard .plan.noplan{border:1.5px dashed #c4cad3}
-.pcard .mgrid .m+.m{border-left:1px solid #e6ebf2;padding-left:14px}
-.pcard .kvs{margin:10px 16px 0;padding:8px 12px;background:#f7f9fc;border-radius:8px}
+.pcard .plan.A{background:var(--surface-2);border-color:var(--line-strong)}
+.pcard .plan.B{background:var(--surface-2);border-color:var(--info-line)}
+.pcard .plan.low{border:1.5px dashed var(--warn-line)}
+.pcard .plan.noplan{border:1.5px dashed var(--line-strong)}
+.pcard .mgrid .m+.m{border-left:1px solid var(--line);padding-left:14px}
+.pcard .kvs{margin:10px 16px 0;padding:8px 12px;background:var(--surface-2);border-radius:8px}
 .plan{position:relative;overflow:hidden;min-width:0}
 .plan:before{content:"";position:absolute;left:0;right:0;top:0;height:4px;background:var(--primary)}
-.plan.B:before{background:#08979c}
-.plan.low{border:1.5px dashed #ff9c6e}
-.plan.noplan{border:1.5px dashed #c4cad3;background:repeating-linear-gradient(135deg,#fbfbfc 0,#fbfbfc 8px,#f2f3f5 8px,#f2f3f5 9px)}
+.plan.B:before{background:var(--info)}
+.plan.low{border:1.5px dashed var(--warn-line)}
+.plan.noplan{border:1.5px dashed var(--line-strong);background:repeating-linear-gradient(135deg,#f6f4ef 0,#f6f4ef 8px,#c9c5bd 8px,#c9c5bd 9px)}
 .plan-h{display:flex;align-items:center;gap:8px;padding:16px 16px 4px;white-space:nowrap}
 .plan-h h3{margin:0;font-size:17px}
 .plan-h .sp{flex:1}
@@ -89,34 +89,34 @@
 .plan-f .sp{flex:1}
 .plan-f .grey{color:var(--faint);font-size:12px;display:flex;align-items:center}
 .plan-f .btn{white-space:nowrap}
-.badge{border-radius:4px;color:#fff;padding:0 7px;font-size:12px;line-height:20px;background:var(--primary)}
+.badge{border-radius:4px;color:var(--on-ink);padding:0 7px;font-size:12px;line-height:20px;background:var(--primary)}
 .emptymsg{padding:14px 16px 20px;color:var(--muted)}
 .emptymsg b{display:block;font-size:15px;margin-bottom:2px;color:var(--text)}
 .banner{margin-top:16px;padding:20px 22px;display:flex;gap:16px;align-items:center}
-.banner .ico{flex:none;width:56px;height:56px;border-radius:12px;background:var(--stripe);border:1px solid #c4cad3}
-.banner.err .ico{background:#fff1f0;border-color:#ffa39e;display:grid;place-items:center;font-size:26px;color:#cf1322}
+.banner .ico{flex:none;width:56px;height:56px;border-radius:12px;background:var(--stripe);border:1px solid var(--line-strong)}
+.banner.err .ico{background:var(--warn-bg);border-color:var(--warn-line);display:grid;place-items:center;font-size:26px;color:var(--warn)}
 .banner h3{margin:0 0 2px;font-size:16px}.banner p{margin:0;color:var(--muted)}
 /* 日历 */
 .cal{display:grid;grid-template-columns:88px repeat(30,minmax(0,1fr));gap:3px;padding:12px 16px 4px;align-items:stretch}
 .cal .lab{font-size:12px;color:var(--muted);display:flex;align-items:center;justify-content:flex-end;padding-right:8px;white-space:nowrap}
 .cal .band{border-radius:6px 6px 0 0;padding:4px 8px;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cal .band.le{background:#e6f1ff;color:#0958d9;border-bottom:2px solid #1677ff}
-.cal .band.gt{background:#f4ebff;color:#531dab;border-bottom:2px solid #9254de}
+.cal .band.le{background:var(--surface-2);color:var(--primary-hover);border-bottom:2px solid var(--primary)}
+.cal .band.gt{background:var(--surface-2);color:var(--info);border-bottom:2px solid var(--info)}
 .cal .dh{text-align:center;font-size:11.5px;line-height:1.25;padding:2px 0;white-space:nowrap}
 .cal .dh b{display:block;font-size:12px}
-.cal .dh.today b{color:var(--primary)}.cal .dh.wkend{color:#cf1322}
-.cal .dh.split,.cal .cell.split{box-shadow:-2px 0 0 #9254de}
+.cal .dh.today b{color:var(--primary)}.cal .dh.wkend{color:var(--warn)}
+.cal .dh.split,.cal .cell.split{box-shadow:-2px 0 0 var(--info)}
 .cell{height:50px;border:1px solid;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px;position:relative;cursor:pointer;white-space:nowrap;overflow:hidden}
-.cell.sel{outline:2.5px solid #26394f;outline-offset:1px;z-index:3}
+.cell.sel{outline:2.5px solid var(--ink);outline-offset:1px;z-index:3}
 .cell b{font-size:13px;line-height:1}
 .cell .bar{display:block;width:70%;height:4px;border-radius:3px;background:rgba(0,0,0,.1);overflow:hidden}
 .cell .bar i{display:block;height:100%;background:currentColor;opacity:.75}
 .cell .dg{display:flex;gap:1px;width:74%;height:4px}
 .cell .dg i{flex:1;border-radius:1px;background:rgba(0,0,0,.12)}.cell .dg i.on{background:currentColor;opacity:.8}
-.cell.nd i{font-style:normal;font-size:10px;color:#7b8696;background:rgba(255,255,255,.85);padding:0 3px;border-radius:3px}
+.cell.nd i{font-style:normal;font-size:10px;color:var(--muted);background:rgba(255,255,255,.85);padding:0 3px;border-radius:3px}
 .cell:hover{outline:2px solid var(--primary);z-index:2}
-.mk{height:20px;border-radius:4px;font-size:11px;display:flex;align-items:center;padding:0 6px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mk.w{background:#d0d7e2;color:#44546a}.mk.a{background:var(--primary)}.mk.b{background:#08979c}
+.mk{height:20px;border-radius:4px;font-size:11px;display:flex;align-items:center;padding:0 6px;color:var(--on-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mk.w{background:var(--line-strong);color:var(--text)}.mk.a{background:var(--primary)}.mk.b{background:var(--info)}
 .mk.low{background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.28) 0,rgba(255,255,255,.28) 4px,transparent 4px,transparent 8px)}
 .legend{display:flex;flex-wrap:wrap;gap:6px 22px;align-items:center;padding:8px 16px 14px;font-size:12px;color:var(--muted)}
 .legend .g{display:flex;align-items:center;gap:5px;white-space:nowrap}
@@ -135,9 +135,9 @@
 .bt b{font-size:13px}.bt small{font-size:11px;opacity:.85}
 .bt.free{background:var(--c1-bg);color:var(--c1-fg);border-color:var(--c1-bd)}
 .bt.occ{background:var(--c3-bg);color:var(--c3-fg);border-color:var(--c3-bd)}
-.bt.cap{background:#e6f4ff;color:#0958d9;border-color:#91caff}
-.bt.nd{background:var(--stripe);color:#5b6878;border-color:#c4cad3}
-.bt.off{background:#eef0f3;color:#a7b0bc;border-color:#dfe3e8}
+.bt.cap{background:var(--primary-bg);color:var(--primary-hover);border-color:var(--line-strong)}
+.bt.nd{background:var(--stripe);color:var(--muted);border-color:var(--line-strong)}
+.bt.off{background:var(--surface-2);color:var(--faint);border-color:var(--line-strong)}
 .bt:hover{outline:2px solid var(--primary);z-index:2}
 .bm-l{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:12px;font-size:12px;color:var(--muted)}
 .bm-l .g{display:flex;align-items:center;gap:5px;white-space:nowrap}
@@ -146,43 +146,45 @@
 .stk{margin-top:0}
 .stk-b{display:grid;grid-template-columns:270px minmax(0,1fr);gap:16px;padding:6px 16px 12px}
 .stk-l{display:flex;flex-direction:column;gap:8px}
-.sr{display:flex;align-items:center;justify-content:space-between;gap:8px;border:1px solid #e6ebf2;border-radius:8px;padding:9px 12px;background:#fbfcfe;white-space:nowrap}
+.sr{display:flex;align-items:center;justify-content:space-between;gap:8px;border:1px solid var(--line);border-radius:8px;padding:9px 12px;background:var(--surface-2);white-space:nowrap}
 .sr .k{color:var(--muted);font-size:13px}.sr .v{font-weight:700;font-size:16px}.sr .v small{font-size:12px;font-weight:500;color:var(--muted);margin-left:3px}
-.sr.red{background:#fff1f0;border-color:#ffccc7}.sr.red .v{color:#cf1322}
-.sr.grn{background:#f6ffed;border-color:#d9f7be}.sr.grn .v{color:#237804}
-.stk-r{border:1px solid #e6ebf2;border-radius:10px;min-width:0}
+.sr.red{background:var(--warn-bg);border-color:var(--warn-line)}.sr.red .v{color:var(--warn)}
+.sr.grn{background:var(--ok-bg);border-color:var(--ok-line)}.sr.grn .v{color:var(--ok)}
+.stk-r{border:1px solid var(--line);border-radius:10px;min-width:0}
 .tabs2{display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid var(--line-2)}
-.tabs2 .tb{border:0;background:none;padding:8px 6px;font-size:14px;color:#5b6878;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
-.tabs2 .tb.on{color:#0958d9;border-bottom-color:#1677ff;font-weight:600}
+.tabs2 .tb{border:0;background:none;padding:8px 6px;font-size:14px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.tabs2 .tb.on{color:var(--primary-hover);border-bottom-color:var(--primary);font-weight:600}
 .tabs2 .sp{flex:1}
 .rseg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
-.rseg button{border:0;background:#fff;padding:3px 12px;font-size:13px;cursor:pointer;color:#3b4a5c;border-left:1px solid var(--line);white-space:nowrap}
-.rseg button:first-child{border-left:0}.rseg button.on{background:#1677ff;color:#fff}
-.lgd{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;font-size:12px;color:#5b6878;padding:8px 12px 0}
+.rseg button{border:0;background:var(--surface);padding:3px 12px;font-size:13px;cursor:pointer;color:var(--text);border-left:1px solid var(--line);white-space:nowrap}
+.rseg button:first-child{border-left:0}.rseg button.on{background:var(--primary);color:var(--on-ink)}
+.lgd{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;font-size:12px;color:var(--muted);padding:8px 12px 0}
 .lgd i{display:inline-block;width:22px;height:0;border-top:2.4px solid;vertical-align:middle;margin-right:5px}
 .dtw{max-height:300px;overflow:auto;margin:10px 12px}
 .dt{width:100%;border-collapse:collapse;font-size:13px}
-.dt th{text-align:left;color:var(--muted);font-weight:500;padding:6px 8px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff}
+.dt th{text-align:left;color:var(--muted);font-weight:500;padding:6px 8px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--surface)}
 .dt td{padding:5px 8px;border-bottom:1px solid var(--line-2);white-space:nowrap}
-.dt .r{text-align:right}.dt tr.k td{background:#fffbe6}.dt tr.so td{background:#fff1f0;color:#a8071a}
+.dt .r{text-align:right}.dt tr.k td{background:var(--caution-bg)}.dt tr.so td{background:var(--warn-bg);color:var(--warn)}
 @media(max-width:1100px){.stk-b{grid-template-columns:1fr}.fbtn{margin-left:0}}
 .stk .facts{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px 16px;padding:10px 16px 2px}
 .stk .facts .k{font-size:12px;color:var(--muted);white-space:nowrap}
 .stk .facts .v{font-size:18px;font-weight:700;white-space:nowrap}
 .stk .facts .v small{font-size:12px;font-weight:500;color:var(--muted);margin-left:3px}
 .lvl{display:inline-block;border-radius:4px;padding:0 8px;font-size:12px;line-height:20px;font-weight:600;margin-left:8px}
-.lvl.ok{background:#f6ffed;color:#237804;border:1px solid #b7eb8f}.lvl.mid{background:#fff7e6;color:#ad4e00;border:1px solid #ffd591}.lvl.bad{background:#fff1f0;color:#a8071a;border:1px solid #ffa39e}
+.lvl.ok{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-line)}.lvl.mid{background:var(--caution-bg);color:var(--caution);border:1px solid var(--caution-line)}.lvl.bad{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-line)}
 .stk .bn{margin:8px 16px 0;border-radius:8px;padding:8px 12px;font-size:13px;line-height:1.7}
-.stk .bn.red{background:#fff1f0;border:1px solid #ffa39e;color:#a8071a}
-.stk .bn.blu{background:#f0f7ff;border:1px solid #b7d8ff;color:#0958d9}
+.stk .bn.red{background:var(--warn-bg);border:1px solid var(--warn-line);color:var(--warn)}
+.stk .bn.blu{background:var(--surface-2);border:1px solid var(--line);color:var(--primary-hover)}
 .stk-r > div > svg{padding:0 8px 8px}
-.mk.lt{background:#fa8c16}.mk.so{background:#cf1322}
+.mk.lt{background:var(--caution)}.mk.so{background:var(--warn)}
 /* 弹窗 */
-.annc{background:#f7f9fc;border:1px solid var(--line);border-radius:8px;padding:12px 14px;line-height:2;font-size:13.5px}
-.annc .v{background:#e6f4ff;color:#0958d9;border-radius:3px;padding:0 3px;font-weight:600}
+.annc{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:12px 14px;line-height:2;font-size:13.5px}
+.annc .v{background:var(--primary-bg);color:var(--primary-hover);border-radius:3px;padding:0 3px;font-weight:600}
 .radio{display:flex;gap:8px;align-items:flex-start;border:1px solid var(--line);border-radius:8px;padding:9px 11px;margin-bottom:8px;cursor:pointer}
 .radio.on{border-color:var(--primary);background:var(--primary-bg)}
 </style>
+<link rel="stylesheet" href="assets/skin.css">
+<script data-skin-init>(function(){var s="paper";try{var v=localStorage.getItem("ssps-skin");if(v==="legacy"||v==="midnight")s=v;}catch(e){}document.documentElement.setAttribute("data-skin",s);})();</script>
 </head>
 <body>
 <div class="app">
@@ -203,7 +205,7 @@
       </section>
 
       <section class="card inbar">
-        <div class="card-h"><h2 class="nw"><svg width="16" height="16" viewBox="0 0 24 24" style="margin-right:6px"><path d="M4 6h16M4 12h16M4 18h10" stroke="#1677ff" stroke-width="2.2" stroke-linecap="round"/></svg>预测输入</h2></div>
+        <div class="card-h"><h2 class="nw"><svg width="16" height="16" viewBox="0 0 24 24" style="margin-right:6px"><path d="M4 6h16M4 12h16M4 18h10" stroke="#1a1a18" stroke-width="2.2" stroke-linecap="round"/></svg>预测输入</h2></div>
         <div class="frow">
           <div class="fc"><div class="f-lab">业务类型</div><div class="seg" id="biz"></div></div>
           <div class="fc" style="width:130px"><div class="f-lab">货量（吨）</div><input class="inp" id="tons" type="number" min="1000" step="1000"></div>
@@ -390,7 +392,7 @@
   }
   function planCard(p, res, idx) {
     const P = res.pool, i = res.input, prod = i.biz === '成品销售船';
-    if (!p) return '<div class="card plan noplan B"><div class="plan-h"><h3 style="color:#8a94a3">备选方案</h3><span class="tag gray">暂无</span></div>' +
+    if (!p) return '<div class="card plan noplan B"><div class="plan-h"><h3 style="color:var(--muted)">备选方案</h3><span class="tag gray">暂无</span></div>' +
       '<div class="emptymsg"><b>没有可用的备选方案</b>窗口内找不到与推荐方案错开、且符合条件的时间。</div></div>';
     const low = p.trust === '低可信';
     const cls = 'card plan ' + p.label + (low ? ' low' : '');
@@ -398,7 +400,7 @@
     const trust = low ? '<span class="tag lowtrust">⚠ 低可信</span>' + ic(p.reasons.join('；') + '。')
                       : '<span class="tag green">可信度 正常</span>';
     const stockTag = p.stock && p.stock.state === 'out' ? '<span class="tag red">⚠ 断料 ' + p.stock.gap + ' 天</span>' : (p.stock && p.stock.state === 'tight' ? '<span class="tag amber">缓冲不足</span>' : '');
-    const pathTag = p.mode === 'cmr' ? '<span class="tag blue">近 15 天</span>' : '<span class="tag" style="background:#f9f0ff;color:#531dab;border-color:#d3adf7">15 天后</span>';
+    const pathTag = p.mode === 'cmr' ? '<span class="tag blue">近 15 天</span>' : '<span class="tag" style="background:var(--surface-2);color:var(--info);border-color:var(--info-line)">15 天后</span>';
     let m1, m2, m3;
     if (!prod) {
       m1 = '<div class="m"><div class="lb">推荐发船日（离装港）' + ic('发船日就是船从装港出发的日期。系统用 P80（八成的船不超过的航程天数）从到港窗口的最后一天往前推，这样船大概率不会晚于窗口到港。') + '</div><div class="v">' + (p.depart != null ? mdCn(p.depart) : '—') + '</div><div class="sub">' + (p.depart != null ? wk(p.depart) + ' · 按 P80 反推最晚到港日' : '缺少航程，无法推算') + '</div></div>';
@@ -411,12 +413,12 @@
       const c = p.c.metric;
       m3 = '<div class="m"><div class="lb">最低泊位余量' + ic('窗口 ' + p.c.len + ' 天里每天算一次泊位余量率（空闲泊位 ÷ 能装下的泊位总数），取最低的一天。只要有一天泊位紧张，船就要排队。') + '</div>' +
            '<div class="big ' + cmrCls(c) + '"><b>' + pct(c) + '</b><span>' + cmrLab(c) + '</span></div>' +
-           '<div class="sub">同期最多 ' + peak(p) + ' 艘船 · ' + (p.qualifies ? '<span style="color:#237804">✓ 不低于 30%</span>' : '<span style="color:#ad2102">✗ 低于 30%</span>') + '</div></div>';
+           '<div class="sub">同期最多 ' + peak(p) + ' 艘船 · ' + (p.qualifies ? '<span style="color:var(--ok)">✓ 不低于 30%</span>' : '<span style="color:var(--warn)">✗ 低于 30%</span>') + '</div></div>';
     } else {
       const c = p.c.metric;
       m3 = '<div class="m"><div class="lb">同期最多船数' + ic('窗口内每天与你的货量竞争同吨级泊位的船数，取最多的一天，越少越宽松。15 天后没有逐泊位数据，所以不算泊位余量率。') + '</div>' +
            '<div class="big ' + denCls(c, P.n) + '"><b>' + c + ' 艘</b><span>' + denLab(c, P.n) + '</span></div>' +
-           '<div class="sub">' + (p.qualifies ? '<span style="color:#237804">✓ 余量不低于 30%</span>' : '<span style="color:#ad2102">✗ 余量低于 30%</span>') + '</div></div>';
+           '<div class="sub">' + (p.qualifies ? '<span style="color:var(--ok)">✓ 余量不低于 30%</span>' : '<span style="color:var(--warn)">✗ 余量低于 30%</span>') + '</div></div>';
     }
     let kv = routeRows(res);
     if (p.stock) {
@@ -439,7 +441,7 @@
   function stockCard(res) {
     const st = res.stock; if (!st) return '';
     const it = st.item, so = st.so, l = LV(it.days), A = res.plans && res.plans[0], B = res.plans && res.plans[1];
-    const marks = [A && { d: A.c.e, tons: res.input.tons, label: 'A', color: '#1677ff' }, B && { d: B.c.e, tons: res.input.tons, label: 'B', color: '#08979c' }].filter(Boolean);
+    const marks = [A && { d: A.c.e, tons: res.input.tons, label: 'A', color: 'var(--ink)' }, B && { d: B.c.e, tons: res.input.tons, label: 'B', color: 'var(--info)' }].filter(Boolean);
     let note = st.gap ? '<div class="bn blu"><b>' + mdCn(st.gap.from) + (st.gap.to > st.gap.from ? '–' + mdCn(st.gap.to) : '') + ' 有一个短缺口</b>，按最快航程已经赶不上，之后由已排定的到货补回。这次排船以补回后的下一次断料日为目标。</div>' : '';
     if (st.urgent) {
       const e = A ? A.c.e : null, gap = A && A.stock ? A.stock.gap : 0;
@@ -457,8 +459,8 @@
       ic('只改变显示范围，不改变计算。断料日、最晚到港日或方案到港日超出所选范围时不画出来，选「全部」可以看到。') + '</div>';
     let body;
     if (stkView === 'trend') {
-      body = '<div class="lgd"><span><i style="border-color:#1677ff"></i>模拟库存</span>' + (A ? '<span><i style="border-color:#1677ff;border-top-style:dashed"></i>加入推荐方案后</span>' : '') + (B ? '<span><i style="border-color:#08979c;border-top-style:dashed"></i>加入备选方案后</span>' : '') +
-        '<span><i style="border-color:#fa8c16;border-top-style:dashed"></i>危险线（15 天用量）</span></div>' +
+      body = '<div class="lgd"><span><i style="border-color:var(--ink)"></i>模拟库存</span>' + (A ? '<span><i style="border-color:var(--ink);border-top-style:dashed"></i>加入推荐方案后</span>' : '') + (B ? '<span><i style="border-color:var(--info);border-top-style:dashed"></i>加入备选方案后</span>' : '') +
+        '<span><i style="border-color:var(--caution);border-top-style:dashed"></i>危险线（15 天用量）</span></div>' +
         '<div>' + window.StockChart.html(it, { latest: st.latest, so: st.so, gap: st.gap, marks, warnDays: 15, until: stkRange ? until : undefined, width: Math.max(520, ($('result').clientWidth || 1200) - 340) }) + '</div>';
     } else {
       let prev = null;
@@ -469,7 +471,7 @@
         return '<tr class="' + (d === so ? 'so' : tg.length ? 'k' : '') + '"><td>' + E.md(d) + '</td><td>' + wk(d) + '</td><td class="r">' + fmt(dl) + '</td><td class="r">' + fmt(s0) + '</td><td class="r">' + (dl ? Math.floor(s0 / dl) : '—') + '</td><td>' + tg.join('、') + '</td></tr>'; }).join('');
       body = '<div class="dtw"><table class="dt"><thead><tr><th>日期</th><th>星期</th><th class="r">日耗（吨）</th><th class="r">模拟库存（吨）</th><th class="r">可用天数</th><th>标记</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
     }
-    return '<div class="card stk"><div class="card-h"><h2 class="nw"><svg width="18" height="18" viewBox="0 0 24 24" style="margin-right:6px"><path d="M4 20V10h4v10zM10 20V4h4v16zM16 20v-7h4v7z" fill="#1677ff"/></svg>库存保障与趋势 · ' + it.name + ic('断料日来自库存消耗模拟表（已包含已排定的到货）。预测要求到港窗口的最后一天不晚于「断料日 − 缓冲天数」，否则判为断料。方案到港后库存按虚线回升。') + '</h2><span class="muted nw">' + M.inventory.source + ' · 更新于 ' + M.inventory.updated.slice(0, 10) + '</span></div>' +
+    return '<div class="card stk"><div class="card-h"><h2 class="nw"><svg width="18" height="18" viewBox="0 0 24 24" style="margin-right:6px"><path d="M4 20V10h4v10zM10 20V4h4v16zM16 20v-7h4v7z" fill="#1a1a18"/></svg>库存保障与趋势 · ' + it.name + ic('断料日来自库存消耗模拟表（已包含已排定的到货）。预测要求到港窗口的最后一天不晚于「断料日 − 缓冲天数」，否则判为断料。方案到港后库存按虚线回升。') + '</h2><span class="muted nw">' + M.inventory.source + ' · 更新于 ' + M.inventory.updated.slice(0, 10) + '</span></div>' +
       '<div class="stk-b"><div class="stk-l">' + left + '</div><div class="stk-r">' + tabs + body + '</div></div>' + note + '<div style="height:12px"></div></div>';
   }
   function renderResult(res) {
@@ -490,14 +492,14 @@
     }).join('');
     let h = '<div class="sum"><div class="sum-t"><h2>预测结果</h2><span>' + res.input.biz + ' · ' + fmt(res.input.tons) + ' 吨 · ' + zh(res.input.load) + ' → ' + zh(res.input.disch) + '</span></div>' +
       '<div class="sum-m"><span class="nw">目标到港日 ' + mdCn(r.target) + '（距今 ' + r.dist + ' 天）</span>' +
-      '<span class="tag ' + (le || mixed ? 'blue' : '') + ' nw"' + (le || mixed ? '' : ' style="background:#f9f0ff;color:#531dab;border-color:#d3adf7"') + '>' + (mixed ? '各候选日期分别计算' : le ? '按近 15 天靠船计划' : '按 15 天后航次计划') + '</span>' +
+      '<span class="tag ' + (le || mixed ? 'blue' : '') + ' nw"' + (le || mixed ? '' : ' style="background:var(--surface-2);color:var(--info);border-color:var(--info-line)"') + '>' + (mixed ? '各候选日期分别计算' : le ? '按近 15 天靠船计划' : '按 15 天后航次计划') + '</span>' +
       '<span class="sp"></span><button class="link" id="togCand">系统比对过的 ' + (res.candidates || []).length + ' 个时间 ' + (showCands ? '▴' : '▾') + '</button>' +
       ic('把期望窗口切成每 3 天一档、每次挪一天，逐档计算后挑出推荐和备选。\\n框里是该档的' + (mixed ? '最低泊位余量（近 15 天）或同期最多船数（15 天后）' : le ? '最低泊位余量' : '同期最多船数') + '；带星号表示窗口里有没数据的日子，只按有数据的天数算。') + '</div>' +
       (showCands ? '<div class="cands"><div class="ct">候选窗口（3 天一档，' + (mixed ? '近 15 天按最低泊位余量、15 天后按同期最多船数，各自排序' : '按' + (le ? '最低泊位余量从高到低' : '同期最多船数从少到多')) + '，不使用综合评分）：</div>' + cands + (res.excluded.pastDepart ? '<span class="muted nw">另有 ' + res.excluded.pastDepart + ' 个时间的发船日已早于今天，已排除</span>' : '') + '</div>' : '') + '</div>';
     $('sumbar').innerHTML = h; h = '';
     if (res.noCandidate) {
       h += '<div class="card banner"><div class="ico"></div><div><h3>窗口内没有可以推荐的时间</h3><p>' + (le ? '靠船计划只到 ' + mdCn(E.planCoverTo) : '航次计划只到 ' + mdCn(E.voyHorizon)) + '，这个窗口全部没有数据（灰色斜线，不是 0%）。系统不会因为没有数据而改用另一条计算路径，建议把窗口提前，或等下一期靠船计划。</p></div></div>';
-    } else h += '<div class="card pcard"><div class="card-h"><h2 class="nw"><svg width="18" height="18" viewBox="0 0 24 24" style="margin-right:6px"><path d="M3 15h18l-3 5H6z" fill="#1677ff"/><path d="M6 14V8h8l3 6z" fill="#69b1ff"/></svg>发船方案建议</h2></div><div class="plans">' + planCard(res.plans[0], res) + planCard(res.plans[1] || null, res) + '</div></div>';
+    } else h += '<div class="card pcard"><div class="card-h"><h2 class="nw"><svg width="18" height="18" viewBox="0 0 24 24" style="margin-right:6px"><path d="M3 15h18l-3 5H6z" fill="#1a1a18"/><path d="M6 14V8h8l3 6z" fill="#c9c5bd"/></svg>发船方案建议</h2></div><div class="plans">' + planCard(res.plans[0], res) + planCard(res.plans[1] || null, res) + '</div></div>';
     h += stockCard(res);                                             // 方案在上、库存模拟图在下（2026-11-05 Leyinet）
     el.innerHTML = h;
     const tg = $('togCand'); if (tg) tg.onclick = () => { showCands = !showCands; renderResult(last); };
@@ -585,8 +587,8 @@
     el.innerHTML = '<div class="bm-h"><b>' + M.berths.length + ' 个泊位 · ' + mdCn(d) + ' ' + wk(d) + '</b>' + chips + '<span class="sp"></span><span class="faint">点击上方日历切换日期，鼠标悬停看泊位信息</span></div>' +
       '<div class="bm-g">' + grp('北区码头') + grp('拉博塔码头') + '</div>' +
       '<div class="bm-l"><span class="g"><span class="sw c1">空闲</span>能装下且当天空着</span><span class="g"><span class="sw c3">占用</span>能装下但当天有船</span>' +
-      '<span class="g"><span class="sw" style="background:#eef0f3;color:#a7b0bc;border-color:#dfe3e8">灰色</span>装不下本次货量，不计入基数</span>' +
-      '<span class="g"><span class="sw nd">&nbsp;&nbsp;</span>无数据</span><span class="g"><span class="sw" style="background:#e6f4ff;color:#0958d9;border-color:#91caff">能装下</span>15 天后只判断能否装下</span></div>';
+      '<span class="g"><span class="sw" style="background:var(--surface-2);color:var(--faint);border-color:var(--line-strong)">灰色</span>装不下本次货量，不计入基数</span>' +
+      '<span class="g"><span class="sw nd">&nbsp;&nbsp;</span>无数据</span><span class="g"><span class="sw" style="background:var(--sidebar);color:var(--primary-hover);border-color:var(--line-strong)">能装下</span>15 天后只判断能否装下</span></div>';
   }
 
   // ---------- 采纳 / 宣船文案 ----------

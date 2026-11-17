@@ -10,7 +10,7 @@ import './p08.css';
 
 const TABS: Array<[string, string]> = [['port', '港口'], ['berth', '泊位'], ['vessel', '船舶'], ['route', '航程规则']];
 const COUNTRIES = ['印度尼西亚', '中国', '菲律宾', '越南', '其他'], TYPES = ['散货船', '拖驳组合', '集装箱船', '杂货船', '其他'];
-const Note = ({ children, warn }: { children: ReactNode; warn?: boolean }) => <div className="note" style={warn ? undefined : { background: '#f5f6f8', borderColor: '#d9dee5', color: '#5b6878', marginBottom: 14 }}>{children}</div>;
+const Note = ({ children, warn }: { children: ReactNode; warn?: boolean }) => <div className="note" style={warn ? undefined : { background: 'var(--surface-2)', borderColor: 'var(--line-strong)', color: 'var(--muted)', marginBottom: 14 }}>{children}</div>;
 
 export default function MasterPage() {
   const { data: me } = useMe(), [sp] = useSearchParams(), [tab, setTab] = useState(sp.get('tab') || 'port'), [kw, setKw] = useState(''), [noMmsi, setNoMmsi] = useState(false);

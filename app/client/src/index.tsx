@@ -13,6 +13,15 @@ import { Toaster } from '@client/src/components/ui/sonner';
 
 const CLIENT_BASE_PATH = process.env.CLIENT_BASE_PATH || '/';
 
+/* 皮肤：在首次渲染前落到 <html data-skin>，避免皮肤之间闪一下 */
+try {
+  const savedSkin = localStorage.getItem('ssps-skin');
+  const ok = savedSkin === 'legacy' || savedSkin === 'midnight';
+  document.documentElement.setAttribute('data-skin', ok ? (savedSkin as string) : 'paper');
+} catch {
+  document.documentElement.setAttribute('data-skin', 'paper');
+}
+
 const MainApp = () => {
   return (
     <BrowserRouter basename={CLIENT_BASE_PATH}>

@@ -11,55 +11,57 @@
 .vh{padding:14px 16px}
 .vh .l1{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .vh h1{margin:0;font-size:22px;white-space:nowrap}
-.vh .l2{margin-top:6px;color:#3b4a5c;display:flex;flex-wrap:wrap;gap:2px 16px;font-size:13px}
+.vh .l2{margin-top:6px;color:var(--text);display:flex;flex-wrap:wrap;gap:2px 16px;font-size:13px}
 .vh .l2 span{white-space:nowrap}.vh .l2 em{font-style:normal;color:var(--muted);margin-right:4px}
 .vh .acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;align-items:center}
 .vh .acts .sp{flex:1}
-.star{border:0;background:none;font-size:20px;line-height:1;cursor:pointer;color:#d0d5dc;padding:0}
-.star.on{color:#faad14}
+.star{border:0;background:none;font-size:20px;line-height:1;cursor:pointer;color:var(--line-strong);padding:0}
+.star.on{color:var(--caution)}
 .ship{color:var(--primary);cursor:pointer;font-size:13px;white-space:nowrap;border:0;background:none;padding:0}
 .banner{margin:12px 0 0;border-radius:8px;padding:8px 12px;font-size:13px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.banner.warn{background:#fff7e6;border:1px solid #ffd591;color:#ad4e00}
-.banner.err{background:#fff1f0;border:1px solid #ffa39e;color:#a8071a}
-.banner.info{background:#f5f6f8;border:1px solid #d9dee5;color:#5b6878}
+.banner.warn{background:var(--caution-bg);border:1px solid var(--caution-line);color:var(--caution)}
+.banner.err{background:var(--warn-bg);border:1px solid var(--warn-line);color:var(--warn)}
+.banner.info{background:var(--surface-2);border:1px solid var(--line-strong);color:var(--muted)}
 .banner .btn{padding:1px 12px}
 /* 时间轴 */
 .tlw{overflow-x:auto;padding:6px 16px 16px}
 .tl{display:grid;gap:0;min-width:760px}
 .tn{position:relative;padding:0 6px;text-align:center}
-.tn:before{content:"";position:absolute;top:13px;left:-50%;right:50%;height:3px;background:#dfe3e8}
+.tn:before{content:"";position:absolute;top:13px;left:-50%;right:50%;height:3px;background:var(--line-strong)}
 .tn:first-child:before{display:none}
 .tn.done:before{background:var(--primary)}
-.tn .dot{position:relative;z-index:1;width:28px;height:28px;border-radius:50%;margin:0 auto;display:grid;place-items:center;background:#fff;border:3px solid #dfe3e8;font-size:13px;color:#fff;font-weight:700}
+.tn .dot{position:relative;z-index:1;width:28px;height:28px;border-radius:50%;margin:0 auto;display:grid;place-items:center;background:var(--surface);border:3px solid var(--line-strong);font-size:13px;color:var(--on-ink);font-weight:700}
 .tn.done .dot{background:var(--primary);border-color:var(--primary)}
-.tn.cur .dot{background:#fff;border-color:var(--primary);box-shadow:0 0 0 4px #bae0ff;color:var(--primary)}
+.tn.cur .dot{background:var(--surface);border-color:var(--primary);box-shadow:0 0 0 4px var(--line);color:var(--primary)}
 .tn .lb{margin-top:6px;font-weight:600;font-size:13px;white-space:nowrap}
 .tn .pl,.nd .ac{font-size:12px;color:var(--muted);white-space:nowrap;margin-top:2px}
 .tn .ac b{color:var(--text)}
-.tn .late{display:inline-block;margin-left:4px;color:#cf1322;font-size:11px}
-.tn .early{display:inline-block;margin-left:4px;color:#237804;font-size:11px}
-.tn .none{color:#c0c8d2}
+.tn .late{display:inline-block;margin-left:4px;color:var(--warn);font-size:11px}
+.tn .early{display:inline-block;margin-left:4px;color:var(--ok);font-size:11px}
+.tn .none{color:var(--faint)}
 /* 页签内容 */
 .sec{padding:14px 16px;border-top:1px solid var(--line-2)}
 .sec:first-child{border-top:0}
 .sec h3{margin:0 0 10px;font-size:14px;display:flex;align-items:center;gap:6px;white-space:nowrap}
 .kvg .it{min-width:0}
-.kvg .it.hl{background:#fffbe6;outline:2px solid #ffd666;border-radius:6px;padding:4px 6px;margin:-4px -6px}
+.kvg .it.hl{background:var(--caution-bg);outline:2px solid var(--caution-line);border-radius:6px;padding:4px 6px;margin:-4px -6px}
 .kvg .v .mut{color:var(--faint)}
 .fx{color:var(--muted);font-size:11px;margin-left:4px;border:1px solid var(--line);border-radius:3px;padding:0 4px;white-space:nowrap}
-.lock{background:var(--stripe);color:#7b8696;border:1px solid #c4cad3;border-radius:6px;padding:1px 8px;font-size:12px;white-space:nowrap}
+.lock{background:var(--stripe);color:var(--muted);border:1px solid var(--line-strong);border-radius:6px;padding:1px 8px;font-size:12px;white-space:nowrap}
 .bar2{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 16px;flex-wrap:wrap;border-top:1px solid var(--line-2)}
 .tb-wrap{overflow-x:auto}
 textarea.inp{height:auto;min-height:60px;padding:6px 9px}
 .f-lab2{color:var(--muted);font-size:12px;margin-bottom:4px}
-.errtxt{color:#cf1322;font-size:12.5px;margin-top:6px}
+.errtxt{color:var(--warn);font-size:12.5px;margin-top:6px}
 .note2{color:var(--muted);font-size:12px;margin-top:6px}
-.sumline{padding:8px 16px;background:#f7f9fb;border-top:1px solid var(--line-2);display:flex;gap:18px;flex-wrap:wrap;font-size:13px}
+.sumline{padding:8px 16px;background:var(--surface-2);border-top:1px solid var(--line-2);display:flex;gap:18px;flex-wrap:wrap;font-size:13px}
 .sumline span{white-space:nowrap}
 .viewer{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:12px;white-space:nowrap}
-.viewer select{height:26px;padding:0 6px;border:1px solid #d3d9e1;border-radius:6px;background:#fff}
+.viewer select{height:26px;padding:0 6px;border:1px solid var(--line-strong);border-radius:6px;background:var(--surface)}
 @media(max-width:900px){.vh h1{font-size:19px}.vh .acts .sp{display:none}.viewer{width:100%}}
 </style>
+<link rel="stylesheet" href="assets/skin.css">
+<script data-skin-init>(function(){var s="paper";try{var v=localStorage.getItem("ssps-skin");if(v==="legacy"||v==="midnight")s=v;}catch(e){}document.documentElement.setAttribute("data-skin",s);})();</script>
 </head>
 <body>
 <div class="app"><aside id="nav"></aside>
@@ -124,7 +126,7 @@ textarea.inp{height:auto;min-height:60px;padding:6px 9px}
       item('attr', '业务属性' + C.ic('业务属性的枚举（内贸 / 外贸 / 雅加达物资 / 国内物资 / 本地 / 国际）是否合并为一套，待确认。'), v.attr, e('<select class="inp" data-k="attr">' + ['内贸', '外贸', '雅加达物资', '国内物资', '本地', '国际'].map((o) => '<option' + (o === v.attr ? ' selected' : '') + '>' + o + '</option>').join('') + '</select>')) +
       item('no', '船次号', v.no || '<span class="mut">—</span>', e(txt('no'))) +
       item('vessel', '船舶', v.vessel ? '<b>' + v.vessel + '</b>' : '<span class="mut">待宣船（可空）</span>', e('<select class="inp" data-k="vessel"><option value="">（待宣船）</option>' + M.vessels.map((x) => '<option' + (x.name === v.vessel ? ' selected' : '') + '>' + x.name + '</option>').join('') + '</select>')) +
-      item('mmsi', 'MMSI' + C.ic('MMSI 为必填（一期手工更新 ETA，船讯网用 MMSI 定位）。缺 MMSI 会进入数据质量清单。'), v.vessel ? (mm ? mm : '<span class="lock" style="color:#cf1322">缺 MMSI，请到主数据补录</span>') : '<span class="mut">—</span>') +
+      item('mmsi', 'MMSI' + C.ic('MMSI 为必填（一期手工更新 ETA，船讯网用 MMSI 定位）。缺 MMSI 会进入数据质量清单。'), v.vessel ? (mm ? mm : '<span class="lock" style="color:var(--warn)">缺 MMSI，请到主数据补录</span>') : '<span class="mut">—</span>') +
       item('carrier', '承运方', v.carrier || '<span class="mut">—</span>', e(txt('carrier'))) + item('shipVoy', '船方航次号', v.shipVoy || '<span class="mut">—</span>', e(txt('shipVoy'))) +
       item('load', '装港', C.zh(v.load)) + item('disch', '卸港', C.zh(v.disch)) +
       item('disch2', '第二卸港', v.disch2 ? C.zh(v.disch2) : '<span class="mut">—</span>', e('<select class="inp" data-k="disch2">' + portOpts(v.disch2, true) + '</select>')) +
@@ -133,7 +135,7 @@ textarea.inp{height:auto;min-height:60px;padding:6px 9px}
     const sec2 = '<div class="sec"><h3>时间节点' + C.ic('计划类时间可以在「编辑」里改；实际时间节点只能用「登记节点」录入，预计到达只能用「修订 ETA」，都会留痕。') + '</h3><div class="kvg">' +
       (prod ? item('laycanS', '受载期始', full(v.laycanS), e(dtin('laycanS'))) + item('laycanE', '受载期止', full(v.laycanE), e(dtin('laycanE'))) : '') +
       item('planLoadArr', '计划抵装港', full(v.planLoadArr), e(dtin('planLoadArr'))) + item('actLoadArr', '实际抵装港', full(v.actLoadArr)) + item('loadBerth', '装港靠泊', full(v.loadBerth)) +
-      item('planLoadDep', '计划离装港', full(v.planLoadDep), e(dtin('planLoadDep'))) + item('actLoadDep', '实际离装港' + C.ic('状态进入「航行中」即必填。这是学习航程的关键样本。'), v.actLoadDep ? v.actLoadDep : (v.actDischArr ? '<span class="lock" style="color:#cf1322">缺失，待补</span>' : '—')) +
+      item('planLoadDep', '计划离装港', full(v.planLoadDep), e(dtin('planLoadDep'))) + item('actLoadDep', '实际离装港' + C.ic('状态进入「航行中」即必填。这是学习航程的关键样本。'), v.actLoadDep ? v.actLoadDep : (v.actDischArr ? '<span class="lock" style="color:var(--warn)">缺失，待补</span>' : '—')) +
       (!prod ? item('planDischS', '计划抵卸港窗口始', full(v.planDischS), e(dtin('planDischS'))) + item('planDischE', '计划抵卸港窗口止', full(v.planDischE), e(dtin('planDischE'))) : '') +
       item('eta', '当前 ETA（卸港）', v.eta ? full(v.eta) + (C.etaStale(v) ? ' <span class="tag red">已超 ' + C.ETA_STALE_DAYS + ' 天未更新</span>' : '') : '—') +
       item('actDischArr', '实际抵卸港', full(v.actDischArr)) + item('dischBerth', '卸港靠泊', full(v.dischBerth)) + item('dischDep', '卸港离港', full(v.dischDep)) + '</div></div>';
@@ -157,7 +159,7 @@ textarea.inp{height:auto;min-height:60px;padding:6px 9px}
   function cargoTab() {
     const L = C.cargoOf(v), tot = L.reduce((a, c) => a + c.tons, 0), edit = C.canEdit(v);
     return '<div class="tb-wrap"><table class="tbl"><thead><tr><th>合同号</th><th>物资大类</th><th>物资类别</th><th>货物名称</th>' + (bulk ? '<th>使用单位</th><th>归属事业部</th>' : '') + '<th>' + (prod ? '客户' : '供应商') + '</th><th style="text-align:right">预计装船重量（吨）</th><th style="text-align:right">装港重量（吨）</th><th>溢短装</th><th>合同执行人员</th>' + (edit ? '<th></th>' : '') + '</tr></thead><tbody>' +
-      (L.length ? L.map((c, i) => '<tr><td class="nw"><b>' + (c.contract || '—') + '</b>' + (c.ea ? '<span style="display:block;color:var(--muted);font-size:12px">EA ' + c.ea + '</span>' : '') + '</td><td class="nw">' + (c.big || '—') + '</td><td class="nw">' + (c.kind || '—') + '</td><td class="nw">' + (c.name || '—') + '</td>' + (bulk ? '<td class="nw">' + (c.unit || '—') + '</td><td class="nw">' + (c.dept2 || '—') + '</td>' : '') + '<td class="nw">' + (c.party || '—') + '</td><td class="nw" style="text-align:right">' + C.fmt(c.tons) + '</td><td class="nw" style="text-align:right">' + C.fmt(c.loadTons) + '</td><td class="nw">' + (c.over || '—') + '</td><td class="nw">' + (c.exec || '—') + '</td>' + (edit ? '<td class="nw"><button class="btn ghost" data-ce="' + i + '">编辑</button><button class="btn ghost" data-cd="' + i + '" style="color:#cf1322">删除</button></td>' : '') + '</tr>').join('') : '<tr><td colspan="12" class="empty">还没有货物明细</td></tr>') + '</tbody></table></div>' +
+      (L.length ? L.map((c, i) => '<tr><td class="nw"><b>' + (c.contract || '—') + '</b>' + (c.ea ? '<span style="display:block;color:var(--muted);font-size:12px">EA ' + c.ea + '</span>' : '') + '</td><td class="nw">' + (c.big || '—') + '</td><td class="nw">' + (c.kind || '—') + '</td><td class="nw">' + (c.name || '—') + '</td>' + (bulk ? '<td class="nw">' + (c.unit || '—') + '</td><td class="nw">' + (c.dept2 || '—') + '</td>' : '') + '<td class="nw">' + (c.party || '—') + '</td><td class="nw" style="text-align:right">' + C.fmt(c.tons) + '</td><td class="nw" style="text-align:right">' + C.fmt(c.loadTons) + '</td><td class="nw">' + (c.over || '—') + '</td><td class="nw">' + (c.exec || '—') + '</td>' + (edit ? '<td class="nw"><button class="btn ghost" data-ce="' + i + '">编辑</button><button class="btn ghost" data-cd="' + i + '" style="color:var(--warn)">删除</button></td>' : '') + '</tr>').join('') : '<tr><td colspan="12" class="empty">还没有货物明细</td></tr>') + '</tbody></table></div>' +
       '<div class="sumline"><span>共 <b>' + L.length + '</b> 行</span><span>总货量 <b>' + C.fmt(tot) + '</b> 吨</span><span>拼船：<b>' + (L.length >= 2 ? '是' : '否') + '</b>' + C.ic('货物明细有 2 行及以上就是拼船。') + '</span></div>' +
       (edit ? '<div class="bar2"><span class="note2">一份合同或一类货物一行；多个合同的船要拆成多行。</span><button class="btn primary" id="addCargo">新增明细</button></div>' : '');
   }

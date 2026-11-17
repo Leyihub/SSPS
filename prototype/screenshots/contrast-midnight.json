@@ -1,0 +1,247 @@
+{
+  "label": "midnight",
+  "rows": [
+    {
+      "name": "正文 / 页面底",
+      "fg": "#d8d3c9",
+      "bg": "#141311",
+      "ratio": 12.45,
+      "need": 4.5,
+      "ok": true
+    },
+    {
+      "name": "正文 / 卡片",
+      "fg": "#d8d3c9",
+      "bg": "#1b1a17",
+      "ratio": 11.67,
+      "need": 4.5,
+      "ok": true
+    },
+    {
+      "name": "标题墨色 / 页面底",
+      "fg": "#ece9e2",
+      "bg": "#141311",
+      "ratio": 15.31,
+      "need": 3,
+      "ok": true
+    },
+    {
+      "name": "标题墨色 / 卡片",
+      "fg": "#ece9e2",
+      "bg": "#1b1a17",
+      "ratio": 14.35,
+      "need": 3,
+      "ok": true
+    },
+    {
+      "name": "标题墨色 / 浮层",
+      "fg": "#ece9e2",
+      "bg": "#232220",
+      "ratio": 13.11,
+      "need": 4.5,
+      "ok": true
+    },
+    {
+      "name": "次要文字 / 页面底",
+      "fg": "#201f1c",
+      "bg": "#141311",
+      "ratio": 1.13,
+      "need": 4.5,
+      "ok": false
+    },
+    {
+      "name": "次要文字 / 卡片",
+      "fg": "#201f1c",
+      "bg": "#1b1a17",
+      "ratio": 1.06,
+      "need": 4.5,
+      "ok": false
+    },
+    {
+      "name": "次要文字 / 侧栏",
+      "fg": "#201f1c",
+      "bg": "#0e0d0b",
+      "ratio": 1.18,
+      "need": 4.5,
+      "ok": false
+    },
+    {
+      "name": "次要文字 / 浮层",
+      "fg": "#201f1c",
+      "bg": "#232220",
+      "ratio": 1.04,
+      "need": 4.5,
+      "ok": false
+    },
+    {
+      "name": "微标签 / 页面底",
+      "fg": "#908a7d",
+      "bg": "#141311",
+      "ratio": 5.41,
+      "need": 4.5,
+      "ok": true
+    },
+    {
+      "name": "微标签 / 卡片",
+      "fg": "#908a7d",
+      "bg": "#1b1a17",
+      "ratio": 5.07,
+      "need": 4.5,
+      "ok": true
+    },
+    {
+      "name": "微标签 / 侧栏",
+      "fg": "#908a7d",
+      "bg": "#0e0d0b",
+      "ratio": 5.66,
+      "need": 4.5,
+      "ok": true
+    },
+    {
+      "name": "主按钮文字 / 主按钮底",
+      "fg": "#141311",
+      "bg": "#ece9e2",
+      "ratio": 15.31,
+      "need": 4.5,
+      "ok": true
+    },
+    {
+      "name": "主按钮底 / 页面底（边界）",
+      "fg": "#ece9e2",
+      "bg": "#141311",
+      "ratio": 15.31,
+      "need": 4.5,
+      "ok": true
+    },
+    {
+      "name": "成功 / 页面底",
+      "fg": "#6fbf95",
+      "bg": "#141311",
+      "ratio": 8.45,
+      "need": 4.5,
+      "ok": true
+    },
+    {
+      "name": "成功 / 成功浅底",
+      "fg": "#6fbf95",
+      "bg": "#16241d",
+      "ratio": 7.33,
+      "need": 4.5,
+      "ok": true
+    },
+    {
+      "name": "警示 / 页面底",
+      "fg": "#f0806a",
+      "bg": "#141311",
+      "ratio": 7.07,
+      "need": 4.5,
+      "ok": true
+    },
+    {
+      "name": "警示 / 警示浅底",
+      "fg": "#f0806a",
+      "bg": "#2a1613",
+      "ratio": 6.54,
+      "need": 4.5,
+      "ok": true
+    },
+    {
+      "name": "强警示 / 警示浅底",
+      "fg": "#ff9f8c",
+      "bg": "#2a1613",
+      "ratio": 8.66,
+      "need": 4.5,
+      "ok": true
+    },
+    {
+      "name": "注意 / 页面底",
+      "fg": "#e2ab70",
+      "bg": "#141311",
+      "ratio": 9.1,
+      "need": 4.5,
+      "ok": true
+    },
+    {
+      "name": "注意 / 注意浅底",
+      "fg": "#e2ab70",
+      "bg": "#2a2015",
+      "ratio": 7.82,
+      "need": 4.5,
+      "ok": true
+    },
+    {
+      "name": "信息 / 页面底",
+      "fg": "#9ab7d4",
+      "bg": "#141311",
+      "ratio": 8.93,
+      "need": 4.5,
+      "ok": true
+    },
+    {
+      "name": "信息 / 信息浅底",
+      "fg": "#9ab7d4",
+      "bg": "#171e26",
+      "ratio": 8.08,
+      "need": 4.5,
+      "ok": true
+    },
+    {
+      "name": "表格表头 / 表头底",
+      "fg": "#201f1c",
+      "bg": "#201f1c",
+      "ratio": 1,
+      "need": 4.5,
+      "ok": false
+    },
+    {
+      "name": "悬停文字 / 悬停底",
+      "fg": "#ece9e2",
+      "bg": "#2b2926",
+      "ratio": 11.96,
+      "need": 4.5,
+      "ok": true
+    },
+    {
+      "name": "CMR ≥50% 充裕",
+      "fg": "#135200",
+      "bg": "#d9f7be",
+      "ratio": 8.05,
+      "need": 4.5,
+      "ok": true
+    },
+    {
+      "name": "CMR 30–50% 适中",
+      "fg": "#614700",
+      "bg": "#fff1b8",
+      "ratio": 7.69,
+      "need": 4.5,
+      "ok": true
+    },
+    {
+      "name": "CMR 15–30% 紧张",
+      "fg": "#873800",
+      "bg": "#ffd8bf",
+      "ratio": 6.1,
+      "need": 4.5,
+      "ok": true
+    },
+    {
+      "name": "CMR <15% 拥堵",
+      "fg": "#a8071a",
+      "bg": "#ffccc7",
+      "ratio": 5.43,
+      "need": 4.5,
+      "ok": true
+    },
+    {
+      "name": "无数据标签文字 / 灰斜线",
+      "fg": "#3f3c37",
+      "bg": "#f6f7f9",
+      "ratio": 10.24,
+      "need": 4.5,
+      "ok": true
+    }
+  ],
+  "worst": 1,
+  "fails": 5
+}

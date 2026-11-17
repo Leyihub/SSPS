@@ -3,6 +3,8 @@ import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useMe } from '../ssps/api';
 import { wk } from '../ssps/format';
 import '../ssps/ssps.css';
+import '../ssps/skin.css';
+import SkinSwitch from './SkinSwitch';
 
 /** 导航：顺序按业务员的工作顺序，P11 智能提问是预测入口，排在 P02 前面 */
 export const NAV: Array<{ group: string; id: string; name: string; to: string; sub?: boolean }> = [
@@ -44,6 +46,7 @@ export default function Layout() {
           <div className="crumb"><button className="burger" onClick={() => setOpen(!open)} aria-label="菜单">☰</button><b>{detail || cur?.name || ''}</b></div>
           <div className="top-right">
             {me && <span className="top-date">{me.today} {wk(me.today)}</span>}
+            <SkinSwitch />
             {me && <span className="user"><span className="avatar">{me.name.slice(0, 1)}</span><span>{me.name}<small>{me.dept ? me.dept + ' · ' : ''}{me.role}</small></span></span>}
           </div>
         </header>

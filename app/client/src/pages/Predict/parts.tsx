@@ -43,7 +43,7 @@ function basisTip(res: R, p: R, ctx: { batchPlanDate?: string | null; planCoverT
 export function PlanCard({ p, res, ctx, onAdopt, onAnnounce, onDetail, canAct }: { p: R | null; res: R; ctx: Parameters<typeof basisTip>[2]; onAdopt?: (l: string) => void; onAnnounce?: (l: string) => void; onDetail?: (l: string) => void; canAct?: boolean }) {
   const P = res.pool, i = res.input, prod = i.biz === '成品销售船';
   if (!p) return (
-    <div className="card plan noplan B"><div className="plan-h"><h3 style={{ color: '#8a94a3' }}>备选方案</h3><span className="tag gray">暂无</span></div>
+    <div className="card plan noplan B"><div className="plan-h"><h3 style={{ color: 'var(--muted)' }}>备选方案</h3><span className="tag gray">暂无</span></div>
       <div className="emptymsg"><b>没有可用的备选方案</b>窗口内找不到与推荐方案错开、且符合条件的时间。</div></div>
   );
   const low = p.trust === '低可信', name = p.label === 'A' ? '推荐方案' : '备选方案';
@@ -59,17 +59,17 @@ export function PlanCard({ p, res, ctx, onAdopt, onAnnounce, onDetail, canAct }:
   m3 = p.mode === 'cmr'
     ? <div className="m"><div className="lb">最低泊位余量<Info text={`窗口 ${p.c.len} 天里每天算一次泊位余量率（空闲泊位 ÷ 能装下的泊位总数），取最低的一天。只要有一天泊位紧张，船就要排队。`} /></div>
         <div className={'big ' + cmrCls(c)}><b>{pct(c)}</b><span>{cmrLab(c)}</span></div>
-        <div className="sub">同期最多 {peak(p)} 艘船 · {p.qualifies ? <span style={{ color: '#237804' }}>✓ 不低于 30%</span> : <span style={{ color: '#ad2102' }}>✗ 低于 30%</span>}</div></div>
+        <div className="sub">同期最多 {peak(p)} 艘船 · {p.qualifies ? <span style={{ color: 'var(--ok)' }}>✓ 不低于 30%</span> : <span style={{ color: 'var(--warn)' }}>✗ 低于 30%</span>}</div></div>
     : <div className="m"><div className="lb">同期最多船数<Info text="窗口内每天与你的货量竞争同吨级泊位的船数，取最多的一天，越少越宽松。15 天后没有逐泊位数据，所以不算泊位余量率。" /></div>
         <div className={'big ' + denCls(c, P.n)}><b>{c} 艘</b><span>{denLab(c, P.n)}</span></div>
-        <div className="sub">{p.qualifies ? <span style={{ color: '#237804' }}>✓ 余量不低于 30%</span> : <span style={{ color: '#ad2102' }}>✗ 余量低于 30%</span>}</div></div>;
+        <div className="sub">{p.qualifies ? <span style={{ color: 'var(--ok)' }}>✓ 余量不低于 30%</span> : <span style={{ color: 'var(--warn)' }}>✗ 余量低于 30%</span>}</div></div>;
   const rule = res.run.rule;
   return (
     <div className={'card plan ' + p.label + (low ? ' low' : '')} data-plan={p.label}>
       <div className="plan-h"><h3>{name}</h3>
         {low ? <><span className="tag lowtrust">⚠ 低可信</span><Info text={p.reasons.join('；') + '。'} /></> : <span className="tag green">可信度 正常</span>}
         {p.stock && p.stock.state === 'out' && <span className="tag red">⚠ 断料 {p.stock.gap} 天</span>}{p.stock && p.stock.state === 'tight' && <span className="tag amber">缓冲不足</span>}
-        {p.mode === 'cmr' ? <span className="tag blue">近 15 天</span> : <span className="tag" style={{ background: '#f9f0ff', color: '#531dab', borderColor: '#d3adf7' }}>15 天后</span>}
+        {p.mode === 'cmr' ? <span className="tag blue">近 15 天</span> : <span className="tag" style={{ background: 'var(--surface-2)', color: 'var(--info)', borderColor: 'var(--info-line)' }}>15 天后</span>}
         <span className="sp" /><span className="muted">{p.label === 'A' ? '排序依据' : '备选条件'}<Info text={p.label === 'A' ? (p.mode === 'cmr' ? '按最低泊位余量从高到低排序，同分取更早的时间，不使用综合评分。' : '按同期最多船数从少到多排序，同分取更早的时间，不使用综合评分。') : '备选方案要求余量不低于 30%，并且与推荐方案的时间不重叠；没有完整数据的候选时从数据不全的时间里选，并标「低可信」。'} /></span></div>
       <div className="mgrid">{m1}{m2}{m3}</div>
       <div className="days">{dayChips(p)}</div>
@@ -98,7 +98,7 @@ export function SummaryBar({ res }: { res: R }) {
   return (
     <div className="sum"><div className="sum-t"><h2>预测结果</h2><span>{res.input.biz} · {fmt(res.input.tons)} 吨 · {zh(res.input.load)} → {zh(res.input.disch)}</span></div>
       <div className="sum-m"><span className="nw">目标到港日 {nMdCn(r.target)}（距今 {r.dist} 天）</span>
-        <span className={'tag nw ' + (le || mixed ? 'blue' : '')} style={le || mixed ? undefined : { background: '#f9f0ff', color: '#531dab', borderColor: '#d3adf7' }}>{mixed ? '各候选日期分别计算' : le ? '按近 15 天靠船计划' : '按 15 天后航次计划'}</span>
+        <span className={'tag nw ' + (le || mixed ? 'blue' : '')} style={le || mixed ? undefined : { background: 'var(--surface-2)', color: 'var(--info)', borderColor: 'var(--info-line)' }}>{mixed ? '各候选日期分别计算' : le ? '按近 15 天靠船计划' : '按 15 天后航次计划'}</span>
         <span className="sp" /><button className="link" onClick={() => setShow(!show)}>系统比对过的 {(res.candidates || []).length} 个时间 {show ? '▴' : '▾'}</button>
         <Info text={`把期望窗口切成每 3 天一档、每次挪一天，逐档计算后挑出推荐和备选。框里是该档的${mixed ? '最低泊位余量（近 15 天）或同期最多船数（15 天后）' : le ? '最低泊位余量' : '同期最多船数'}；带星号表示窗口里有没数据的日子，只按有数据的天数算。`} /></div>
       {show && (
@@ -119,7 +119,7 @@ export function StockCard({ res, today, inventorySource }: { res: R; today: numb
   const [view, setView] = useState<'trend' | 'detail'>('trend'), [range, setRange] = useState(0);
   const st = res.stock, A = res.plans?.[0], B = res.plans?.[1];
   const it = st?.item;
-  const marks = useMemo(() => [A && { d: A.c.e, tons: res.input.tons, label: 'A', color: '#1677ff' }, B && { d: B.c.e, tons: res.input.tons, label: 'B', color: '#08979c' }].filter(Boolean) as Array<{ d: number; tons: number; label: string; color: string }>, [A, B, res]);
+  const marks = useMemo(() => [A && { d: A.c.e, tons: res.input.tons, label: 'A', color: 'var(--ink)' }, B && { d: B.c.e, tons: res.input.tons, label: 'B', color: 'var(--info)' }].filter(Boolean) as Array<{ d: number; tons: number; label: string; color: string }>, [A, B, res]);
   const so = st?.so ?? null;
   const until = st ? (range ? today + range : Math.min(Math.max(today + 45, (so || 0) + 14, (st.latest || 0) + 14, ...marks.map((m) => m.d + 14)), today + 100)) : today + 45;
   const { data: trend } = useTrend(st ? it.name : null, marks.map((m) => ({ d: m.d, tons: m.tons })), until);
@@ -145,7 +145,7 @@ export function StockCard({ res, today, inventorySource }: { res: R; today: numb
             <Info text="只改变显示范围，不改变计算。断料日、最晚到港日或方案到港日超出所选范围时不画出来，选「全部」可以看到。" /></div>
           {view === 'trend' ? (
             <div>
-              <div className="lgd"><span><i style={{ borderColor: '#1677ff' }} />模拟库存</span>{A && <span><i style={{ borderColor: '#1677ff', borderTopStyle: 'dashed' }} />加入推荐方案后</span>}{B && <span><i style={{ borderColor: '#08979c', borderTopStyle: 'dashed' }} />加入备选方案后</span>}<span><i style={{ borderColor: '#fa8c16', borderTopStyle: 'dashed' }} />危险线（15 天用量）</span></div>
+              <div className="lgd"><span><i style={{ borderColor: 'var(--ink)' }} />模拟库存</span>{A && <span><i style={{ borderColor: 'var(--ink)', borderTopStyle: 'dashed' }} />加入推荐方案后</span>}{B && <span><i style={{ borderColor: 'var(--info)', borderTopStyle: 'dashed' }} />加入备选方案后</span>}<span><i style={{ borderColor: 'var(--caution)', borderTopStyle: 'dashed' }} />危险线（15 天用量）</span></div>
               <div>{trend ? <StockChart trend={trend} daily={it.daily} latest={st.latest ?? null} gap={st.gap ?? null} marks={marks} /> : <div className="empty">加载中…</div>}</div>
             </div>
           ) : (
@@ -245,8 +245,8 @@ export function BerthMap({ date, tons }: { date: number; tons: number }) {
         <span className="sp" /><span className="faint">点击上方日历切换日期，鼠标悬停看泊位信息</span></div>
       <div className="bm-g">{grp('北区码头')}{grp('拉博塔码头')}</div>
       <div className="bm-l"><span className="g"><span className="sw c1">空闲</span>能装下且当天空着</span><span className="g"><span className="sw c3">占用</span>能装下但当天有船</span>
-        <span className="g"><span className="sw" style={{ background: '#eef0f3', color: '#a7b0bc', borderColor: '#dfe3e8' }}>灰色</span>装不下本次货量，不计入基数</span><span className="g"><span className="sw nd">&nbsp;&nbsp;</span>无数据</span>
-        <span className="g"><span className="sw" style={{ background: '#e6f4ff', color: '#0958d9', borderColor: '#91caff' }}>能装下</span>15 天后只判断能否装下</span></div>
+        <span className="g"><span className="sw" style={{ background: 'var(--surface-2)', color: 'var(--faint)', borderColor: 'var(--line-strong)' }}>灰色</span>装不下本次货量，不计入基数</span><span className="g"><span className="sw nd">&nbsp;&nbsp;</span>无数据</span>
+        <span className="g"><span className="sw" style={{ background: 'var(--sidebar)', color: 'var(--primary-hover)', borderColor: 'var(--line-strong)' }}>能装下</span>15 天后只判断能否装下</span></div>
     </div>
   );
 }

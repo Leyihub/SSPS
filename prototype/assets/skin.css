@@ -1,0 +1,416 @@
+/* ==========================================================================
+   SSPS 皮肤层 · 三皮肤切换（paper 暖纸 / midnight 夜墨 / legacy 经典深蓝）
+   · 单一源：prototype/assets/skin.css ≡ app/client/src/ssps/skin.css
+   · 切换：<html data-skin="paper|midnight|legacy">，持久化于 localStorage['ssps-skin']
+   · 只覆盖「外观」；DOM 结构、业务逻辑、API、规则引擎数值一律不动
+   · midnight 只改颜色 / 阴影 / 边框色，几何与断点完全复用 paper
+   【不参与换肤】CMR 四档色阶、无数据灰色斜线、低可信标签 —— 业务硬规矩
+   ========================================================================== */
+
+/* ==========================================================================
+   1. 经典深蓝（legacy）：token 还原 2025 版 ERP 视觉基线
+   ========================================================================== */
+:root[data-skin="legacy"]{
+  /* 外壳：全屏铺满，取消陶土画布与圆角窗口 */
+  --canvas:#eef1f5;
+  --shell-max:none;
+  --shell-gutter:0px;
+  --shell-radius:0px;
+  --shell-shadow:none;
+
+  /* 表面 */
+  --bg:#eef1f5; --page:#eef1f5; --sidebar:#26394f;
+  --card:#ffffff; --surface:#ffffff;
+  --surface-2:#f5f6f8; --surface-3:#e9edf2;
+  --line:#e4e8ee; --line-2:#f0f2f5; --line-strong:#d3d9e1;
+
+  /* 文本 */
+  --ink:#1f2d3d; --text:#1f2d3d; --muted:#6b7a8c; --faint:#98a4b3; --on-ink:#ffffff;
+
+  /* 强调：蓝色主色 */
+  --primary:#1677ff; --primary-hover:#4096ff; --primary-bg:#e6f4ff;
+  --primary-fg:#0958d9; --primary-line:#91caff;
+  --nav-1:#26394f; --nav-2:#203348;
+
+  /* 语义色 */
+  --ok:#389e0d; --ok-bg:#f6ffed; --ok-line:#b7eb8f;
+  --warn:#d46b08; --warn-strong:#a8071a; --warn-bg:#fff1f0; --warn-line:#ffa39e;
+  --caution:#ad4e00; --caution-bg:#fff7e6; --caution-line:#ffd591;
+  --info:#1677ff; --info-bg:#e6f4ff; --info-line:#91caff;
+
+  /* 图表：当前柱回到品牌蓝 */
+  --bar-past:#c9d0d9; --bar-now:#1677ff; --bar-future:#dbe4ee;
+
+  /* 形状 */
+  --radius:10px; --radius-sm:6px; --radius-lg:12px;
+  --shadow:0 1px 3px rgba(16,24,40,.08),0 1px 2px rgba(16,24,40,.05);
+  --shadow-pop:0 12px 40px rgba(16,24,40,.25);
+  --focus:0 0 0 2px #bae0ff;
+
+  /* 字体：中文系统字体优先，去掉 Inter 的字距压缩感 */
+  --font:"PingFang SC","Microsoft YaHei","Noto Sans SC","WenQuanYi Zen Hei",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+
+/* ==========================================================================
+   2. 经典深蓝：外壳与侧栏（深蓝渐变 + 左侧 3px 蓝条选中）
+   ========================================================================== */
+[data-skin="legacy"] body{line-height:1.55}
+[data-skin="legacy"] .app{
+  grid-template-columns:208px minmax(0,1fr);
+  min-height:100vh;margin:0;max-width:none;
+  border:0;border-radius:0;box-shadow:none;
+}
+[data-skin="legacy"] #nav{
+  background:linear-gradient(180deg,#26394f,#203348);
+  border-right:0;color:#c9d4e2;
+}
+[data-skin="legacy"] #nav .nav-in{padding:0 0 16px}
+[data-skin="legacy"] .brand{
+  padding:18px 16px 16px;margin:0;
+  background:none;border:0;border-bottom:1px solid rgba(255,255,255,.08);
+  border-radius:0;box-shadow:none;
+}
+[data-skin="legacy"] .brand::after{display:none}
+[data-skin="legacy"] .brand .logo{
+  width:32px;height:32px;border-radius:8px;
+  background:#1677ff;color:var(--on-ink);font-size:17px;font-weight:700;
+}
+[data-skin="legacy"] .brand b{color:var(--on-ink);font-size:15px;font-weight:600;letter-spacing:.5px}
+[data-skin="legacy"] .brand small{color:#8fa3bb;font-size:11px;margin-top:0}
+[data-skin="legacy"] .nav-group{
+  padding:14px 16px 4px;font-size:11px;font-weight:400;
+  letter-spacing:1px;text-transform:none;color:#7f93ab;
+}
+[data-skin="legacy"] .nav-item{
+  padding:8px 16px;margin:0;border-radius:0;
+  border-left:3px solid transparent;
+  color:#c9d4e2;font-size:13px;
+}
+[data-skin="legacy"] .nav-item .code{
+  font:600 11px/1 var(--mono);color:#7f93ab;min-width:26px;letter-spacing:0;
+}
+[data-skin="legacy"] .nav-item:hover:not(.disabled){background:rgba(255,255,255,.06);color:var(--on-ink)}
+[data-skin="legacy"] .nav-item.active{
+  background:rgba(22,119,255,.22);border-left-color:#1677ff;
+  color:var(--on-ink);font-weight:400;box-shadow:none;
+}
+[data-skin="legacy"] .nav-item.active .code{color:#8cc0ff}
+[data-skin="legacy"] .nav-item.sub{padding-left:36px;font-size:12.5px}
+[data-skin="legacy"] .nav-item.disabled{color:#71859d;opacity:1}
+[data-skin="legacy"] .nav-item em{border-color:rgba(255,255,255,.18);border-radius:8px;color:#8fa3bb}
+[data-skin="legacy"] .nav-foot{
+  margin:22px 16px 0;padding-top:12px;
+  border-top:1px solid rgba(255,255,255,.08);
+  color:#7f93ab;font-size:11px;line-height:1.7;
+}
+
+/* ==========================================================================
+   3. 经典深蓝：顶栏与页面容器
+   ========================================================================== */
+[data-skin="legacy"] #topbar{height:48px;background:var(--surface);padding:0 20px}
+[data-skin="legacy"] .crumb{font-size:13px}
+[data-skin="legacy"] .crumb i{color:#c0c8d2}
+[data-skin="legacy"] .proto-flag{border-radius:12px;padding:1px 10px;font-size:12px}
+[data-skin="legacy"] .top-date{font-size:12.5px;letter-spacing:0}
+[data-skin="legacy"] .user{border:0;background:none;padding:0}
+[data-skin="legacy"] .avatar{width:28px;height:28px;background:#1677ff;color:var(--on-ink);font-size:12px}
+[data-skin="legacy"] .page{padding:16px 20px 28px;max-width:none}
+[data-skin="legacy"] .page-head h1,
+[data-skin="legacy"] .ptitle h1{font-size:20px;font-weight:400;letter-spacing:normal}
+[data-skin="legacy"] .page-head p,
+[data-skin="legacy"] .ptitle p{font-size:13px}
+
+/* ==========================================================================
+   4. 经典深蓝：卡片、按钮、标签、表单、表格、浮层
+   ========================================================================== */
+[data-skin="legacy"] .card{border-color:var(--line-2);border-radius:10px}
+[data-skin="legacy"] .card-h{padding:11px 16px;min-height:0}
+[data-skin="legacy"] .card-h h2{font-size:14px;font-weight:600;letter-spacing:normal}
+[data-skin="legacy"] .card-b{padding:14px 16px}
+
+[data-skin="legacy"] .btn{
+  padding:5px 14px;border-radius:6px;border-color:var(--line);
+  font-size:13px;font-weight:400;
+}
+[data-skin="legacy"] .btn:hover{border-color:#1677ff;color:#1677ff;background:var(--surface)}
+[data-skin="legacy"] .btn.primary{background:#1677ff;border-color:#1677ff;color:var(--on-ink)}
+[data-skin="legacy"] .btn.primary:hover{background:#4096ff;border-color:#4096ff;color:var(--on-ink)}
+[data-skin="legacy"] .btn.ghost{color:#1677ff;padding:5px 8px}
+[data-skin="legacy"] .btn.ghost:hover{color:#0958d9;background:#e6f4ff}
+[data-skin="legacy"] .btn.lg{padding:7px 18px;font-weight:600}
+
+[data-skin="legacy"] .tag{font-size:12px;font-weight:400}
+[data-skin="legacy"] .tag.dark{background:#26394f;border-color:#26394f}
+[data-skin="legacy"] .st{font-size:12px;font-weight:400}
+
+[data-skin="legacy"] .tabs2{gap:2px}
+[data-skin="legacy"] .tabs2 button{font-size:14px;padding:9px 16px}
+[data-skin="legacy"] .tabs2 button:hover{color:#1677ff}
+[data-skin="legacy"] .tabs2 button.on{color:#1677ff;border-bottom-color:#1677ff;font-weight:600}
+
+[data-skin="legacy"] .tbl{font-size:13px}
+[data-skin="legacy"] .tbl th,[data-skin="legacy"] .tbl td{padding:8px 10px}
+[data-skin="legacy"] .tbl th{
+  background:#f7f9fb;font-size:12px;font-weight:500;
+  letter-spacing:normal;text-transform:none;
+}
+[data-skin="legacy"] .tbl tbody tr:hover{background:#f8fbff}
+
+[data-skin="legacy"] .inp{height:32px;border-color:#d3d9e1;border-radius:6px;font-size:13px}
+[data-skin="legacy"] .inp:hover{border-color:#a8b3c2}
+[data-skin="legacy"] .inp:focus{border-color:#1677ff;box-shadow:0 0 0 2px #bae0ff}
+[data-skin="legacy"] .inp:disabled{background:#f4f6f8}
+[data-skin="legacy"] .field>label{font-size:12px}
+
+[data-skin="legacy"] .seg{border-color:#d3d9e1;border-radius:6px}
+[data-skin="legacy"] .seg button{padding:6px 4px;border-right-color:#d3d9e1;font-size:13px}
+[data-skin="legacy"] .seg button:hover{background:#f5f8ff;color:#1677ff}
+[data-skin="legacy"] .seg button.on{background:#1677ff;color:var(--on-ink);font-weight:400}
+
+[data-skin="legacy"] .chipf{
+  border-color:var(--line);background:var(--surface);color:#3b4a5c;
+  font-size:12.5px;padding:1px 11px;
+}
+[data-skin="legacy"] .chipf:hover{border-color:#1677ff;color:#1677ff}
+[data-skin="legacy"] .chipf.on{border-color:#1677ff;background:#e6f4ff;color:#0958d9}
+
+[data-skin="legacy"] .i{background:#c9d0d9;color:var(--on-ink)}
+[data-skin="legacy"] .i:hover{background:#8a97a8;color:var(--on-ink)}
+
+[data-skin="legacy"] .tip,[data-skin="legacy"] #tipbox{
+  background:#1f2d3d;color:var(--on-ink);border:0;border-radius:8px;
+}
+[data-skin="legacy"] .toast{background:#26394f;color:var(--on-ink);border-radius:8px}
+[data-skin="legacy"] .modal{border:0;border-radius:12px}
+[data-skin="legacy"] .modal-h{font-size:15px}
+[data-skin="legacy"] .empty{color:var(--muted)}
+
+/* 数据卡大数字：旧版是实心粗体、不压缩字距 */
+[data-skin="legacy"] .sm b,
+[data-skin="legacy"] .kpi b,
+[data-skin="legacy"] .tiles b,
+[data-skin="legacy"] .ds-kpi{font-weight:700!important;letter-spacing:normal}
+[data-skin="legacy"] .ds-eyebrow{letter-spacing:.08em;font-size:11px;text-transform:none}
+[data-skin="legacy"] .ds-foot{letter-spacing:.06em;text-transform:none;font-size:11px}
+
+/* 页面内联 SVG 图形：把墨黑/砖红描边拨回品牌蓝与警示橙 */
+[data-skin="legacy"] svg [stroke="#1a1a18"]{stroke:#1677ff}
+[data-skin="legacy"] svg [fill="#1a1a18"]{fill:#1677ff}
+[data-skin="legacy"] svg [stroke="#c0452f"]{stroke:#d46b08}
+[data-skin="legacy"] svg [fill="#c0452f"]{fill:#d46b08}
+[data-skin="legacy"] svg [stroke="#2f7d55"]{stroke:#389e0d}
+[data-skin="legacy"] svg [fill="#2f7d55"]{fill:#389e0d}
+
+/* ==========================================================================
+   5. 夜墨（midnight）：与「暖纸 · 墨黑」完全同构，只替换配色
+   —— 不覆盖任何尺寸 / 间距 / 栅格 / 圆角 / 字阶 / 断点，仅覆盖颜色与阴影
+   —— CMR 四档色阶、--stripe 无数据斜线、低可信标签：不参与换肤
+   ========================================================================== */
+:root[data-skin="midnight"]{
+  /* 外壳：保留暖纸的「画布 + 圆角纸」几何，只改色 */
+  --canvas:#0a0908;
+  --shell-shadow:0 24px 64px rgba(0,0,0,.55);
+
+  /* 表面 */
+  --bg:#141311; --page:#141311; --sidebar:#0e0d0b;
+  --card:#1b1a17; --surface:#232220;
+  --surface-2:#201f1c; --surface-3:#2b2926;
+  --line:#2c2a26; --line-2:#232120; --line-strong:#3b3934;
+
+  /* 文本 */
+  --ink:#ece9e2; --text:#d8d3c9; --muted:#a09a8e; --faint:#908a7d; --on-ink:#141311;
+
+  /* 强调：纸白主 CTA（对应参考站的白色主按钮） */
+  --primary:#ece9e2; --primary-hover:#fffdf6;
+  --primary-bg:#262420; --primary-fg:#ece9e2; --primary-line:#3b3934;
+  --nav-1:#0e0d0b; --nav-2:#141311;
+
+  /* 语义色：暗底提亮，全部达到 AA */
+  --ok:#6fbf95; --ok-bg:#16241d; --ok-line:#2d4a3a;
+  --warn:#f0806a; --warn-strong:#ff9f8c; --warn-bg:#2a1613; --warn-line:#5c2e26;
+  --caution:#e2ab70; --caution-bg:#2a2015; --caution-line:#4f3c23;
+  --info:#9ab7d4; --info-bg:#171e26; --info-line:#2f3f4f;
+
+  /* 图表三态：过去=深灰 / 当前=纸白 / 未来=深色斜纹 */
+  --bar-past:#4d4a45; --bar-now:#ece9e2; --bar-future:#2e2c28;
+  --hatch:repeating-linear-gradient(135deg,#1b1a17 0,#1b1a17 4px,#6a6560 4px,#6a6560 5px);
+
+  /* 形状：几何不变，只调阴影透明度与聚焦环 */
+  --shadow:0 1px 2px rgba(0,0,0,.45);
+  --shadow-pop:0 16px 44px rgba(0,0,0,.66);
+  --focus:0 0 0 2px rgba(236,233,226,.28);
+}
+
+/* 夜墨：同步 shadcn / Radix 基础组件 token（React 侧的 toast、dialog、popover 等） */
+:root[data-skin="midnight"]{
+  --button-outline:rgba(255,255,255,.12);
+  --badge-outline:rgba(255,255,255,.08);
+  --elevate-1:rgba(255,255,255,.04);
+  --elevate-2:rgba(255,255,255,.08);
+  --background:#141311; --foreground:#ece9e2;
+  --card:#1b1a17; --card-foreground:#ece9e2;
+  --popover:#232220; --popover-foreground:#ece9e2;
+  --primary:#ece9e2; --primary-foreground:#141311;
+  --secondary:#201f1c; --secondary-foreground:#ece9e2;
+  /* 不在这里重定义 --muted：SSPS 样式把它当「次要文字色」用（上一段已设 #a09a8e），
+     shadcn 把同名变量当「弱化底色」。2026-11-17 修复：此处曾写 --muted:#201f1c，
+     因为排在后面而生效，导致夜墨下全部次要文字与底色几乎同色。 */
+  --muted-foreground:#a09a8e;
+  --accent:#2b2926; --accent-foreground:#ece9e2;
+  --info:#9ab7d4; --info-foreground:#141311;
+  --destructive:#f0806a; --destructive-foreground:#141311;
+  --success:#6fbf95; --success-foreground:#141311;
+  --warning:#e2ab70; --warning-foreground:#141311;
+  --border:#2c2a26; --input:#2c2a26; --ring:#ece9e2;
+  --chart-1:#ece9e2; --chart-2:#4d4a45; --chart-3:#6fbf95; --chart-4:#f0806a; --chart-5:#e2ab70;
+  --sidebar:#0e0d0b; --sidebar-foreground:#d8d3c9;
+  --sidebar-primary:#ece9e2; --sidebar-primary-foreground:#141311;
+  --sidebar-accent:#232220; --sidebar-accent-foreground:#ece9e2;
+  --sidebar-border:#2c2a26; --sidebar-ring:#ece9e2;
+  --primary-border:#fffdf6; --secondary-border:#2c2a26;
+  --destructive-border:#ff9f8c; --accent-border:#2c2a26; --muted-border:#2c2a26;
+}
+
+/* 夜墨：暖纸里写死的少数非 token 颜色，在此补齐（仅颜色） */
+[data-skin="midnight"] .app{border-color:rgba(236,233,226,.07)}
+[data-skin="midnight"] .avatar{background:var(--surface-3);color:var(--ink)}
+[data-skin="midnight"] .mask{background:rgba(0,0,0,.62)}
+[data-skin="midnight"] .navmask.on{background:rgba(0,0,0,.62)}
+/* 无数据标签底色仍是浅灰斜纹（业务硬规矩），文字改为深色才读得清 */
+[data-skin="midnight"] .nd,
+[data-skin="midnight"] .tag.nodata{color:#3f3c37}
+/* 页面级 ⓘ 帮助点：暖纸是浅灰底白字，夜墨改为深灰底纸白字 */
+[data-skin="midnight"] .i{background:#3b3934;color:#ece9e2}
+/* 无数据格里的「无数据」小标签：底色仍是浅灰斜线，标签本身改成深底浅字 */
+[data-skin="midnight"] .cell.nd i,
+[data-skin="midnight"] .cell.nd small{background:rgba(20,19,17,.84);color:#ece9e2}
+/* 页面级「不适用」斜纹块跟随主题，不改成业务斜线口径 */
+[data-skin="midnight"] .plan.noplan{background:var(--hatch)}
+
+/* 页面内联 SVG：把暖纸的墨黑 / 砖红 / 灰阶描边映射到夜墨色阶 */
+[data-skin="midnight"] svg [stroke="#1a1a18"]{stroke:#ece9e2}
+[data-skin="midnight"] svg [fill="#1a1a18"]{fill:#ece9e2}
+[data-skin="midnight"] svg [fill="#35342f"]{fill:#a8a29a}
+[data-skin="midnight"] svg [fill="#c9c5bd"]{fill:#4d4a45}
+[data-skin="midnight"] svg [stroke="#d8d3ca"]{stroke:#3b3934}
+[data-skin="midnight"] svg [stroke="#c0452f"]{stroke:#f0806a}
+[data-skin="midnight"] svg [fill="#c0452f"]{fill:#f0806a}
+[data-skin="midnight"] svg [stroke="#2f7d55"]{stroke:#6fbf95}
+[data-skin="midnight"] svg [fill="#2f7d55"]{fill:#6fbf95}
+[data-skin="midnight"] svg [fill="#fff"]{fill:#141311}
+[data-skin="midnight"] svg [stroke="#fff"]{stroke:#141311}
+
+/* 自包含页（index / P02-v2）的深色顶栏：暖纸下是墨黑，夜墨下改为近黑底 */
+[data-skin="midnight"] .top{background:#0e0d0b;color:#ece9e2}
+[data-skin="midnight"] .top a{color:#a09a8e}
+[data-skin="midnight"] .top a:hover{color:#ece9e2}
+[data-skin="midnight"] .top .logo{background:#ece9e2;color:#141311}
+
+/* ==========================================================================
+   6. 皮肤切换器（右上角下拉）—— 三套皮肤共用同一套结构
+   ========================================================================== */
+.skin-sw{position:relative;display:inline-flex;flex:none;align-items:center}
+.skin-sw-btn{
+  display:inline-flex;align-items:center;gap:7px;
+  height:28px;padding:0 9px;
+  background:var(--surface);color:var(--text);
+  border:1px solid var(--line-strong);border-radius:var(--radius-sm);
+  font-size:11.5px;line-height:1;white-space:nowrap;
+  transition:border-color .15s ease,color .15s ease,background .15s ease;
+}
+.skin-sw-btn:hover,
+.skin-sw-btn[aria-expanded="true"]{border-color:var(--ink);color:var(--ink)}
+.skin-sw-ico{
+  width:13px;height:13px;border-radius:3px;flex:none;
+  background:linear-gradient(135deg,var(--bg) 0 50%,var(--ink) 50% 100%);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.12);
+}
+.skin-sw-car{
+  width:5px;height:5px;flex:none;margin-left:1px;
+  border-right:1.5px solid var(--faint);border-bottom:1.5px solid var(--faint);
+  transform:rotate(45deg) translateY(-1px);
+}
+.skin-sw-pop{
+  position:absolute;right:0;top:calc(100% + 6px);z-index:70;
+  min-width:228px;padding:6px;
+  background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--radius);box-shadow:var(--shadow-pop);
+}
+.skin-sw-pop[hidden]{display:none}
+.skin-sw-t{
+  padding:5px 8px 7px;font-size:9.5px;font-weight:500;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--faint);
+}
+.skin-sw-opt{
+  display:flex;align-items:center;gap:9px;width:100%;
+  padding:7px 8px;border:0;background:none;border-radius:var(--radius-sm);
+  text-align:left;color:var(--text);
+  transition:background .15s ease;
+}
+.skin-sw-opt:hover{background:var(--surface-2)}
+.skin-sw-opt[aria-selected="true"]{background:var(--surface-2)}
+.skin-sw-pv{
+  width:34px;height:24px;border-radius:4px;flex:none;overflow:hidden;
+  display:grid;grid-template-columns:1fr 1fr;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.1);
+}
+.skin-sw-pv i{display:block}
+.pv-paper i:first-child{background:var(--bg)}
+.pv-paper i:last-child{background:var(--ink)}
+.pv-legacy i:first-child{background:#26394f}
+.pv-legacy i:last-child{background:#1677ff}
+.pv-midnight i:first-child{background:#0e0d0b}
+.pv-midnight i:last-child{background:#ece9e2}
+.skin-sw-tx{flex:1;min-width:0;line-height:1.35}
+.skin-sw-tx b{display:block;font-size:12px;font-weight:600;color:var(--ink)}
+.skin-sw-tx small{display:block;font-size:10.5px;color:var(--muted);margin-top:1px}
+.skin-sw-ck{width:12px;height:12px;flex:none;opacity:0}
+.skin-sw-opt[aria-selected="true"] .skin-sw-ck{opacity:1}
+.skin-sw-ck::after{
+  content:"";display:block;width:5px;height:9px;
+  border-right:1.6px solid var(--ink);border-bottom:1.6px solid var(--ink);
+  transform:rotate(42deg) translate(-1px,-2px);
+}
+
+/* 经典深蓝下切换器也跟着回到旧版观感 */
+:root[data-skin="legacy"] .skin-sw-btn{height:30px;border-color:var(--line);font-size:12px}
+:root[data-skin="legacy"] .skin-sw-btn:hover,
+:root[data-skin="legacy"] .skin-sw-btn[aria-expanded="true"]{border-color:#1677ff;color:#1677ff}
+:root[data-skin="legacy"] .skin-sw-ico{
+  background:linear-gradient(135deg,#26394f 0 50%,#1677ff 50% 100%);
+}
+:root[data-skin="legacy"] .skin-sw-opt[aria-selected="true"]{background:#e6f4ff}
+:root[data-skin="legacy"] .skin-sw-opt:hover{background:#f0f6ff}
+:root[data-skin="legacy"] .skin-sw-pop{border-radius:8px}
+
+/* 夜墨下切换器沿用同一尺寸，只把图标与选中态换成暗色 */
+:root[data-skin="midnight"] .skin-sw-ico{
+  background:linear-gradient(135deg,#141311 0 50%,#ece9e2 50% 100%);
+  box-shadow:inset 0 0 0 1px rgba(236,233,226,.18);
+}
+:root[data-skin="midnight"] .skin-sw-opt[aria-selected="true"]{background:var(--surface-3)}
+
+/* ==========================================================================
+   7. 经典深蓝的响应式重置
+   —— 上面的桌面栅格/内边距特异性高于 app.css 的 @media，必须在断点里再复位，
+      否则窄屏会残留 208px 的侧栏列宽。
+   ========================================================================== */
+@media (max-width:900px){
+  [data-skin="legacy"] .app{grid-template-columns:1fr;min-height:100vh}
+  [data-skin="legacy"] #topbar{padding:0 14px}
+  [data-skin="legacy"] .page{padding:14px 14px 26px}
+  [data-skin="legacy"] .nav-in{padding:0 0 12px}
+  [data-skin="legacy"] .brand{padding:14px 16px 13px}
+}
+@media (max-width:640px){
+  [data-skin="legacy"] .page{padding:12px 12px 24px}
+  [data-skin="legacy"] .brand{padding:12px 14px 11px}
+  [data-skin="legacy"] .nav-group{padding:12px 14px 4px}
+  [data-skin="legacy"] .nav-item{padding:7px 14px}
+}
+
+@media (max-width:640px){
+  .skin-sw-label{display:none}
+  .skin-sw-btn{padding:0 7px}
+  .skin-sw-pop{min-width:210px;right:-2px}
+}

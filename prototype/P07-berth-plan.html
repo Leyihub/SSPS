@@ -7,28 +7,30 @@
 <link rel="stylesheet" href="assets/app.css">
 <style>
 .btns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.auto{display:flex;flex-wrap:wrap;gap:6px 22px;padding:10px 16px;font-size:13px;color:#3b4a5c;border-bottom:1px solid var(--line-2)}
+.auto{display:flex;flex-wrap:wrap;gap:6px 22px;padding:10px 16px;font-size:13px;color:var(--text);border-bottom:1px solid var(--line-2)}
 .auto span{white-space:nowrap}.auto em{font-style:normal;color:var(--muted);margin-right:4px}
 .alerts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
-.al{padding:12px 16px;border-left:4px solid #d9dee5;cursor:pointer}
+.al{padding:12px 16px;border-left:4px solid var(--line-strong);cursor:pointer}
 .al b{font-size:24px;line-height:1.2;display:block}
 .al span{color:var(--muted);font-size:13px;display:flex;align-items:center}
-.al.warn{border-left-color:#faad14}.al.err{border-left-color:#ff4d4f}.al.ok{border-left-color:#52c41a}
-.al:hover{box-shadow:0 2px 8px rgba(16,24,40,.12)}
-.tbl tr.off td{color:#98a4b3;background:#fafbfc}
-.tbl tr.focus td{background:#fffbe6}
+.al.warn{border-left-color:var(--caution)}.al.err{border-left-color:var(--warn)}.al.ok{border-left-color:var(--ok)}
+.al:hover{box-shadow:0 2px 8px rgba(26,26,24,.12)}
+.tbl tr.off td{color:var(--faint);background:var(--surface-2)}
+.tbl tr.focus td{background:var(--caution-bg)}
 .tbl td,.tbl th{white-space:nowrap}
 .vname a{color:var(--primary);text-decoration:none}.vname a:hover{text-decoration:underline}
 .raw{color:var(--muted);font-size:12px;display:block}
 .fbar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line-2)}
 .fbar .inp{width:auto}
-.bt2 tr.sel td{background:#f0f7ff}
+.bt2 tr.sel td{background:var(--surface-2)}
 .viewer{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:12px;white-space:nowrap}
-.viewer select{height:28px;padding:0 6px;border:1px solid #d3d9e1;border-radius:6px;background:#fff}
+.viewer select{height:28px;padding:0 6px;border:1px solid var(--line-strong);border-radius:6px;background:var(--surface)}
 .rep{display:grid;gap:8px;margin-top:8px}
 .rep div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--line-2);padding:5px 0}
 .rep div span:first-child{color:var(--muted)}
 </style>
+<link rel="stylesheet" href="assets/skin.css">
+<script data-skin-init>(function(){var s="paper";try{var v=localStorage.getItem("ssps-skin");if(v==="legacy"||v==="midnight")s=v;}catch(e){}document.documentElement.setAttribute("data-skin",s);})();</script>
 </head>
 <body>
 <div class="app"><aside id="nav"></aside>
@@ -111,7 +113,7 @@
       '<div class="field"><div style="color:var(--muted);font-size:12px;margin-bottom:4px">选择 IMIP 靠船计划 Excel</div><input type="file" id="fl" accept=".xlsx,.xls" class="inp" style="height:auto;padding:6px"></div>' +
       '<div style="color:var(--muted);font-size:12px;margin-bottom:8px">原型不会真的解析文件，选好文件（或不选，用示例文件演示）后点「校验」看校验报告，再确认导入。</div><button class="btn" id="chk">校验</button><div class="rep" id="rep"></div>',
       onOpen: (m) => { m.querySelector('#chk').onclick = () => { const f = m.querySelector('#fl').files[0]; m.dataset.name = f ? f.name : '靠船计划_20261104.xlsx'; m.querySelector('#rep').innerHTML =
-        '<div><span>文件</span><b>' + m.dataset.name + '</b></div><div><span>总行数</span><b>56</b></div><div><span>通过</span><b style="color:#237804">53</b></div><div><span>标「非德信池」</span><b>3</b></div><div><span>泊位无法解析</span><b>0</b></div><div><span>解析告警</span><b style="color:#ad4e00">1（第 31 行船长为空，已按空值导入）</b></div><div><span>与最新一期的差异</span><b>新增 3 条 · 取消 2 条 · 时间变更 7 条</b></div>'; m.dataset.checked = '1'; }; },
+        '<div><span>文件</span><b>' + m.dataset.name + '</b></div><div><span>总行数</span><b>56</b></div><div><span>通过</span><b style="color:var(--ok)">53</b></div><div><span>标「非德信池」</span><b>3</b></div><div><span>泊位无法解析</span><b>0</b></div><div><span>解析告警</span><b style="color:var(--caution)">1（第 31 行船长为空，已按空值导入）</b></div><div><span>与最新一期的差异</span><b>新增 3 条 · 取消 2 条 · 时间变更 7 条</b></div>'; m.dataset.checked = '1'; }; },
       onOk: (m) => { if (!m.dataset.checked) { C.toast('请先点「校验」'); return false; }
         M.batches.unshift({ batchNo: 'BP-20261104-02', planDate: M.today, source: '手动上传', fileName: m.dataset.name, rows: 56, validation: '通过 · 3 行标「非德信池」· 1 条解析告警', status: '成功' });
         M.syncLogs.unshift({ type: '手动上传靠船计划', start: M.now, end: M.now, n: 56, ok: '成功', err: '' }); C.persist(); S.batch = latest.batchNo; draw(); C.toast('已导入批次 BP-20261104-02（原型：明细仍显示上一期）'); } });

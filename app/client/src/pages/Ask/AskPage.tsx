@@ -109,12 +109,12 @@ export default function AskPage() {
   return (
     <div className="pg-p11"><div className="p11">
       <section>
-        <div className="card hd"><div className="hd-t"><div className="hd-ico"><svg viewBox="0 0 40 40"><path d="M6 26h28l-4 7H10z" fill="#1677ff" /><path d="M11 25V15h14l4 10z" fill="#69b1ff" /><rect x="14" y="9" width="7" height="6" rx="1" fill="#0958d9" /></svg></div>
+        <div className="card hd"><div className="hd-t"><div className="hd-ico"><svg viewBox="0 0 40 40"><path d="M6 26h28l-4 7H10z" fill="#1a1a18" /><path d="M11 25V15h14l4 10z" fill="#c9c5bd" /><rect x="14" y="9" width="7" height="6" rx="1" fill="#35342f" /></svg></div>
           <div><h1>智能发船助手<small>智慧发船预测系统</small></h1><p>基于库存消耗、港口容量与航程规则的发船方案助手</p></div></div>
           <div className="steps">{names.map((n, i) => { const k = i + 1; let c = k < stage ? 'done' : k === stage ? 'cur' : ''; if (k === 3 && noItem && stage === 4) c = 'skip'; return <div key={k} className={'st ' + c}><b>{c === 'done' ? '✓' : k}</b><span>{n}</span></div>; })}</div></div>
 
         <div className="card ask">
-          <div className="ask-in"><span className="ai"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M4 4h16v12H8l-4 4z" fill="none" stroke="#1677ff" strokeWidth="2" strokeLinejoin="round" /><path d="M8 9h8M8 12h5" stroke="#1677ff" strokeWidth="2" strokeLinecap="round" /></svg></span>
+          <div className="ask-in"><span className="ai"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M4 4h16v12H8l-4 4z" fill="none" stroke="#1a1a18" strokeWidth="2" strokeLinejoin="round" /><path d="M8 9h8M8 12h5" stroke="#1a1a18" strokeWidth="2" strokeLinecap="round" /></svg></span>
             <textarea value={text} placeholder="像说话一样描述需求，比如：烧结石灰石 秦皇岛→德信 5万吨 12月10日前到港" onChange={(e) => onText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); if (text.trim()) run(); } }} /></div>
           <div className="ask-bar"><span className="hint">{listening ? '正在听，请直接说出需求…再点一次麦克风结束' : '按 Enter 解析，Shift+Enter 换行'}</span>
             <button className={'mic' + (listening ? ' on' : '')} onClick={mic} aria-label="语音输入" title="语音输入"><svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V22h2v-3.08A7 7 0 0 0 19 12h-2z" /></svg></button>
@@ -184,8 +184,8 @@ export default function AskPage() {
 
       <aside className="card inv">
         <div className="grp"><h2>库存可用天数分析<Info text="按库存消耗模拟表计算：可用天数 = 当前库存 ÷ 日耗。模拟库存已经包含已排定的到货，降到 0 的那一天就是断料日。点击某个物料可以带入提问。" /></h2>
-          <div className="lg"><span><i style={{ background: '#52c41a' }} />充裕（&gt;25天）</span><span><i style={{ background: '#fa8c16' }} />偏紧（15–25天）</span><span><i style={{ background: '#ff4d4f' }} />危险（&lt;15天）</span></div></div>
-        <div className="up"><span>{inv?.batch ? `批次 ${(inv.batch as R).batchNo}` : '还没有导入库存表'}</span>{inv?.batch && <span className="sample" style={{ background: '#f6ffed', borderColor: '#b7eb8f', color: '#237804' }}>已导入：{(inv.batch as R).fileName}</span>}</div>
+          <div className="lg"><span><i style={{ background: 'var(--ok)' }} />充裕（&gt;25天）</span><span><i style={{ background: 'var(--caution)' }} />偏紧（15–25天）</span><span><i style={{ background: 'var(--warn)' }} />危险（&lt;15天）</span></div></div>
+        <div className="up"><span>{inv?.batch ? `批次 ${(inv.batch as R).batchNo}` : '还没有导入库存表'}</span>{inv?.batch && <span className="sample" style={{ background: 'var(--ok-bg)', borderColor: 'var(--ok-line)', color: 'var(--ok)' }}>已导入：{(inv.batch as R).fileName}</span>}</div>
         <StaleNotice stale={inv?.stale} />
         <div className="itabs"><button className={invTab === 'mat' ? 'on' : ''} onClick={() => setInvTab('mat')}>按物料</button><button className={invTab === 'risk' ? 'on' : ''} onClick={() => setInvTab('risk')}>按风险</button></div>
         {invTab === 'mat' ? types.map((ty) => grp('t:' + ty, ty, items.filter((i) => i.type === ty).sort((a, b) => a.days - b.days), false))

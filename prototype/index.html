@@ -5,34 +5,122 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SSPS 产品原型导航</title>
 <style>
-:root{--primary:#1677ff;--bg:#f1f4f8;--line:#e4e8ee;--text:#1f2d3d;--muted:#6b7a8c}
+/* ds-v2-tokens · 与 prototype/assets/app.css 同源 */
+:root {
+  /* —— 外壳配置（prototype 展示态；React 嵌入态在 ssps.css 覆盖） —— */
+  --canvas: #a6634a;
+  --shell-max: 1680px;
+  --shell-gutter: 28px;
+  --shell-radius: 16px;
+  --shell-shadow: 0 24px 64px rgba(60,32,20,.24);
+
+  /* —— 表面 —— */
+  --bg: #faf9f6;
+  --page: #faf9f6;
+  --sidebar: #f1eee9;
+  --card: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f5f3ee;
+  --surface-3: #ece8e0;
+  --line: #e6e2da;
+  --line-2: #efebe4;
+  --line-strong: #d8d3ca;
+
+  /* —— 文本 —— */
+  --ink: #1a1a18;
+  --text: #2a2926;
+  --muted: #8a857d;
+  --faint: #aaa49a;
+  --on-ink: #ffffff;
+
+  /* —— 强调（兼容旧变量 --primary：由蓝改墨黑） —— */
+  --primary: #1a1a18;
+  --primary-hover: #35342f;
+  --primary-bg: #f1eee9;
+  --primary-fg: #1a1a18;
+  --primary-line: #1a1a18;
+  --nav-1: #f1eee9;
+  --nav-2: #ece8e0;
+
+  /* —— 语义色（仅趋势 / 逾期 / 提示使用，低饱和） —— */
+  --ok: #2f7d55;
+  --ok-bg: #eef4ef;
+  --ok-line: #cfe2d5;
+  --warn: #c0452f;
+  --warn-strong: #a33724;
+  --warn-bg: #faeeea;
+  --warn-line: #edd2c9;
+  --caution: #a86a2e;
+  --caution-bg: #f8f1e6;
+  --caution-line: #e8dcc4;
+  --info: #4a6b8a;
+  --info-bg: #eef2f5;
+  --info-line: #d6e0e8;
+
+  /* —— 图表灰阶：过去 / 当前 / 预测 —— */
+  --bar-past: #c9c5bd;
+  --bar-now: #1a1a18;
+  --bar-future: #e3dfd7;
+  --hatch: repeating-linear-gradient(135deg,#f6f4ef 0,#f6f4ef 4px,#c9c5bd 4px,#c9c5bd 5px);
+
+  /* —— 形状 —— */
+  --radius: 8px;
+  --radius-sm: 6px;
+  --radius-lg: 12px;
+  --shadow: 0 1px 2px rgba(26,26,24,.04);
+  --shadow-pop: 0 12px 36px rgba(26,26,24,.14);
+  --focus: 0 0 0 2px rgba(26,26,24,.16);
+
+  /* —— 字体 —— */
+  --font: Inter, "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  --mono: "SF Mono", "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+
+  /* —— 业务语义色：禁止换肤（CLAUDE.md 硬规矩 6 / 26） —— */
+  --c1-bg:#d9f7be; --c1-fg:#135200; --c1-bd:#95de64;   /* CMR ≥50% 充裕 */
+  --c2-bg:#fff1b8; --c2-fg:#614700; --c2-bd:#ffd666;   /* CMR 30–50% 适中 */
+  --c3-bg:#ffd8bf; --c3-fg:#873800; --c3-bd:#ffa940;   /* CMR 15–30% 紧张 */
+  --c4-bg:#ffccc7; --c4-fg:#a8071a; --c4-bd:#ff7875;   /* CMR <15% 拥堵 */
+  --stripe: repeating-linear-gradient(135deg,#f6f7f9 0,#f6f7f9 5px,#cdd2d9 5px,#cdd2d9 6px); /* 无数据：灰色斜线，绝不显示 0% */
+}
+:root{--primary:var(--ink);--bg:var(--bg);--line:var(--line);--text:var(--ink);--muted:var(--muted)}
 *{box-sizing:border-box}html,body{margin:0}
-body{background:var(--bg);color:var(--text);font:14px/1.7 "PingFang SC","Microsoft YaHei","Noto Sans SC","WenQuanYi Zen Hei",system-ui,sans-serif}
-.top{background:linear-gradient(90deg,#26394f,#203348);color:#fff;height:52px;display:flex;align-items:center;padding:0 16px;gap:10px;font-weight:600}
-.logo{width:28px;height:28px;border-radius:8px;background:var(--primary);display:grid;place-items:center}
-.wrap{max-width:860px;margin:0 auto;padding:18px 16px 40px}
-h1{font-size:20px;margin:4px 0 6px}
-p{margin:0 0 10px;color:#3b4a5c}
-.card{background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(16,24,40,.08);padding:14px 16px;margin-top:12px}
-a.card{display:block;color:inherit;text-decoration:none;border:1.5px solid var(--primary)}
-a.card:active{background:#f5faff}
+body{background:var(--bg);color:var(--text);font:13px/1.6 var(--font);font-variant-numeric:tabular-nums}
+.top{background:var(--surface);color:var(--ink);border-bottom:1px solid var(--line);height:52px;display:flex;align-items:center;padding:0 20px;gap:10px;font-weight:600;letter-spacing:-.01em}
+.logo{width:28px;height:28px;border-radius:7px;background:var(--ink);color:var(--on-ink);display:grid;place-items:center;font-size:13px}
+.wrap{max-width:860px;margin:0 auto;padding:22px 16px 40px}
+h1{font-size:22px;margin:4px 0 6px;font-weight:600;letter-spacing:-.025em;color:var(--ink)}
+p{margin:0 0 10px;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px;margin-top:12px}
+a.card{display:block;color:inherit;text-decoration:none;border:1px solid var(--line-strong);transition:border-color .15s}
+a.card:hover{border-color:var(--ink)}
+a.card:active{background:var(--surface-2)}
 .row{display:flex;justify-content:space-between;align-items:center;gap:8px}
-.row b{font-size:15px}
-.tag{font-size:12px;border-radius:4px;padding:0 8px;line-height:20px;border:1px solid #91caff;background:#e6f4ff;color:#0958d9;white-space:nowrap}
-.tag.g{background:#f5f6f8;color:#5b6878;border-color:#d9dee5}
-.sub{color:var(--muted);font-size:13px;margin-top:2px}
-.list{margin-top:12px;background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(16,24,40,.08)}
-.it{display:flex;gap:10px;align-items:center;padding:10px 16px;border-bottom:1px solid #f0f2f5}
+.row b{font-size:15px;font-weight:600}
+.tag{font-size:11px;border-radius:4px;padding:0 8px;line-height:20px;border:1px solid var(--line);background:var(--surface-2);color:var(--muted);white-space:nowrap;font-weight:500}
+.tag.g{background:var(--surface-2);color:var(--faint);border-color:var(--line)}
+.sub{color:var(--muted);font-size:12.5px;margin-top:2px}
+.list{margin-top:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+.it{display:flex;gap:10px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line-2)}
+.it:hover{background:var(--surface-2)}
 .it:last-child{border:0}
-.it .c{font:700 12px ui-monospace,Menlo,Consolas,monospace;color:var(--primary);width:30px}
-.it.todo .c,.it.todo .n{color:#98a4b3}
-.it .n{flex:1}.it .n small{display:block;color:var(--muted);font-size:12px;line-height:1.4}
+.it .c{font:500 11px var(--mono);color:var(--muted);width:30px;letter-spacing:.04em}
+.it.todo .c,.it.todo .n{color:var(--faint)}
+.it .n{flex:1}.it .n small{display:block;color:var(--muted);font-size:11.5px;line-height:1.4}
 .it a{color:inherit;text-decoration:none;display:contents}
-.note{margin-top:14px;font-size:12px;color:var(--muted)}
+.note{margin-top:14px;font-size:11.5px;color:var(--faint)}
+@media(max-width:640px){
+  .wrap{padding:16px 12px 30px}
+  .top{padding:0 12px}
+  .row{flex-wrap:wrap}
+  .tag{white-space:normal}
+  h1{font-size:19px}
+}
 </style>
+<link rel="stylesheet" href="assets/skin.css">
+<script data-skin-init>(function(){var s="paper";try{var v=localStorage.getItem("ssps-skin");if(v==="legacy"||v==="midnight")s=v;}catch(e){}document.documentElement.setAttribute("data-skin",s);})();</script>
 </head>
 <body>
-<header class="top"><span class="logo">S</span>SSPS 产品原型</header>
+<header class="top"><span class="logo">S</span>SSPS 产品原型<span data-skin-slot style="margin-left:auto"></span></header>
 <main class="wrap">
   <h1>智慧发船预测系统 · 产品原型</h1>
   <p>P01–P11 共 11 个页面的可点击原型已做完（P11 智能提问是预测入口），等待评审。不连飞书，示例数据均为虚构，<b>没有任何功能已上线</b>。页面里的新建、修改只保存在当前浏览器标签页里，在「系统管理」页可以一键重置。P01、P04、P05 支持手机浏览。</p>
@@ -41,7 +129,7 @@ a.card:active{background:#f5faff}
     <div class="row"><b>P02 智能发船预测（第一版 · 已优化）</b><span class="tag">待评审</span></div>
     <div class="sub">表单输入，推荐 + 备选方案 + 30 天容量日历 + 7 个示例场景；术语全中文，解释收进悬停浮窗；日历下方有 23 个泊位一览，桌面版。</div>
   </a>
-  <a class="card" href="P02-prediction-v2.html" style="border-color:#d9dee5">
+  <a class="card" href="P02-prediction-v2.html" style="border-color:var(--line-strong)">
     <div class="row"><b>P02 智能发船预测 · v2 简化草图</b><span class="tag g">备选草图</span></div>
     <div class="sub">一句话提问、手机可用、点击日历看预抵船只；去掉了可信度 / 评分 / 溯源。</div>
   </a>

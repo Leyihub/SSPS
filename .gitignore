@@ -15,3 +15,7 @@ app/migration-out/
 
 # 本机 WorkBuddy 工具目录
 .workbuddy/
+
+# IDE 与本机临时目录
+.idea/
+.tmp-chrome-*/
