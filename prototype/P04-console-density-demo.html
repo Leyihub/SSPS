@@ -1,0 +1,905 @@
+<!doctype html>
+<html lang="zh-CN" data-skin="paper" data-density="compact">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>在途船运工作平面 · 高密度化方案示意原型 · SSPS</title>
+<script>try{document.documentElement.setAttribute('data-skin',localStorage.getItem('ssps-skin')||'paper')}catch(e){}</script>
+<link rel="stylesheet" href="assets/app.css">
+<link rel="stylesheet" href="assets/skin.css">
+<style>
+/* ==========================================================================
+   P04-console-density-demo · 方案示意原型
+   仅复用 app.css / skin.css 的 :root token；本文件所有几何均为示意增量。
+   密度是独立维度 data-density，绝不写进 skin.css（方案 C8）。
+   CMR 四档色阶 / 无数据灰色斜线 / 低可信标签一律用业务变量，不参与换肤。
+   ========================================================================== */
+html[data-density="cozy"]    { --cd-rowh:48px; --cd-pad:9px 10px; --cd-fs:13px; --cd-sub:11px }
+html[data-density="compact"] { --cd-rowh:32px; --cd-pad:4px 8px;  --cd-fs:12px; --cd-sub:10px }
+html[data-density="ultra"]   { --cd-rowh:28px; --cd-pad:2px 6px;   --cd-fs:12px; --cd-sub:10px }
+
+html,body{height:100%;margin:0;padding:0;overflow:hidden;background:var(--bg);color:var(--text);
+  font:13px/1.5 var(--font);font-variant-numeric:tabular-nums}
+*,*::before,*::after{box-sizing:border-box}
+button,input,select{font-family:inherit}
+button{cursor:pointer}
+a{color:var(--primary)}
+
+.cd-console{height:100vh;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;
+  background:var(--bg);color:var(--text);min-width:0}
+
+/* —— 通用控件 —— */
+.cd-btn{display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 10px;white-space:nowrap;
+  border:1px solid var(--line-strong);border-radius:var(--radius-sm);background:var(--surface);
+  color:var(--text);font-size:12px;line-height:1}
+.cd-btn:hover{border-color:var(--primary);color:var(--primary)}
+.cd-btn.pri{background:var(--primary);border-color:var(--primary);color:var(--on-ink)}
+.cd-btn.pri:hover{opacity:.88;color:var(--on-ink)}
+.cd-btn.on{background:var(--primary-bg);border-color:var(--primary-line);color:var(--primary-fg);font-weight:600}
+.cd-btn:disabled{opacity:.45;cursor:not-allowed}
+.cd-seg{display:inline-flex;border:1px solid var(--line-strong);border-radius:var(--radius-sm);overflow:hidden;background:var(--surface)}
+.cd-seg .cd-btn{border:0;border-radius:0;border-right:1px solid var(--line-2);height:26px;padding:0 9px}
+.cd-seg .cd-btn:last-child{border-right:0}
+.cd-tag{display:inline-flex;align-items:center;gap:3px;padding:0 6px;height:18px;border-radius:4px;
+  font-size:11px;line-height:1;white-space:nowrap;border:1px solid transparent}
+.cd-tag.ok{background:var(--ok-bg);border-color:var(--ok-line);color:var(--ok)}
+.cd-tag.warn{background:var(--warn-bg);border-color:var(--warn-line);color:var(--warn)}
+.cd-tag.caution{background:var(--caution-bg);border-color:var(--caution-line);color:var(--caution)}
+.cd-tag.info{background:var(--info-bg);border-color:var(--info-line);color:var(--info)}
+.cd-tag.mute{background:var(--surface-2);border-color:var(--line);color:var(--muted)}
+.cd-lowtrust{background:var(--caution-bg);border:1px solid var(--caution-line);color:var(--caution);
+  border-radius:3px;padding:0 4px;font-size:10px;line-height:16px;white-space:nowrap}
+.cd-dot{width:6px;height:6px;border-radius:50%;display:inline-block;flex:none}
+.cd-dim{color:var(--muted)}
+.cd-faint{color:var(--faint)}
+
+/* —— 区 1 · 工具栏 —— */
+.cd-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:7px 12px;
+  background:var(--surface);border-bottom:1px solid var(--line);min-height:46px}
+.cd-title{display:flex;align-items:baseline;gap:8px;min-width:0}
+.cd-title h1{margin:0;font-size:15px;color:var(--ink);white-space:nowrap;font-weight:650}
+.cd-title .cd-note{font-size:10.5px;color:var(--faint);white-space:nowrap}
+.cd-chain{display:flex;align-items:center;gap:0;margin-left:6px}
+.cd-chain .cd-step{display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 9px;
+  border:1px solid var(--line-2);background:var(--surface-2);color:var(--muted);font-size:11.5px;
+  white-space:nowrap;cursor:pointer}
+.cd-chain .cd-step:first-child{border-radius:var(--radius-sm) 0 0 var(--radius-sm)}
+.cd-chain .cd-step:last-child{border-radius:0 var(--radius-sm) var(--radius-sm) 0}
+.cd-chain .cd-step + .cd-step{border-left:0}
+.cd-chain .cd-step b{font-size:10px;border:1px solid currentColor;border-radius:50%;width:14px;height:14px;
+  display:grid;place-items:center;line-height:1}
+.cd-chain .cd-step:hover{color:var(--primary)}
+.cd-chain .cd-step.done{background:var(--ok-bg);color:var(--ok)}
+.cd-chain .cd-step.done b{background:var(--ok);color:var(--on-ink);border-color:var(--ok)}
+.cd-spacer{flex:1;min-width:4px}
+.cd-badge{display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 9px;border-radius:var(--radius-sm);
+  background:var(--surface-2);border:1px solid var(--line-2);font-size:11.5px;white-space:nowrap}
+.cd-badge b{font-size:13px;color:var(--ink)}
+.cd-badge.danger b{color:var(--warn)}
+.cd-badge.draft{background:var(--caution-bg);border-color:var(--caution-line);color:var(--caution);cursor:pointer}
+.cd-skinpop{position:relative}
+.cd-skinpop .cd-menu{position:absolute;right:0;top:30px;z-index:40;min-width:150px;padding:5px;
+  background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--radius);box-shadow:var(--shadow-pop)}
+.cd-skinpop .cd-menu button{display:block;width:100%;text-align:left;padding:6px 9px;border:0;border-radius:4px;
+  background:none;color:var(--text);font-size:12px}
+.cd-skinpop .cd-menu button:hover{background:var(--surface-2)}
+.cd-skinpop .cd-menu button.on{color:var(--primary);font-weight:600}
+
+/* —— 区 2 · 高级筛选 —— */
+.cd-filters{padding:6px 12px;background:var(--surface-2);border-bottom:1px solid var(--line);
+  display:flex;flex-wrap:wrap;gap:5px 14px;align-items:center}
+.cd-filters.collapsed{display:none}
+.cd-fl{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;white-space:nowrap}
+.cd-fl > span{color:var(--muted)}
+.cd-inp{height:24px;padding:0 7px;border:1px solid var(--line-strong);border-radius:4px;
+  background:var(--surface);color:var(--text);font-size:11.5px;min-width:96px}
+.cd-inp:focus{outline:none;box-shadow:var(--focus);border-color:var(--primary)}
+.cd-filters .cd-hint{font-size:10.5px;color:var(--faint)}
+
+/* —— 区 3 · 主体 —— */
+.cd-main{display:grid;grid-template-columns:minmax(0,1fr) 330px;min-height:0;min-width:0}
+.cd-main.no-alerts{grid-template-columns:minmax(0,1fr)}
+.cd-tablewrap{overflow:auto;min-width:0;min-height:0;position:relative;background:var(--surface)}
+.cd-tablewrap::-webkit-scrollbar{width:9px;height:9px}
+.cd-tablewrap::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:5px}
+.cd-tablewrap::-webkit-scrollbar-track{background:var(--surface-2)}
+
+table.cd-grid{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%;
+  font-size:var(--cd-fs);table-layout:auto}
+table.cd-grid th,table.cd-grid td{padding:var(--cd-pad);height:var(--cd-rowh);
+  border-right:1px solid var(--line-2);border-bottom:1px solid var(--line-2);
+  white-space:nowrap;vertical-align:middle;line-height:1.2}
+table.cd-grid thead tr.cd-g th{position:sticky;top:0;z-index:5;height:23px;padding:3px 8px;
+  background:var(--surface-3);color:var(--muted);font-size:10.5px;font-weight:600;
+  text-align:center;border-bottom:1px solid var(--line-strong);border-right:1px solid var(--line-strong)}
+table.cd-grid thead tr.cd-h th{position:sticky;top:23px;z-index:4;height:27px;padding:3px 8px;
+  background:var(--surface-2);color:var(--ink);font-weight:600;font-size:11px;text-align:left;
+  border-bottom:1px solid var(--line-strong)}
+table.cd-grid thead tr.cd-h th .cd-colhint{font-weight:400;color:var(--faint);font-size:10px;margin-left:3px}
+table.cd-grid tbody tr.cd-row:hover td{background:var(--surface-2)}
+table.cd-grid tbody tr.cd-row.cd-hit td{background:var(--info-bg)}
+table.cd-grid tbody tr.cd-row.cd-draftrow td{background:var(--caution-bg)}
+table.cd-grid tbody tr.cd-row.cd-selected td{background:var(--primary-bg)}
+.cd-fz{position:sticky;z-index:2;background:var(--surface)}
+table.cd-grid thead th.cd-fz{z-index:6;background:var(--surface-2)}
+table.cd-grid thead tr.cd-g th.cd-fz{background:var(--surface-3)}
+table.cd-grid tbody tr.cd-row:hover td.cd-fz,
+table.cd-grid tbody tr.cd-row.cd-selected td.cd-fz{background:var(--surface-2)}
+table.cd-grid tbody tr.cd-row.cd-hit td.cd-fz{background:var(--info-bg)}
+table.cd-grid tbody tr.cd-row.cd-draftrow td.cd-fz{background:var(--caution-bg)}
+.cd-fz.cd-fz-last{border-right:2px solid var(--line-strong);box-shadow:2px 0 3px rgba(0,0,0,.05)}
+.cd-ctrl{text-align:center;color:var(--muted)}
+.cd-exp{border:0;background:none;color:var(--muted);font-size:12px;padding:0 3px;line-height:1}
+.cd-exp:hover{color:var(--primary)}
+.cd-cell{display:flex;flex-direction:column;justify-content:center;gap:1px;min-height:0}
+.cd-cell .cd-s1{color:var(--ink);font-weight:500}
+.cd-cell .cd-s2{color:var(--muted);font-size:var(--cd-sub);line-height:1.1}
+.cd-num{font-variant-numeric:tabular-nums;text-align:right}
+.cd-editable{cursor:text;border-radius:3px}
+.cd-editable:hover{background:var(--primary-bg);box-shadow:inset 0 0 0 1px var(--primary-line)}
+.cd-locked{color:var(--faint);cursor:not-allowed}
+.cd-locked .cd-s1{color:var(--muted)}
+.cd-lockico{font-size:9px;color:var(--faint);margin-left:3px}
+.cd-relay-hint{box-shadow:inset 0 0 0 1px var(--caution-line);border-radius:3px;background:var(--caution-bg)}
+.cd-inline-edit{width:100%;min-width:80px;height:22px;padding:0 5px;font-size:12px;
+  border:1px solid var(--primary);border-radius:3px;background:var(--surface);color:var(--ink);outline:none}
+.cd-nodata{display:inline-block;min-width:52px;height:15px;border-radius:3px;
+  background:var(--stripe);border:1px solid var(--line);position:relative;text-align:center}
+.cd-nodata::after{content:"无数据";position:absolute;inset:0;font-size:9px;line-height:14px;color:var(--muted)}
+.cd-cmr{display:inline-flex;align-items:center;justify-content:center;min-width:42px;height:18px;
+  border-radius:3px;font-size:11px;font-weight:600;border:1px solid transparent}
+.cd-cmr.c1{background:var(--c1-bg);color:var(--c1-fg);border-color:var(--c1-bd)}
+.cd-cmr.c2{background:var(--c2-bg);color:var(--c2-fg);border-color:var(--c2-bd)}
+.cd-cmr.c3{background:var(--c3-bg);color:var(--c3-fg);border-color:var(--c3-bd)}
+.cd-cmr.c4{background:var(--c4-bg);color:var(--c4-fg);border-color:var(--c4-bd)}
+.cd-status{display:inline-flex;align-items:center;gap:4px;font-size:11px;white-space:nowrap}
+.cd-prog{display:flex;align-items:center;gap:5px}
+.cd-prog .cd-bar{width:38px;height:5px;border-radius:3px;background:var(--line);overflow:hidden;flex:none}
+.cd-prog .cd-bar i{display:block;height:100%;background:var(--ok)}
+.cd-prog small{font-size:10px;color:var(--muted)}
+.cd-ops{display:inline-flex;gap:4px}
+.cd-ops button{border:0;background:none;color:var(--info);font-size:11px;padding:0 2px}
+.cd-ops button:hover{text-decoration:underline}
+
+/* —— 行展开详情 —— */
+table.cd-grid tbody tr.cd-detail td{height:auto;padding:0;background:var(--surface-2);
+  border-bottom:2px solid var(--line-strong);white-space:normal}
+.cd-det{padding:10px 14px 14px 310px;display:grid;grid-template-columns:repeat(3,minmax(190px,1fr));gap:8px}
+.cd-det .cd-grp{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-sm);padding:8px 10px}
+.cd-det .cd-grp h4{margin:0 0 6px;font-size:11.5px;color:var(--ink);display:flex;justify-content:space-between}
+.cd-det .cd-grp h4 span{font-size:10px;color:var(--faint);font-weight:400}
+.cd-det .cd-kv{display:flex;justify-content:space-between;gap:8px;font-size:11px;padding:2px 0;border-bottom:1px dotted var(--line-2)}
+.cd-det .cd-kv:last-child{border-bottom:0}
+.cd-det .cd-kv span{color:var(--muted)}
+.cd-det .cd-kv b{color:var(--text);font-weight:500;text-align:right}
+.cd-det .cd-grp.full{grid-column:1/-1}
+
+/* —— 区 4 · 预警中心 —— */
+.cd-alerts{border-left:1px solid var(--line);background:var(--surface);display:flex;flex-direction:column;min-height:0}
+.cd-main.no-alerts .cd-alerts{display:none}
+.cd-al-head{display:flex;align-items:center;gap:8px;padding:8px 11px;border-bottom:1px solid var(--line);flex:none}
+.cd-al-head h3{margin:0;font-size:13px;color:var(--ink)}
+.cd-al-head .cd-spacer{flex:1}
+.cd-al-counts{display:flex;gap:5px;padding:7px 11px;border-bottom:1px solid var(--line-2);flex:none}
+.cd-al-counts div{flex:1;text-align:center;padding:4px 0;border-radius:4px;font-size:10.5px;
+  background:var(--surface-2);color:var(--muted);border:1px solid var(--line-2)}
+.cd-al-counts div b{display:block;font-size:16px;line-height:1.2;color:var(--ink)}
+.cd-al-counts div.l1 b{color:var(--warn)}
+.cd-al-counts div.l2 b{color:var(--caution)}
+.cd-al-counts div.l3 b{color:var(--info)}
+.cd-al-list{overflow:auto;flex:1;min-height:0;padding:4px 0}
+.cd-al-group{padding:7px 11px 3px;font-size:10.5px;font-weight:600;color:var(--muted);
+  display:flex;align-items:center;gap:6px;position:sticky;top:0;background:var(--surface);z-index:1}
+.cd-al-item{display:block;width:100%;text-align:left;padding:7px 11px;border:0;border-bottom:1px solid var(--line-2);
+  background:none;color:var(--text);font-size:11.5px}
+.cd-al-item:hover{background:var(--surface-2)}
+.cd-al-item.focus{background:var(--info-bg)}
+.cd-al-item .cd-al-r1{display:flex;align-items:center;gap:6px;margin-bottom:2px}
+.cd-al-item .cd-al-r1 b{font-size:11.5px;color:var(--ink)}
+.cd-al-item .cd-al-r2{color:var(--muted);font-size:10.5px;line-height:1.4}
+.cd-al-foot{padding:7px 11px;border-top:1px solid var(--line);font-size:10.5px;color:var(--faint);
+  display:flex;justify-content:space-between;flex:none}
+
+/* —— 区 5 · 汇总带 —— */
+.cd-sum{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:0;
+  background:var(--surface);border-top:1px solid var(--line-strong);min-height:44px;flex:none}
+.cd-sum .cd-s{padding:5px 10px;border-right:1px solid var(--line-2);display:flex;flex-direction:column;justify-content:center;gap:1px;min-width:0}
+.cd-sum .cd-s:last-child{border-right:0}
+.cd-sum .cd-s .cd-l{font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cd-sum .cd-s .cd-v{font-size:16px;font-weight:650;color:var(--ink);line-height:1.15;white-space:nowrap}
+.cd-sum .cd-s .cd-v small{font-size:10px;font-weight:400;color:var(--muted);margin-left:4px}
+.cd-sum .cd-s.bad .cd-v{color:var(--warn)}
+.cd-sum .cd-s.good .cd-v{color:var(--ok)}
+
+/* —— 视图配置抽屉 —— */
+.cd-mask{position:fixed;inset:0;background:rgba(20,20,18,.32);z-index:50;display:none}
+.cd-mask.open{display:block}
+.cd-drawer{position:fixed;right:0;top:0;bottom:0;width:430px;max-width:96vw;z-index:51;
+  background:var(--surface);border-left:1px solid var(--line-strong);box-shadow:var(--shadow-pop);
+  display:none;flex-direction:column}
+.cd-drawer.open{display:flex}
+.cd-dr-head{padding:12px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;flex:none}
+.cd-dr-head h3{margin:0;font-size:14px;color:var(--ink)}
+.cd-dr-head .cd-spacer{flex:1}
+.cd-dr-body{padding:11px 14px;overflow:auto;flex:1;min-height:0}
+.cd-dr-sec{margin-bottom:14px}
+.cd-dr-sec > h4{margin:0 0 7px;font-size:11.5px;color:var(--muted);font-weight:600;
+  border-bottom:1px solid var(--line-2);padding-bottom:5px}
+.cd-dr-roles{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.cd-dr-roles button{text-align:left;padding:7px 9px;border:1px solid var(--line-strong);border-radius:var(--radius-sm);
+  background:var(--surface);color:var(--text);font-size:11.5px;line-height:1.35}
+.cd-dr-roles button b{display:block;color:var(--ink);font-size:12px}
+.cd-dr-roles button small{color:var(--muted);font-size:10px}
+.cd-dr-roles button.on{border-color:var(--primary);background:var(--primary-bg)}
+.cd-dr-note{font-size:10.5px;color:var(--muted);line-height:1.6;background:var(--surface-2);
+  border:1px solid var(--line-2);border-radius:var(--radius-sm);padding:7px 9px}
+.cd-dr-note b{color:var(--ink)}
+.cd-frow{display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px dotted var(--line-2);font-size:11.5px}
+.cd-frow label{display:flex;align-items:center;gap:6px;flex:1;min-width:0;cursor:pointer}
+.cd-frow label > span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cd-frow .cd-owner{font-size:10px;color:var(--faint);white-space:nowrap}
+.cd-frow .cd-mark{font-size:10px;padding:0 4px;border-radius:3px;line-height:16px;white-space:nowrap}
+.cd-frow .cd-mark.r{background:var(--info-bg);color:var(--info)}
+.cd-frow .cd-mark.w{background:var(--ok-bg);color:var(--ok)}
+.cd-frow .cd-mark.n{background:var(--surface-2);color:var(--faint)}
+.cd-frow .cd-mv{border:1px solid var(--line-2);background:var(--surface);color:var(--muted);
+  width:19px;height:19px;line-height:1;border-radius:3px;font-size:10px;padding:0}
+.cd-frow .cd-mv:disabled{opacity:.3;cursor:not-allowed}
+.cd-frow.fixed label{cursor:default}
+.cd-dr-foot{padding:10px 14px;border-top:1px solid var(--line);display:flex;gap:7px;align-items:center;flex:none}
+.cd-dr-foot .cd-spacer{flex:1}
+
+/* —— toast / 浮窗 —— */
+.cd-toast{position:fixed;left:50%;bottom:62px;transform:translateX(-50%) translateY(10px);z-index:70;
+  padding:9px 16px;border-radius:var(--radius);background:var(--ink);color:var(--bg);
+  font-size:12px;box-shadow:var(--shadow-pop);opacity:0;pointer-events:none;transition:.18s;max-width:78vw;text-align:center}
+.cd-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.cd-tip{position:fixed;z-index:65;padding:6px 9px;border-radius:4px;background:var(--surface);
+  border:1px solid var(--line-strong);box-shadow:var(--shadow-pop);font-size:11px;color:var(--muted);
+  max-width:230px;display:none;line-height:1.5}
+
+/* —— 移动端：保留卡片列表，不做横向压缩（方案 7.8） —— */
+.cd-mobile{display:none;padding:12px;overflow:auto;height:100%}
+.cd-mcard{border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);padding:10px 12px;margin-bottom:8px}
+.cd-mcard h4{margin:0 0 5px;font-size:13px;color:var(--ink);display:flex;justify-content:space-between}
+.cd-mcard p{margin:2px 0;font-size:11.5px;color:var(--muted)}
+@media(max-width:900px){
+  .cd-main{grid-template-columns:minmax(0,1fr)}
+  .cd-alerts{display:none}
+  .cd-tablewrap{display:none}
+  .cd-mobile{display:block}
+  .cd-sum{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .cd-chain{display:none}
+  .cd-title .cd-note{display:none}
+}
+</style>
+</head>
+<body>
+
+<div class="cd-console">
+
+  <!-- 区 1 · 工具栏 -->
+  <header class="cd-bar">
+    <div class="cd-title">
+      <h1>在途船运工作平面</h1>
+      <span class="cd-note">方案示意原型 · 静态 Mock 数据 · 非业务代码 · 不连任何接口/数据库</span>
+    </div>
+
+    <div class="cd-chain" id="chain">
+      <button class="cd-step" data-chain="A"><b>A</b>采纳发船预测</button>
+      <button class="cd-step" data-chain="B"><b>B</b>采购员建计划</button>
+      <button class="cd-step" data-chain="C"><b>C</b>岗位接力更新</button>
+      <button class="cd-step" data-chain="D"><b>D</b>预警与状态</button>
+    </div>
+
+    <div class="cd-spacer"></div>
+
+    <div class="cd-badge draft" id="draftBadge" hidden>待落计划 <b>0</b> 条</div>
+    <div class="cd-badge danger">今日异常 <b id="badgeAlert">7</b></div>
+    <div class="cd-badge">待办 <b>4</b></div>
+    <div class="cd-badge">数据更新于 <b id="clock">18:16</b></div>
+
+    <div class="cd-seg" id="densitySeg" title="密度是独立于皮肤的维度（方案 C8）">
+      <button class="cd-btn" data-density="cozy">舒适 48</button>
+      <button class="cd-btn" data-density="compact">紧凑 32</button>
+      <button class="cd-btn" data-density="ultra">极简 28</button>
+    </div>
+
+    <div class="cd-skinpop" id="skinPop">
+      <button class="cd-btn" id="skinBtn">界面皮肤 ▾</button>
+      <div class="cd-menu" id="skinMenu" hidden>
+        <button data-skin="paper">暖纸 paper</button>
+        <button data-skin="midnight">夜墨 midnight</button>
+        <button data-skin="legacy">经典深蓝 legacy</button>
+      </div>
+    </div>
+
+    <button class="cd-btn" id="alertToggle">预警中心</button>
+    <button class="cd-btn pri" id="viewBtn">⚙ 视图配置</button>
+  </header>
+
+  <!-- 区 2 · 高级筛选 -->
+  <section class="cd-filters" id="filters">
+    <div class="cd-fl"><span>航次编号</span><input class="cd-inp" placeholder="模糊搜索"></div>
+    <div class="cd-fl"><span>船名</span><input class="cd-inp" placeholder="船名 / MMSI"></div>
+    <div class="cd-fl"><span>状态</span>
+      <select class="cd-inp"><option>全部</option><option>待宣船</option><option>航行中</option><option>卸港等泊</option><option>已结束</option></select></div>
+    <div class="cd-fl"><span>业务类型</span>
+      <select class="cd-inp"><option>全部</option><option>大宗采购</option><option>销售外运</option></select></div>
+    <div class="cd-fl"><span>装卸港</span><input class="cd-inp" placeholder="装港 / 卸港"></div>
+    <div class="cd-fl"><span>货物名称</span><input class="cd-inp" placeholder="品名"></div>
+    <div class="cd-fl"><span>负责业务员</span><input class="cd-inp" placeholder="姓名"></div>
+    <div class="cd-fl"><span>ETD 起止</span><input class="cd-inp" type="date"></div>
+    <div class="cd-fl"><span>预警</span>
+      <select class="cd-inp"><option>全部</option><option>ETA 超期未更新</option><option>缺实际离装港</option><option>节点时序倒置</option></select></div>
+    <div class="cd-fl"><span>异常标记</span>
+      <select class="cd-inp"><option>全部</option><option>重点关注</option><option>待补录节点</option></select></div>
+    <div class="cd-fl"><span>接力待办岗位</span>
+      <select class="cd-inp"><option>全部</option><option>采购业务员</option><option>仓储船务</option><option>大宗综合</option></select></div>
+    <span class="cd-hint">筛选条件可随视图一起保存（L3 View Profile）；字段由 L1 字段目录驱动</span>
+  </section>
+
+  <!-- 区 3 · 主体 -->
+  <main class="cd-main" id="main">
+    <div class="cd-tablewrap" id="tablewrap">
+      <table class="cd-grid" id="grid"></table>
+      <div class="cd-mobile" id="mobile"></div>
+    </div>
+    <aside class="cd-alerts" id="alerts"></aside>
+  </main>
+
+  <!-- 区 5 · 汇总带 -->
+  <footer class="cd-sum" id="sum"></footer>
+</div>
+
+<div class="cd-mask" id="mask"></div>
+<aside class="cd-drawer" id="drawer">
+  <div class="cd-dr-head">
+    <h3>视图配置 · View Profile</h3>
+    <span class="cd-tag info" id="scopeTag">user 个人</span>
+    <div class="cd-spacer"></div>
+    <button class="cd-btn" id="drawerClose">关闭</button>
+  </div>
+  <div class="cd-dr-body" id="drawerBody"></div>
+  <div class="cd-dr-foot">
+    <span class="cd-faint" style="font-size:10.5px">优先级 user &gt; dept &gt; role &gt; system</span>
+    <div class="cd-spacer"></div>
+    <button class="cd-btn" id="resetView">恢复模板</button>
+    <button class="cd-btn pri" id="saveView">保存为我的视图</button>
+  </div>
+</aside>
+
+<div class="cd-toast" id="toast"></div>
+<div class="cd-tip" id="tip"></div>
+
+<script>
+/* ==========================================================================
+   L1 字段目录（示意）：全部取自 docs/schema/T04–T07 现有字段名。
+   ro=公式/引擎/系统只读；money=受 canSeeMoney 约束；owner=责任岗位（依据 1.png）
+   ========================================================================== */
+var FIELDS = [
+  {k:'voyageNo', n:'航次编号',   g:'标识',       w:116, t:'text',    ro:1, owner:'系统',       editBy:[]},
+  {k:'bizType',  n:'业务类型',   g:'标识',       w:78,  t:'tag',     ro:1, owner:'系统',       editBy:[]},
+  {k:'vessel',   n:'船名',       g:'标识',       w:96,  t:'text',    ro:0, owner:'采购业务员', editBy:['采购业务员']},
+  {k:'mmsi',     n:'MMSI',       g:'标识',       w:88,  t:'text',    ro:0, owner:'采购业务员', editBy:['采购业务员']},
+  {k:'loadPort', n:'装港',       g:'航线',       w:80,  t:'text',    ro:0, owner:'采购业务员', editBy:['采购业务员']},
+  {k:'disPort',  n:'卸港',       g:'航线',       w:80,  t:'text',    ro:0, owner:'采购业务员', editBy:['采购业务员']},
+  {k:'route',    n:'航线',       g:'航线',       w:112, t:'text',    ro:1, owner:'系统',       editBy:[]},
+  {k:'berth',    n:'泊位',       g:'航线',       w:74,  t:'text',    ro:0, owner:'仓储船务',   editBy:['仓储船务']},
+  {k:'etaLoad',  n:'计划抵装港', g:'计划时间',   w:106, t:'date2',   ro:0, owner:'采购业务员', editBy:['采购业务员']},
+  {k:'etdLoad',  n:'计划离装港', g:'计划时间',   w:106, t:'date2',   ro:0, owner:'采购业务员', editBy:['采购业务员']},
+  {k:'etaDis',   n:'计划抵卸港', g:'计划时间',   w:116, t:'date2',   ro:0, owner:'采购业务员', editBy:['采购业务员']},
+  {k:'ataLoad',  n:'实际抵装港', g:'实际时间',   w:106, t:'date2',   ro:0, owner:'仓储船务',   editBy:['仓储船务']},
+  {k:'atdLoad',  n:'实际离装港', g:'实际时间',   w:106, t:'date2',   ro:0, owner:'仓储船务',   editBy:['仓储船务']},
+  {k:'ataDis',   n:'实际抵卸港', g:'实际时间',   w:106, t:'date2',   ro:0, owner:'仓储船务',   editBy:['仓储船务']},
+  {k:'status',   n:'船舶状态',   g:'偏差与状态', w:94,  t:'status',  ro:1, owner:'系统',       editBy:[]},
+  {k:'etaCur',   n:'当前 ETA',   g:'偏差与状态', w:108, t:'date2',   ro:0, owner:'仓储船务',   editBy:['仓储船务']},
+  {k:'etaDev',   n:'ETA 偏差',   g:'偏差与状态', w:84,  t:'dev',     ro:1, owner:'系统',       editBy:[]},
+  {k:'cmr',      n:'CMR',        g:'偏差与状态', w:76,  t:'cmr',     ro:1, owner:'系统',       editBy:[]},
+  {k:'alert',    n:'异常标记',   g:'偏差与状态', w:92,  t:'alert',   ro:0, owner:'仓储船务',   editBy:['仓储船务','大宗综合']},
+  {k:'cargo',    n:'货物名称',   g:'货物',       w:100, t:'text',    ro:0, owner:'采购业务员', editBy:['采购业务员']},
+  {k:'qty',      n:'总货量(吨)', g:'货物',       w:100, t:'num',     ro:1, owner:'系统',       editBy:[]},
+  {k:'contract', n:'合同号',     g:'货物',       w:106, t:'text',    ro:0, owner:'采购业务员', editBy:['采购业务员']},
+  {k:'owner',    n:'负责业务员', g:'责任岗位',   w:92,  t:'text',    ro:0, owner:'采购业务员', editBy:['采购业务员']},
+  {k:'relay',    n:'接力进度',   g:'责任岗位',   w:106, t:'progress',ro:1, owner:'系统',       editBy:[]},
+  {k:'updated',  n:'最近更新',   g:'责任岗位',   w:112, t:'text',    ro:1, owner:'系统',       editBy:[]},
+  {k:'demurrage',n:'滞期费',     g:'费用结算',   w:94,  t:'money',   ro:0, owner:'大宗综合',   editBy:['大宗综合'], money:1},
+  {k:'portFee',  n:'港务费',     g:'费用结算',   w:94,  t:'money',   ro:0, owner:'大宗综合',   editBy:['大宗综合'], money:1},
+  {k:'ops',      n:'操作',       g:'操作',       w:96,  t:'ops',     ro:1, owner:'系统',       editBy:[]}
+];
+var FMAP = {}; FIELDS.forEach(function(f){ FMAP[f.k]=f; });
+var GROUPS = ['标识','航线','计划时间','实际时间','偏差与状态','货物','责任岗位','费用结算','操作'];
+var FREEZE = ['voyageNo','vessel'];
+
+/* L2 字段策略 + L3 角色模板（示意）
+   seeMoney=false 的角色，金额字段在目录里「根本不返回」，配置抽屉也不列出（方案 C5）。 */
+var ROLES = {
+  buyer: {
+    name:'业务员 · 大宗采购部', desc:'合同/货物/计划侧 · 看不到金额', seeMoney:false, editAs:'采购业务员',
+    hide:['mmsi','berth','ataDis','etaDev','ops']
+  },
+  supervisor: {
+    name:'部门主管 · 大宗采购部', desc:'费用与复核侧 · 唯一可见可改金额', seeMoney:true, editAs:'大宗综合',
+    hide:[]
+  },
+  logistics: {
+    name:'物流管理员 · 仓储物流部', desc:'节点与作业侧 · 看不到金额', seeMoney:false, editAs:'仓储船务',
+    hide:['mmsi','route','cargo','contract','qty','owner','updated','ops']
+  },
+  admin: {
+    name:'系统管理员', desc:'只读结构 + 可配角色模板 · 亦不可见金额', seeMoney:false, editAs:'',
+    hide:['mmsi','berth','ataDis','etaDev','cargo','contract','qty','owner','updated','ops','etaCur','alert']
+  }
+};
+
+/* Mock 行：字段名严格取自 FIELDS，null 表示「无数据」（灰色斜线，绝不显示 0%） */
+var ROWS = [
+  {id:'V01',voyageNo:'SS-2611-0031',bizType:'大宗采购',vessel:'远洋 harmony',mmsi:'413782410',loadPort:'曹妃甸',disPort:'湛江',route:'曹妃甸→湛江',berth:'B3',
+   etaLoad:'11-08 06:00',etdLoad:'11-10 22:00',etaDis:'11-16 14:00',ataLoad:'11-08 05:40',atdLoad:'11-11 01:10',ataDis:null,
+   status:'航行中',etaCur:'11-16 19:30',etaDev:'+5.5h',cmr:'c2',alert:'ETA 超期',cargo:'铁矿粉',qty:'172,400',contract:'HT-26-0881',owner:'李文博',
+   relay:'7/10',updated:'11-16 09:12 · 仓储船务',demurrage:'—',portFee:'—'},
+  {id:'V02',voyageNo:'SS-2611-0030',bizType:'大宗采购',vessel:'Ocean Pioneer',mmsi:'636019825',loadPort:'岚山',disPort:'防城港',route:'岚山→防城港',berth:'A1',
+   etaLoad:'11-06 12:00',etdLoad:'11-08 18:00',etaDis:'11-15 08:00',ataLoad:'11-06 11:20',atdLoad:'11-08 19:40',ataDis:'11-15 09:05',
+   status:'卸港卸货',etaCur:'11-15 09:05',etaDev:'+1.1h',cmr:'c3',alert:'',cargo:'煤炭',qty:'86,200',contract:'HT-26-0876',owner:'陈静',
+   relay:'10/10',updated:'11-15 17:40 · 大宗综合',demurrage:'¥ 42,800',portFee:'¥ 118,600'},
+  {id:'V03',voyageNo:'SS-2611-0029',bizType:'销售外运',vessel:'宁海运 7',mmsi:'413226901',loadPort:'湛江',disPort:'宁波',route:'湛江→宁波',berth:null,
+   etaLoad:'11-09 03:00',etdLoad:'11-11 09:00',etaDis:'11-16 22:00',ataLoad:'11-09 02:35',atdLoad:null,ataDis:null,
+   status:'装港装货',etaCur:'11-17 04:00',etaDev:'+6.0h',cmr:'c1',alert:'缺实际离装港',cargo:'钢材',qty:'32,800',contract:'HT-26-0879',owner:'王楷',
+   relay:'4/10',updated:'11-14 11:08 · 采购业务员',demurrage:'—',portFee:'—'},
+  {id:'V04',voyageNo:'SS-2611-0028',bizType:'大宗采购',vessel:'Pacific Dawn',mmsi:'538090117',loadPort:'图巴朗',disPort:'湛江',route:'图巴朗→湛江',berth:'B1',
+   etaLoad:'10-18 08:00',etdLoad:'10-21 16:00',etaDis:'11-17 06:00',ataLoad:'10-18 07:50',atdLoad:'10-21 17:20',ataDis:null,
+   status:'航行中',etaCur:'11-17 06:00',etaDev:'0',cmr:'c4',alert:'低可信',cargo:'铁矿粉',qty:'211,600',contract:'HT-26-0852',owner:'李文博',
+   relay:'8/10',updated:'11-16 08:02 · 仓储船务',demurrage:'—',portFee:'—'},
+  {id:'V05',voyageNo:'SS-2611-0027',bizType:'大宗采购',vessel:'华韵 6',mmsi:'412771330',loadPort:'黄骅',disPort:'湛江',route:'黄骅→湛江',berth:'A2',
+   etaLoad:'11-04 20:00',etdLoad:'11-06 10:00',etaDis:'11-14 12:00',ataLoad:'11-04 21:10',atdLoad:'11-06 10:40',ataDis:'11-14 13:20',
+   status:'卸港等泊',etaCur:'11-14 13:20',etaDev:'+1.3h',cmr:'c2',alert:'重点关注',cargo:'煤炭',qty:'74,500',contract:'HT-26-0868',owner:'陈静',
+   relay:'9/10',updated:'11-15 16:20 · 大宗综合',demurrage:'¥ 18,400',portFee:'¥ 96,200'},
+  {id:'V06',voyageNo:'SS-2611-0026',bizType:'大宗采购',vessel:'Nordic Star',mmsi:'235104882',loadPort:'丹皮尔',disPort:'防城港',route:'丹皮尔→防城港',berth:null,
+   etaLoad:'11-12 05:00',etdLoad:'11-14 11:00',etaDis:null,ataLoad:null,atdLoad:null,ataDis:null,
+   status:'待宣船',etaCur:null,etaDev:null,cmr:'c1',alert:'待补录节点',cargo:'铁矿粉',qty:'195,000',contract:'HT-26-0890',owner:'王楷',
+   relay:'2/10',updated:'11-13 10:30 · 采购业务员',demurrage:'—',portFee:'—'},
+  {id:'V07',voyageNo:'SS-2610-0025',bizType:'销售外运',vessel:'粤电 58',mmsi:'413990214',loadPort:'防城港',disPort:'广州',route:'防城港→广州',berth:'C2',
+   etaLoad:'10-28 14:00',etdLoad:'10-29 22:00',etaDis:'10-31 08:00',ataLoad:'10-28 13:40',atdLoad:'10-30 00:10',ataDis:'10-31 09:40',
+   status:'已结束',etaCur:'10-31 09:40',etaDev:'+1.7h',cmr:'c2',alert:'',cargo:'钢材',qty:'28,900',contract:'HT-26-0811',owner:'李文博',
+   relay:'10/10',updated:'11-02 15:00 · 大宗综合',demurrage:'¥ 6,200',portFee:'¥ 41,300',history:true},
+  {id:'V08',voyageNo:'SS-2611-0024',bizType:'大宗采购',vessel:'Golden Iris',mmsi:'563881200',loadPort:'岚桥',disPort:'湛江',route:'岚桥→湛江',berth:'B2',
+   etaLoad:'11-10 09:00',etdLoad:'11-12 15:00',etaDis:'11-18 03:00',ataLoad:'11-10 08:30',atdLoad:'11-12 16:10',ataDis:null,
+   status:'航行中',etaCur:'11-18 03:00',etaDev:'0',cmr:'c3',alert:'MMSI 缺失',cargo:'铝矾土',qty:'63,700',contract:'HT-26-0884',owner:'陈静',
+   relay:'6/10',updated:'11-15 09:44 · 仓储船务',demurrage:'—',portFee:'—'}
+];
+
+var ALERTS = [
+  {lv:1,id:'V03',t:'缺实际离装港',d:'SS-2611-0029 · 计划离装港 11-11 09:00 已过，实际离装港仍为空',x:'逾期 5 天',ts:'11-16 08:00'},
+  {lv:1,id:'V01',t:'ETA 超期未更新',d:'SS-2611-0031 · 当前 ETA 已 9 天未修订，偏差 +5.5h',x:'+5.5h',ts:'11-16 09:12'},
+  {lv:1,id:'V04',t:'规则引擎低可信',d:'SS-2611-0028 · 远洋航线样本不足，推荐窗口标为低可信',x:'低可信',ts:'11-16 08:02'},
+  {lv:2,id:'V08',t:'缺 MMSI / 港口未匹配',d:'SS-2611-0024 · 泊位为空，卸港主数据未匹配',x:'待补',ts:'11-15 09:44'},
+  {lv:2,id:'V06',t:'节点时序倒置风险',d:'SS-2611-0026 · 计划抵卸港为空，后续节点无法校验',x:'2/10',ts:'11-13 10:30'},
+  {lv:2,id:'V05',t:'靠船计划覆盖不足',d:'SS-2611-0027 · 湛江 B7 泊位本批次无覆盖（无数据，非 0）',x:'无数据',ts:'11-15 16:20'},
+  {lv:3,id:'V02',t:'库存表即将过期',d:'SS-2611-0030 · 库存批次日期 11-10，建议核实',x:'6 天',ts:'11-16 07:00'},
+  {lv:3,id:'V06',t:'待补录节点提醒',d:'SS-2611-0026 · 待宣船，待采购业务员补计划抵卸港',x:'待办',ts:'11-16 07:00'}
+];
+
+/* —— state —— */
+var state = {
+  role:'buyer', density:'compact', alertsOpen:true, expanded:{}, drafts:0,
+  visible:[], order:[], scope:'user', hitId:null, focusAlert:-1, chainDone:{}, relayHint:false,
+  selected:null
+};
+
+function roleDef(){ return ROLES[state.role]; }
+function catalog(){ /* L2 裁剪：无权金额字段根本不返回 */
+  return FIELDS.filter(function(f){ return !(f.money && !roleDef().seeMoney); });
+}
+function canWrite(f){
+  if(state.role==='admin') return false;
+  var row = f._row || null;
+  if(row && row.history) return false;
+  if(f.ro || f.money && !roleDef().seeMoney) return false;
+  return f.editBy.indexOf(roleDef().editAs) >= 0;
+}
+function defaultVisible(){
+  var hide = roleDef().hide;
+  return catalog().filter(function(f){ return hide.indexOf(f.k)<0; }).map(function(f){return f.k;});
+}
+function applyRole(r){
+  state.role=r; state.scope='role'; state.visible=defaultVisible();
+  state.order=state.visible.slice(); state.expanded={}; state.relayHint=false;
+  renderAll();
+}
+function cols(){
+  var list=[{k:'_check',w:34,fz:1},{k:'_expand',w:30,fz:1}];
+  FREEZE.forEach(function(k){ var f=FMAP[k]; if(state.visible.indexOf(k)>=0) list.push({k:k,w:f.w,fz:1,field:f}); });
+  var rest=state.order.filter(function(k){ return state.visible.indexOf(k)>=0 && FREEZE.indexOf(k)<0; });
+  rest.forEach(function(k){ var f=FMAP[k]; if(f) list.push({k:k,w:f.w,fz:0,field:f}); });
+  return list;
+}
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* —— 单元格渲染 —— */
+function cellHTML(row, f){
+  var v=row[f.k], k=f.k;
+  var editable=canWrite(Object.assign({},f,{_row:row}));
+  var lock=f.ro?'<span class="cd-lockico" title="公式/引擎只读">🔒</span>':(editable?'':'<span class="cd-lockico" title="当前角色无写权限">🔒</span>');
+  var cls='cd-cell'+(editable?' cd-editable':' cd-locked')+(state.relayHint&&editable?' cd-relay-hint':'');
+  var attrs='data-edit="'+k+'" data-id="'+row.id+'"';
+
+  if(v===null || v==='' || typeof v==='undefined'){
+    return '<div class="'+cls+'" '+attrs+'><span class="cd-nodata" title="无数据：灰色斜线，绝不显示 0%"></span></div>';
+  }
+  switch(f.t){
+    case 'date2': {
+      var p=String(v).split(' ');
+      return '<div class="'+cls+'" '+attrs+'><span class="cd-s1">'+esc(p[0])+'</span>'+
+        '<span class="cd-s2">'+(p[1]?esc(p[1]):'—')+'</span></div>';
+    }
+    case 'tag':
+      return '<div class="'+cls+'" '+attrs+'><span class="cd-tag '+(v==='大宗采购'?'info':'mute')+'">'+esc(v)+'</span></div>';
+    case 'status': {
+      var c = v==='航行中'?'info':(v==='已结束'?'mute':(v==='待宣船'?'caution':'ok'));
+      return '<div class="'+cls+'" '+attrs+'><span class="cd-status"><i class="cd-dot" style="background:var(--'+(c==='mute'?'faint':c)+')"></i>'+esc(v)+'</span>'+lock+'</div>';
+    }
+    case 'dev': {
+      var bad = String(v).indexOf('+')===0 && v!=='+0.0h';
+      return '<div class="'+cls+'" '+attrs+'><span class="cd-tag '+(bad?'warn':'ok')+'">'+esc(v)+'</span>'+lock+'</div>';
+    }
+    case 'cmr':
+      return '<div class="'+cls+'" '+attrs+'><span class="cd-cmr '+esc(v)+'">'+({c1:'充裕',c2:'适中',c3:'紧张',c4:'拥堵'}[v]||'—')+'</span>'+lock+'</div>';
+    case 'alert':
+      if(!v) return '<div class="'+cls+'" '+attrs+'><span class="cd-faint">—</span></div>';
+      var ac = v==='低可信'?'':(v==='重点关注'?'warn':'caution');
+      return '<div class="'+cls+'" '+attrs+'>'+(v==='低可信'
+        ? '<span class="cd-lowtrust">低可信</span>'
+        : '<span class="cd-tag '+ac+'">'+esc(v)+'</span>')+'</div>';
+    case 'num':
+      return '<div class="'+cls+' cd-num" '+attrs+'><span class="cd-s1">'+esc(v)+'</span></div>';
+    case 'money':
+      return '<div class="'+cls+' cd-num" '+attrs+'><span class="cd-s1">'+esc(v)+'</span></div>';
+    case 'progress': {
+      var m=String(v).split('/'), pct=Math.round(parseInt(m[0],10)/parseInt(m[1],10)*100);
+      return '<div class="'+cls+'" '+attrs+'><span class="cd-prog"><span class="cd-bar"><i style="width:'+pct+'%"></i></span>'+
+        '<small>'+esc(v)+'</small></span></div>';
+    }
+    case 'ops':
+      return '<div class="cd-ops"><button data-act="edit" data-id="'+row.id+'">修改</button>'+
+        '<button data-act="expand" data-id="'+row.id+'">展开</button></div>';
+    default:
+      return '<div class="'+cls+'" '+attrs+'><span class="cd-s1">'+esc(v)+'</span>'+lock+'</div>';
+  }
+}
+
+function renderGrid(){
+  var C=cols(), wrap=document.getElementById('tablewrap');
+  var st=wrap.scrollTop, sl=wrap.scrollLeft;
+  var h='';
+
+  /* 分组表头：冻结区一格 + 其余按连续分组 colspan */
+  h+='<thead><tr class="cd-g">';
+  var left=0; var fzCount=0;
+  C.forEach(function(c){ if(c.fz){ fzCount++; left+=c.w; } });
+  var fzLeft=0;
+  h+='<th class="cd-fz" colspan="'+fzCount+'" style="left:0;width:'+left+'px">固定列 · 标识</th>';
+  var seq=[]; C.slice(fzCount).forEach(function(c){ seq.push(c.field?c.field.g:'操作'); });
+  var i=0;
+  while(i<seq.length){ var g=seq[i], n=1; while(i+n<seq.length && seq[i+n]===g) n++;
+    h+='<th colspan="'+n+'">'+esc(g)+'</th>'; i+=n; }
+  h+='</tr>';
+
+  /* 列头 */
+  h+='<tr class="cd-h">';
+  var acc=0;
+  C.forEach(function(c,idx){
+    var fz=c.fz?' class="cd-fz'+(idx===fzCount-1?' cd-fz-last':'')+'" style="left:'+acc+'px;min-width:'+c.w+'px;width:'+c.w+'px"':' style="min-width:'+c.w+'px;width:'+c.w+'px"';
+    var name=c.k==='_check'?'<input type="checkbox" id="checkAll">':(c.k==='_expand'?'':esc(c.field.n));
+    var hint=c.field&&c.field.money?'<span class="cd-colhint">金额</span>':'';
+    h+='<th'+fz+'>'+name+hint+'</th>';
+    if(c.fz) acc+=c.w;
+  });
+  h+='</tr></thead><tbody>';
+
+  ROWS.forEach(function(row){
+    var rc='cd-row'+(row._draft?' cd-draftrow':'')+(state.hitId===row.id?' cd-hit':'')+(state.selected===row.id?' cd-selected':'');
+    h+='<tr class="'+rc+'" data-row="'+row.id+'">';
+    var acc2=0;
+    C.forEach(function(c,idx){
+      var fz=c.fz?' class="cd-fz'+(idx===fzCount-1?' cd-fz-last':'')+'" style="left:'+acc2+'px;min-width:'+c.w+'px;width:'+c.w+'px"':' style="min-width:'+c.w+'px;width:'+c.w+'px"';
+      var body;
+      if(c.k==='_check') body='<input type="checkbox" data-check="'+row.id+'">';
+      else if(c.k==='_expand') body='<button class="cd-exp" data-act="expand" data-id="'+row.id+'">'+(state.expanded[row.id]?'▾':'▸')+'</button>';
+      else body=cellHTML(row,c.field);
+      h+='<td'+fz+'>'+body+'</td>';
+      if(c.fz) acc2+=c.w;
+    });
+    h+='</tr>';
+    if(state.expanded[row.id]) h+=detailHTML(row,C.length);
+  });
+  h+='</tbody>';
+  document.getElementById('grid').innerHTML=h;
+  wrap.scrollTop=st; wrap.scrollLeft=sl;
+
+  /* 移动端卡片列表（390px 下不横向压缩） */
+  document.getElementById('mobile').innerHTML=ROWS.map(function(r){
+    return '<div class="cd-mcard"><h4>'+esc(r.voyageNo)+' <span class="cd-tag info">'+esc(r.status)+'</span></h4>'+
+      '<p>'+esc(r.vessel)+' · '+esc(r.route)+'</p>'+
+      '<p>计划抵卸港 '+esc(r.etaDis||'无数据')+' · 货物 '+esc(r.cargo)+'</p>'+
+      '<p>接力 '+esc(r.relay)+' · '+esc(r.owner)+'</p></div>';
+  }).join('')+'<div class="cd-dr-note"><b>移动端策略</b>：保留 P04 卡片列表作为独立 mobile 视图配置，不把高密度表格横向压缩（方案第 7 节第 8 条）。</div>';
+}
+
+function detailHTML(row, span){
+  var g1=[['航次编号',row.voyageNo],['业务类型',row.bizType],['船名',row.vessel],['MMSI',row.mmsi],['装港 / 卸港',row.loadPort+' → '+row.disPort],['泊位',row.berth]];
+  var g2=[['计划抵装港',row.etaLoad],['计划离装港',row.etdLoad],['计划抵卸港',row.etaDis],['实际抵装港',row.ataLoad],['实际离装港',row.atdLoad],['实际抵卸港',row.ataDis]];
+  var g3=[['货物名称',row.cargo],['总货量(吨)',row.qty],['合同号',row.contract],['负责业务员',row.owner],['当前 ETA',row.etaCur],['ETA 偏差',row.etaDev]];
+  var g4=[['卸港水尺吨位',null],['汽运量',null],['管带机运量',null],['允许卸货天数',null],['卸率',null],['异常反馈',row.alert||null]];
+  var g5=roleDef().seeMoney
+    ? [['滞期费',row.demurrage],['港务费',row.portFee],['装卸费','—'],['汇率','—'],['审核状态','—']]
+    : [['费用结算','当前角色无权查看'],['说明','金额字段在接口响应中整体不返回（canSeeMoney）']];
+  var g6=[['最近更新',row.updated],['ETA 修订历史','K13 · D01 留痕（示意）'],['变更日志','D02 · 金额只记「已修改」'],
+          ['责任岗位','采购业务员 → 仓储船务 → 大宗综合'],['接力进度',row.relay],['公式字段','状态/总货量/拼船/实际航程/等泊/作业/逾期 只读']];
+  function grp(title,arr,full){
+    return '<div class="cd-grp'+(full?' full':'')+'"><h4>'+title+'<span>只读展示</span></h4>'+arr.map(function(kv){
+      return '<div class="cd-kv"><span>'+esc(kv[0])+'</span><b>'+(kv[1]==null?'<span class="cd-nodata"></span>':esc(kv[1]))+'</b></div>';
+    }).join('')+'</div>';
+  }
+  return '<tr class="cd-detail"><td colspan="'+span+'"><div class="cd-det">'+
+    grp('① 标识与航线',g1)+grp('② 时间节点',g2)+grp('③ 货物明细',g3)+
+    grp('④ 作业数据',g4)+grp('⑤ 费用结算',g5)+grp('⑥ ETA 修订 / 变更日志',g6,true)+
+    '</div></td></tr>';
+}
+
+function renderAlerts(){
+  var lv={1:'严重 · 需立即处理',2:'中风险',3:'提醒'};
+  var cnt={1:0,2:0,3:0}; ALERTS.forEach(function(a){cnt[a.lv]++;});
+  var h='<div class="cd-al-head"><h3>预警中心</h3><span class="cd-tag mute">按当前筛选联动</span><div class="cd-spacer"></div>'+
+    '<button class="cd-btn" id="alertClose">收起</button></div>'+
+    '<div class="cd-al-counts"><div class="l1">严重<b>'+cnt[1]+'</b></div><div class="l2">中风险<b>'+cnt[2]+'</b></div>'+
+    '<div class="l3">提醒<b>'+cnt[3]+'</b></div></div><div class="cd-al-list">';
+  [1,2,3].forEach(function(l){
+    h+='<div class="cd-al-group"><i class="cd-dot" style="background:var(--'+(l===1?'warn':l===2?'caution':'info')+')"></i>'+lv[l]+'</div>';
+    ALERTS.forEach(function(a,idx){
+      if(a.lv!==l) return;
+      h+='<button class="cd-al-item'+(state.focusAlert===idx?' focus':'')+'" data-alert="'+idx+'" data-id="'+a.id+'">'+
+        '<span class="cd-al-r1"><b>'+esc(a.t)+'</b><span class="cd-tag '+(l===1?'warn':l===2?'caution':'info')+'">'+esc(a.x)+'</span></span>'+
+        '<span class="cd-al-r2">'+esc(a.d)+'<br>'+esc(a.ts)+'</span></button>';
+    });
+  });
+  h+='</div><div class="cd-al-foot"><span>数据更新于 <b id="clock2">18:16</b> · 30 秒轮询</span><span>全部预警</span></div>';
+  document.getElementById('alerts').innerHTML=h;
+  document.getElementById('badgeAlert').textContent=cnt[1]+cnt[2];
+}
+
+var SUM=[['今日发船','3','较昨 +1'],['今日到港','2','较昨 -1'],['航行中','3','—'],['在港','2','—'],
+         ['ETA 异常','3','需处置'],['待补录节点','4','接力中'],['数据质量待处理','2','—'],['计划总数','8','本批次']];
+function renderSum(){
+  document.getElementById('sum').innerHTML=SUM.map(function(s,i){
+    var bad=i===4, good=i===0;
+    return '<div class="cd-s'+(bad?' bad':good?' good':'')+'"><span class="cd-l">'+s[0]+'</span>'+
+      '<span class="cd-v">'+s[1]+'<small>'+s[2]+'</small></span></div>';
+  }).join('');
+}
+
+function renderDrawer(){
+  var cat=catalog();
+  var h='<div class="cd-dr-sec"><h4>① 当前岗位 / 角色模板（L2 策略 + L3 role 作用域）</h4><div class="cd-dr-roles">';
+  Object.keys(ROLES).forEach(function(k){
+    var r=ROLES[k];
+    h+='<button data-role="'+k+'" class="'+(state.role===k?'on':'')+'"><b>'+esc(r.name)+'</b><small>'+esc(r.desc)+'</small></button>';
+  });
+  h+='</div></div>';
+
+  h+='<div class="cd-dr-sec"><h4>② 关键约束</h4><div class="cd-dr-note">'+
+    '<b>目录已被后端策略裁剪</b>：当前角色'+(roleDef().seeMoney?'可见金额字段':'不可见金额字段，费用列在接口响应里根本不返回')+
+    '，因此下方清单里'+(roleDef().seeMoney?'会列出':'不会列出')+'「滞期费 / 港务费」。配置只能隐藏和重排被允许的字段，<b>不能新增字段、不能提权</b>；写接口对每个字段单独鉴权，越权直接 403。<br>'+
+    '<b>密度是独立维度</b>：切换皮肤不改变 data-density，几何规则不进 skin.css（方案 C8）。<br>'+
+    '<b>正式实现</b>存服务端 D13 view_profile；本原型仅内存 + localStorage 示意。导出 CSV 按 L2 策略裁剪列，不按个人视图裁剪。</div></div>';
+
+  h+='<div class="cd-dr-sec"><h4>③ 可见列 · 顺序 · 权限（'+cat.length+' 个可配置字段 / '+state.visible.length+' 个已选）</h4>';
+  var fzLeft=0;
+  FREEZE.concat(state.order.filter(function(k){return FREEZE.indexOf(k)<0;})).forEach(function(k){
+    var f=FMAP[k]; if(!f || !cat.some(function(c){return c.k===k;})) return;
+    var fixed=FREEZE.indexOf(k)>=0;
+    var editable=f.editBy.indexOf(roleDef().editAs)>=0 && !f.ro && state.role!=='admin';
+    h+='<div class="cd-frow'+(fixed?' fixed':'')+'">'+
+      '<label'+(fixed?'':' ') +'><input type="checkbox" data-col="'+k+'"'+(state.visible.indexOf(k)>=0?' checked':'')+(fixed?' disabled':'')+'>'+
+      '<span>'+esc(f.n)+(fixed?' <span class="cd-faint">(冻结)</span>':'')+'</span></label>'+
+      '<span class="cd-owner">'+esc(f.owner)+'</span>'+
+      '<span class="cd-mark r">看</span>'+
+      '<span class="cd-mark '+(editable?'w':'n')+'">'+(editable?'改':'锁')+'</span>'+
+      (fixed?'':'<button class="cd-mv" data-mv="up" data-k="'+k+'" title="上移">↑</button><button class="cd-mv" data-mv="down" data-k="'+k+'" title="下移">↓</button>')+
+      '</div>';
+  });
+  h+='</div><div class="cd-dr-note">责任岗位依据 <b>1.png</b>（旧企微表字段归属）映射到平台口径；仅用于「接力进度」分组与显示，<b>不覆盖权限</b>。两处职责冲突（港务费/装卸费、滞期费率）以 T06 为准，待 Leyinet 勾定（方案 C4）。</div>';
+  document.getElementById('drawerBody').innerHTML=h;
+  document.getElementById('scopeTag').textContent=state.scope==='user'?'user 个人':(state.scope==='role'?'role 角色模板':'dept 部门模板');
+}
+
+function renderAll(){
+  renderGrid(); renderAlerts(); renderSum(); renderDrawer();
+  document.getElementById('draftBadge').hidden = state.drafts===0;
+  document.getElementById('draftBadge').querySelector('b').textContent=state.drafts;
+  var seg=document.getElementById('densitySeg');
+  seg.querySelectorAll('button').forEach(function(b){ b.classList.toggle('on', b.dataset.density===state.density); });
+  document.getElementById('main').classList.toggle('no-alerts',!state.alertsOpen);
+  document.getElementById('chain').querySelectorAll('.cd-step').forEach(function(b){
+    b.classList.toggle('done',!!state.chainDone[b.dataset.chain]);
+  });
+  document.getElementById('skinMenu').querySelectorAll('button').forEach(function(b){
+    b.classList.toggle('on', b.dataset.skin===document.documentElement.getAttribute('data-skin'));
+  });
+  var now=new Date();
+  document.getElementById('clock').textContent=pad(now.getHours())+':'+pad(now.getMinutes());
+  var c2=document.getElementById('clock2'); if(c2) c2.textContent=pad(now.getHours())+':'+pad(now.getMinutes());
+}
+function pad(n){ return n<10?'0'+n:''+n; }
+
+var toastTimer=null;
+function toast(msg){
+  var t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(function(){t.classList.remove('show');},3200);
+}
+function tip(msg,x,y){
+  var el=document.getElementById('tip'); el.textContent=msg; el.style.left=(x+10)+'px'; el.style.top=(y+10)+'px';
+  el.style.display='block'; clearTimeout(el._t); el._t=setTimeout(function(){el.style.display='none';},2000);
+}
+
+/* —— 事件：行内编辑（U04 语义，逐字段鉴权） —— */
+document.getElementById('tablewrap').addEventListener('click',function(e){
+  var chkAll=e.target.id==='checkAll';
+  if(chkAll) return;
+  var expand=e.target.closest('[data-act="expand"]');
+  if(expand){ var id=expand.dataset.id; state.expanded[id]=!state.expanded[id]; renderGrid(); return; }
+  var op=e.target.closest('[data-act="edit"]');
+  if(op){ state.expanded[op.dataset.id]=true; renderGrid(); toast('行内展开编辑：公式/引擎/无权限字段灰显并带锁（U04 逐字段鉴权）'); return; }
+
+  var cell=e.target.closest('[data-edit]');
+  if(!cell) return;
+  var k=cell.dataset.edit, id=cell.dataset.id, f=FMAP[k];
+  var row=ROWS.filter(function(r){return r.id===id;})[0];
+  if(!row) return;
+  var fake=Object.assign({},f,{_row:row});
+  if(!canWrite(fake)){
+    var why=row.history?'历史只读航次整行不可编辑':(f.ro?'公式 / 规则引擎输出，只读':(f.money&&!roleDef().seeMoney?'金额字段对当前角色不返回':'当前角色「'+roleDef().name+'」无此字段写权限'));
+    tip('不可编辑：'+why,e.clientX,e.clientY); return;
+  }
+  if(cell.querySelector('input')) return;
+  var old=row[k], parts=String(old==null?'':old).split(' ');
+  var val=f.t==='date2'?(parts[0]+' '+(parts[1]||'')):old;
+  cell.innerHTML='<input class="cd-inline-edit" value="'+esc(val)+'">';
+  var inp=cell.querySelector('input'); inp.focus(); inp.select();
+  var done=function(save){
+    if(save && inp.value.trim()!==''){
+      row[k]=inp.value.trim();
+      row.updated='刚刚 · '+roleDef().name;
+      toast('已保存 '+f.n+'（局部刷新该行，不换页；正式实现走 U04 现有写链路 + 变更日志 + 幂等键）');
+    }
+    renderGrid();
+  };
+  inp.addEventListener('keydown',function(ev){ if(ev.key==='Enter') done(true); if(ev.key==='Escape') done(false); });
+  inp.addEventListener('blur',function(){ done(true); });
+});
+
+/* —— 预警点击：定位到行并展开对应字段（?focus= 改为行内定位） —— */
+document.getElementById('alerts').addEventListener('click',function(e){
+  if(e.target.id==='alertClose'){ state.alertsOpen=false; renderAll(); return; }
+  var it=e.target.closest('[data-alert]'); if(!it) return;
+  var idx=parseInt(it.dataset.alert,10), id=it.dataset.id;
+  state.focusAlert=idx; state.hitId=id; state.selected=id; state.expanded[id]=true;
+  renderAll();
+  var tr=document.querySelector('tr[data-row="'+id+'"]');
+  if(tr) tr.scrollIntoView({block:'center',behavior:'smooth'});
+  toast('已在主表定位 '+id+' 并展开对应字段：0 次页面跳转');
+});
+
+/* —— 视图配置抽屉 —— */
+function openDrawer(v){ document.getElementById('drawer').classList.toggle('open',v); document.getElementById('mask').classList.toggle('open',v); }
+document.getElementById('viewBtn').onclick=function(){ openDrawer(true); };
+document.getElementById('drawerClose').onclick=function(){ openDrawer(false); };
+document.getElementById('mask').onclick=function(){ openDrawer(false); };
+document.getElementById('drawerBody').addEventListener('click',function(e){
+  var rb=e.target.closest('[data-role]');
+  if(rb){ applyRole(rb.dataset.role); toast('已切换角色模板：'+ROLES[state.role].name+'（列集合由后端策略裁剪后返回）'); return; }
+  var mv=e.target.closest('[data-mv]');
+  if(mv){
+    var k=mv.dataset.k, arr=state.order, i=arr.indexOf(k), j=mv.dataset.mv==='up'?i-1:i+1;
+    if(i<0||j<0||j>=arr.length) return;
+    var t=arr[i]; arr[i]=arr[j]; arr[j]=t; state.scope='user'; renderAll(); return;
+  }
+});
+document.getElementById('drawerBody').addEventListener('change',function(e){
+  var cb=e.target.closest('[data-col]'); if(!cb) return;
+  var k=cb.dataset.col, i=state.visible.indexOf(k);
+  if(cb.checked && i<0) state.visible.push(k);
+  if(!cb.checked && i>=0) state.visible.splice(i,1);
+  state.scope='user'; renderAll();
+});
+document.getElementById('resetView').onclick=function(){
+  state.visible=defaultVisible(); state.order=state.visible.slice(); state.scope='role'; renderAll();
+  toast('已恢复 '+ROLES[state.role].name+' 的角色模板');
+};
+document.getElementById('saveView').onclick=function(){
+  state.scope='user';
+  try{ localStorage.setItem('ssps-console-view',JSON.stringify({role:state.role,visible:state.visible,order:state.order,density:state.density})); }catch(err){}
+  renderAll(); toast('已保存为我的视图（正式实现存服务端 D13，跨设备一致；此处仅示意）');
+};
+
+/* —— 密度 / 皮肤 —— */
+document.getElementById('densitySeg').addEventListener('click',function(e){
+  var b=e.target.closest('[data-density]'); if(!b) return;
+  state.density=b.dataset.density; document.documentElement.setAttribute('data-density',state.density);
+  renderAll(); toast('密度 → '+b.textContent.trim()+'；三套皮肤共用同一套几何规则，皮肤未改变');
+});
+document.getElementById('alertToggle').onclick=function(){ state.alertsOpen=!state.alertsOpen; renderAll(); };
+document.getElementById('skinBtn').onclick=function(){
+  var m=document.getElementById('skinMenu'); m.hidden=!m.hidden;
+};
+document.getElementById('skinMenu').addEventListener('click',function(e){
+  var b=e.target.closest('[data-skin]'); if(!b) return;
+  document.documentElement.setAttribute('data-skin',b.dataset.skin);
+  try{ localStorage.setItem('ssps-skin',b.dataset.skin); }catch(err){}
+  document.getElementById('skinMenu').hidden=true; renderAll();
+  toast('皮肤 → '+b.textContent+'；CMR 四档色阶 / 无数据灰色斜线 / 低可信标签保持不变');
+});
+document.addEventListener('click',function(e){
+  if(!e.target.closest('#skinPop')) document.getElementById('skinMenu').hidden=true;
+});
+
+/* —— 阶段 A–D 全链路演示 —— */
+document.getElementById('chain').addEventListener('click',function(e){
+  var b=e.target.closest('[data-chain]'); if(!b) return;
+  var s=b.dataset.chain;
+  state.chainDone[s]=true;
+
+  if(s==='A'){
+    var id='DRAFT'+(++state.drafts);
+    ROWS.unshift({id:id,voyageNo:'预测草稿 · '+id,bizType:'大宗采购',vessel:'待指定',mmsi:null,
+      loadPort:'曹妃甸',disPort:'湛江',route:'曹妃甸→湛江',berth:null,
+      etaLoad:'11-20 08:00',etdLoad:'11-22 18:00',etaDis:'11-29 06:00',
+      ataLoad:null,atdLoad:null,ataDis:null,status:'待宣船',etaCur:null,etaDev:null,cmr:'c2',
+      alert:'方案 A 溯源 · S1',cargo:'铁矿粉',qty:'180,000',contract:null,owner:'待指派',
+      relay:'1/10',updated:'刚刚 · 采纳预测方案',demurrage:'—',portFee:'—',_draft:true,
+      _plan:{ab:'方案 A',window:'11-20 ~ 11-22',cmrMin:'CMR_min 22%',path:'≤15 天',lowtrust:true}});
+    state.hitId=id; state.selected=id;
+    renderAll();
+    document.getElementById('tablewrap').scrollTop=0;
+    toast('阶段 A：调用 A23 adopt 后在工作平面插入「预测草稿行」——待宣船 / 方案 A 溯源 / 推荐窗口 11-20~11-22 / CMR_min 22% / ≤15 天 / 低可信。规则引擎数值原样展示，前端不重算');
+
+  } else if(s==='B'){
+    var d=ROWS.filter(function(r){return r._draft;})[0];
+    if(!d){ toast('请先执行阶段 A 采纳一条预测方案'); state.chainDone[s]=false; renderAll(); return; }
+    d._draft=false; d.status='待宣船'; d.alert='待补录节点'; d.updated='刚刚 · 业务员 · 大宗采购部';
+    state.expanded[d.id]=true; state.hitId=d.id; state.selected=d.id;
+    renderAll();
+    toast('阶段 B：草稿行「转为发船计划」，补齐合同号 / 船名 / 货物明细 / 负责业务员；工具栏「＋ 新建」也可在表内插行快速新建。复用 createVoyage，行内展开继续填，不跳 P05');
+
+  } else if(s==='C'){
+    applyRole('logistics'); state.relayHint=true; state.chainDone[s]=true; renderAll();
+    toast('阶段 C：接力棒 → 仓储船务。高亮格为当前岗位可填字段；采购业务员填合同/货物/计划，仓储船务填实际节点与作业，大宗综合填费用与复核。能否编辑由 L2 策略决定，公式字段永远只读');
+
+  } else if(s==='D'){
+    state.alertsOpen=true; state.chainDone[s]=true; renderAll();
+    var first=document.querySelector('[data-alert="0"]'); if(first) first.click();
+    toast('阶段 D：8 类预警统一聚合，分严重/中风险/提醒三级；30 秒轮询，界面写「数据更新于 HH:MM」而非「实时」。一期的 ETA 是人工修订，不接 AIS / 气象');
+  }
+});
+
+/* —— 汇总带 / 草稿徽标 —— */
+document.getElementById('draftBadge').onclick=function(){
+  var d=ROWS.filter(function(r){return r._draft;})[0]; if(!d) return;
+  state.hitId=d.id; state.expanded[d.id]=true; renderAll();
+  var tr=document.querySelector('tr[data-row="'+d.id+'"]'); if(tr) tr.scrollIntoView({block:'center'});
+};
+
+/* —— 初始化 —— */
+(function init(){
+  state.visible=defaultVisible(); state.order=state.visible.slice();
+  document.documentElement.setAttribute('data-density',state.density);
+  renderAll();
+  setTimeout(function(){ toast('这是方案示意原型：可切换 4 个岗位模板看列与权限如何变化、点单元格试原地编辑、点 A→B→C→D 看全链路'); },400);
+  setInterval(function(){
+    var n=new Date(), t=pad(n.getHours())+':'+pad(n.getMinutes());
+    var a=document.getElementById('clock'), b=document.getElementById('clock2');
+    if(a) a.textContent=t; if(b) b.textContent=t;
+  },30000);
+})();
+</script>
+</body>
+</html>
