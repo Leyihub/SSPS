@@ -57,7 +57,9 @@
 ## 文档地图
 
 - `docs/implementation-plan.md`：实施计划书 V1.0 的导出快照。在线版：https://claude.ai/artifact/VM4TLGJqdbd2FJvQAibNfJ
-- `docs/schema/`：多维表格 T01–T10、应用库 D01–D12、状态推导规则、迁移清洗规则
+- `docs/schema/`：多维表格 T01–T10、应用库 D01–D15、状态推导规则、迁移清洗规则
+- `docs/schema/field-groups.md`：字段组 G01–G13、岗位授权、接力规则、视图（2026-11-16 确认，修改权限以它为准；代码尚未实现）
+- `docs/handoff/vessel-dynamics-rebuild-plan.md`：船舶动态业务体系重构总方案与分期（P04 由航次列表改为「船舶动态」协作台，原型 `prototype/P04-vessel-board.html`）
 - `docs/schema/base-build-checklist.md`：多维表格建设清单（Leyinet 在飞书里照着逐项建表、勾选）
 - `docs/schema/base-plan.json`：建表清单的机器可读版（`node scripts/build-base-plan.mjs` 生成）；`docs/schema/base-build-agent-prompt.md`：本机 agent 建表的步骤与提示词
 - `docs/development-workflow.md`：开发阶段的流程、环节衔接、Leyinet 需要推进的前置条件、开发进度表
@@ -69,7 +71,7 @@
 
 ## 编号约定
 
-K01–K14 是访谈决策；T01–T10 是飞书表；D01–D12 是应用库自有表（D11–D12 是库存断料）；A01–A30 是后端接口；P01–P11 是页面（P11 智能提问是预测入口，导航里排在 P02 前面）；M1–M3 / G1–G3 是里程碑和验收门。
+K01–K14 是访谈决策；T01–T10 是飞书表；D01–D15 是应用库自有表（D11–D12 是库存断料，D13–D15 是船舶动态协作台的视图配置、字段组授权、作业日志，计划中）；G01–G13 是字段组（修改权限的单位，见 `docs/schema/field-groups.md`）；A01–A35 是后端接口（A31–A35 计划中）；P01–P11 是页面（P11 智能提问是预测入口，导航里排在 P02 前面）；M1–M3 / G1–G3 是里程碑和验收门。
 
 ## 本机 Claude Code 接手（2026-11-05）
 

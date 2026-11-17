@@ -1,0 +1,693 @@
+<!doctype html>
+<html lang="zh-CN" data-density="compact">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>P04 船舶动态 · SSPS 原型</title>
+<link rel="stylesheet" href="assets/app.css">
+<style>
+/* 船舶动态协作台 · 重构原型（方案见 docs/handoff/vessel-dynamics-rebuild-plan.md）
+   只用 app.css 的 token；密度是独立于皮肤的维度 data-density，几何规则不进 skin.css。 */
+html[data-density="cozy"]   { --rh:44px; --cp:7px 10px; --fs:12.5px; --sub:11px }
+html[data-density="compact"]{ --rh:32px; --cp:2px 8px;  --fs:12px;   --sub:10px }
+
+.page.bd{display:flex;flex-direction:column;gap:8px;padding:12px 16px;max-width:none;height:calc(100vh - var(--shell-gutter)*2 - 52px);min-height:600px}
+.bd-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:none}
+.bd-bar h1{margin:0 6px 0 0;font-size:18px;font-weight:600;letter-spacing:-.02em;color:var(--ink);white-space:nowrap}
+.bd-bar .sp{flex:1}
+.bd-bar .btn{padding:4px 11px;font-size:12px}
+.bd-bar select.inp{width:auto;height:28px;padding:2px 10px;font-size:12px}
+.bd-bar .lab{font-size:10px;letter-spacing:.14em;color:var(--faint);text-transform:uppercase;white-space:nowrap}
+.bd-bar .upd{font-size:11px;color:var(--muted);white-space:nowrap}
+.bd-views{flex:none;border-bottom:1px solid var(--line)}
+.bd-views button{padding:6px 12px;font-size:12.5px}
+.bd-views button small{background:var(--surface-3);border-radius:9px;padding:0 6px;color:var(--muted);font-size:10.5px}
+.bd-views button.on small{background:var(--ink);color:var(--on-ink)}
+.bd-views button.mine::before{content:"★ ";color:var(--caution)}
+.bd-flt{display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex:none;font-size:12px}
+.bd-flt .inp{width:auto;height:28px;padding:2px 10px;font-size:12px}
+.bd-flt .cnt{color:var(--muted);margin-left:auto;white-space:nowrap}
+.bd-flt .quick{background:var(--ink);color:var(--on-ink);border-radius:12px;padding:1px 10px;cursor:pointer}
+
+.bd-body{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 292px;gap:8px}
+.bd-body.norail{grid-template-columns:minmax(0,1fr)}
+.bd-body.norail .bd-rail{display:none}
+.bd-main{min-width:0;min-height:0;display:flex;flex-direction:column}
+.bd-scroll{flex:1;overflow:auto;min-height:0}
+
+/* 高密度主表 */
+.bd-t{border-collapse:separate;border-spacing:0;font-size:var(--fs);width:max-content;min-width:100%}
+.bd-t th,.bd-t td{border-bottom:1px solid var(--line-2);padding:var(--cp);height:var(--rh);vertical-align:middle;white-space:nowrap;text-align:left;background:var(--card)}
+.bd-t th{position:sticky;top:0;z-index:3;background:var(--surface-2);color:var(--muted);font-weight:500;font-size:10.5px;letter-spacing:.06em;height:28px}
+.bd-t th.can{color:var(--ink)}
+.bd-t th.can::after{content:"✎";margin-left:4px;font-size:10px;color:var(--caution)}
+.bd-t .fz{position:sticky;z-index:2}
+.bd-t th.fz{z-index:4}
+.bd-t .f0{left:0;width:26px;min-width:26px;padding:0;text-align:center}
+.bd-t .f1{left:26px;width:118px;min-width:118px}
+.bd-t .f2{left:144px;width:158px;min-width:158px;border-right:1px solid var(--line)}
+.bd-t .fr{position:sticky;right:0;z-index:2;border-left:1px solid var(--line);text-align:right}
+.bd-t th.fr{z-index:4}
+.bd-t tbody tr:hover>td{background:var(--surface-2)}
+.bd-t tr.open>td{background:var(--surface-2)}
+.bd-t tr.hit>td{box-shadow:inset 0 2px 0 var(--ink),inset 0 -2px 0 var(--ink)}
+.bd-t tr.alertrow>td.f0{box-shadow:inset 3px 0 0 var(--warn)}
+.bd-t tr.myrow>td.f0{box-shadow:inset 3px 0 0 var(--caution)}
+.bd-t td.r{text-align:right}
+.bd-t td b{font-weight:600;color:var(--ink)}
+.bd-t td i{display:block;font-style:normal;font-size:var(--sub);line-height:1.15;color:var(--muted)}
+.bd-t td .l1{display:block;line-height:1.2}
+.bd-t td.na{color:var(--line-strong);text-align:center}
+.bd-t td.ed{cursor:text}
+.bd-t td.ed:hover{box-shadow:inset 0 0 0 1px var(--line-strong)}
+.bd-t td.need{background:var(--caution-bg) !important}
+.bd-t td.need .ph{color:var(--caution);font-weight:500}
+.bd-t td.dirty{box-shadow:inset 3px 0 0 var(--ink)}
+.bd-t td.editing{padding:1px 3px;box-shadow:inset 0 0 0 2px var(--ink)}
+.bd-t td.editing input,.bd-t td.editing select{height:calc(var(--rh) - 6px);min-height:24px;border:0;background:transparent;font-size:12px;padding:0 4px;outline:none;max-width:190px}
+.bd-t td.editing input[type=date]{max-width:118px}
+.xp{border:0;background:none;color:var(--muted);font-size:11px;width:26px;height:100%;padding:0}
+.xp:hover{color:var(--ink)}
+.tdc{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:4px;padding:0 6px;font-size:11px;line-height:18px;color:var(--muted);margin-right:4px;background:var(--surface)}
+.tdc.me{border-color:var(--caution-line);background:var(--caution-bg);color:var(--caution);font-weight:600;cursor:pointer}
+.stale{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--warn);margin-left:5px;vertical-align:1px}
+.star{color:var(--caution)}.star.off{color:var(--line-strong)}
+.pg{display:inline-block;width:64px;height:5px;border-radius:3px;background:var(--surface-3);vertical-align:middle;margin-right:6px;overflow:hidden}
+.pg>span{display:block;height:100%;background:var(--ink)}
+.rowbtn{border:1px solid var(--line-strong);background:var(--surface);border-radius:4px;font-size:11px;line-height:20px;padding:0 8px;color:var(--text)}
+.rowbtn.pri{background:var(--ink);border-color:var(--ink);color:var(--on-ink);font-weight:600}
+.rowbtn:hover{border-color:var(--ink)}
+.crow td{background:var(--surface-2) !important;height:auto;padding:8px 10px}
+.crow .f{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.crow .inp{width:auto;height:28px;font-size:12px;padding:2px 8px}
+
+/* 行内展开 */
+.xrow>td{padding:0 !important;height:auto;background:var(--bg) !important;white-space:normal;border-bottom:1px solid var(--line)}
+.xin{position:sticky;left:0;width:var(--bdw,100%);align-items:start;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr) 300px;gap:10px;padding:10px 12px 12px 26px}
+.xin>.xt{grid-column:1/3}
+.xin>.xm{grid-column:3;grid-row:1/3;min-width:0}
+.xb{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:9px 11px;min-width:0;overflow-x:auto}
+.xb h4{margin:0 0 7px;font-size:10px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:6px}
+.xb.me{border-color:var(--caution-line);background:var(--caution-bg)}
+.xb.me h4{color:var(--caution)}
+.tl{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:0}
+.tl div{border-top:2px solid var(--line-strong);padding:6px 6px 0 0;font-size:11px;min-width:0}
+.tl div.done{border-top-color:var(--ink)}
+.tl div.late b{color:var(--warn)}
+.tl small{display:block;color:var(--muted);font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl b{display:block;font-weight:600;color:var(--ink);white-space:nowrap}
+.tl span{display:block;color:var(--muted);white-space:nowrap}
+.kv2{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:12px}
+.kv2 span{color:var(--muted);white-space:nowrap}
+.kv2 b{font-weight:500;color:var(--ink)}
+.mini{width:100%;border-collapse:collapse;font-size:11.5px}
+.mini th,.mini td{padding:3px 6px;border-bottom:1px solid var(--line-2);text-align:left;white-space:nowrap}
+.mini th{color:var(--muted);font-weight:500;font-size:10px}
+.mini td.r,.mini th.r{text-align:right}
+.logf{display:flex;gap:5px;margin-top:7px;flex-wrap:wrap;align-items:center}
+.logf .inp{height:26px;font-size:11.5px;padding:1px 6px;width:86px}
+.mef{display:grid;gap:7px}
+.mef label{display:block;font-size:11px;color:var(--caution);margin-bottom:2px}
+.mef .ln{display:flex;gap:5px}
+.mef .inp{height:28px;font-size:12px;padding:2px 8px;background:var(--surface)}
+.mef .now{border:1px solid var(--caution-line);background:var(--surface);border-radius:4px;font-size:11px;padding:0 8px;white-space:nowrap}
+.xf{display:flex;gap:12px;align-items:center;margin-top:8px;font-size:11.5px}
+.xf a{color:var(--muted);text-decoration:underline;cursor:pointer}
+.pred{border-left:2px solid var(--ink);padding-left:9px}
+
+/* 预警栏、汇总带 */
+.bd-rail{display:flex;flex-direction:column;min-height:0}
+.bd-rail .rh{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid var(--line-2);font-size:12.5px;font-weight:600;color:var(--ink)}
+.bd-rail .rb{flex:1;overflow:auto}
+.bd-rail .grp{display:flex;align-items:center;gap:6px;padding:8px 12px 4px;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.bd-rail .grp b{margin-left:auto;font-size:11px;color:var(--ink);letter-spacing:0}
+.al{padding:6px 12px 7px;border-bottom:1px solid var(--line-2);cursor:pointer;border-left:3px solid transparent}
+.al:hover{background:var(--surface-2)}
+.al.l1{border-left-color:var(--caution)}.al.l2{border-left-color:var(--warn)}.al.l3{border-left-color:var(--line-strong)}
+.al b{display:block;font-size:12px;font-weight:600;color:var(--ink)}
+.al span{display:block;font-size:11px;color:var(--muted);white-space:normal;line-height:1.45}
+.bd-rail .rf{padding:7px 12px;border-top:1px solid var(--line-2);font-size:10px;letter-spacing:.1em;color:var(--faint);text-transform:uppercase}
+.bd-sum{flex:none;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));overflow:hidden}
+.bd-sum div{padding:6px 14px;border-right:1px solid var(--line-2);cursor:pointer;min-width:0}
+.bd-sum div:last-child{border-right:0;cursor:default}
+.bd-sum div:hover{background:var(--surface-2)}
+.bd-sum div.on{background:var(--surface-3)}
+.bd-sum small{display:block;font-size:10px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bd-sum b{font-size:18px;font-weight:500;letter-spacing:-.03em;color:var(--ink)}
+.bd-sum b.w{color:var(--warn)}.bd-sum b.c{color:var(--caution)}
+
+/* 抽屉、列设置、授权表 */
+.bd-dr{position:fixed;top:0;right:0;bottom:0;width:460px;max-width:96vw;background:var(--surface);border-left:1px solid var(--line);box-shadow:var(--shadow-pop);z-index:90;display:none;flex-direction:column}
+.bd-dr.on{display:flex}
+.bd-dr .dh{padding:12px 16px;border-bottom:1px solid var(--line-2);display:flex;align-items:center;gap:10px}
+.bd-dr .dh b{font-size:14px;color:var(--ink)}
+.bd-dr .dh button{margin-left:auto;border:0;background:none;font-size:20px;color:var(--muted)}
+.bd-dr .db{flex:1;overflow:auto;padding:4px 16px 16px}
+.bd-dr h5{margin:14px 0 6px;font-size:10px;font-weight:500;letter-spacing:.14em;color:var(--muted);text-transform:uppercase;display:flex;align-items:center;gap:8px}
+.bd-dr .df{padding:10px 16px;border-top:1px solid var(--line-2);display:flex;gap:8px;justify-content:flex-end}
+.colrow input{accent-color:var(--ink)}
+.colrow{display:flex;align-items:center;gap:8px;padding:3px 0;font-size:12.5px}
+.colrow .mv{margin-left:auto;display:flex;gap:3px}
+.colrow .mv button{border:1px solid var(--line);background:var(--surface);border-radius:4px;width:22px;height:20px;line-height:1;font-size:10px;color:var(--muted)}
+.gt{border-collapse:collapse;font-size:11.5px;width:100%}
+.gt th,.gt td{border:1px solid var(--line-2);padding:4px 6px;text-align:center;white-space:nowrap}
+.gt th{background:var(--surface-2);color:var(--muted);font-weight:500;font-size:10.5px}
+.gt td:first-child,.gt th:first-child{text-align:left}
+.gt td.g{cursor:pointer}.gt td.g:hover{background:var(--surface-2)}
+.gt td.lk{color:var(--line-strong);background:var(--surface-2)}
+.gt td.on{color:var(--ink);font-weight:600}
+.gt td.chg{box-shadow:inset 0 0 0 2px var(--caution)}
+.note{font-size:11.5px;color:var(--muted);line-height:1.6}
+.bd-cards{display:none}
+@media(max-width:1280px){.xin{grid-template-columns:minmax(0,1fr) minmax(0,1.35fr)}.xin>.xt,.xin>.xm{grid-column:1/-1;grid-row:auto}.bd-body{grid-template-columns:minmax(0,1fr) 250px}}
+@media(max-width:900px){
+  .page.bd{height:auto;min-height:0;padding:12px}
+  .bd-body{display:block}.bd-rail,.bd-scroll,.bd-bar .lab,.bd-bar .hid{display:none}
+  .bd-cards{display:block}
+  .bd-sum{grid-template-columns:repeat(3,minmax(0,1fr)) !important}
+  .vc{padding:10px 12px;border-bottom:1px solid var(--line-2)}
+  .vc .r1{display:flex;justify-content:space-between;gap:8px;align-items:center}
+  .vc .r2{color:var(--muted);font-size:12px;margin:2px 0 5px}
+  .xin{position:static;width:auto;grid-template-columns:minmax(0,1fr);padding:8px 0 0}.xin>*{grid-column:auto !important;grid-row:auto !important}
+}
+</style>
+<link rel="stylesheet" href="assets/skin.css">
+<script data-skin-init>(function(){var s="paper",d="compact";try{var v=localStorage.getItem("ssps-skin");if(v==="legacy"||v==="midnight")s=v;if(localStorage.getItem("ssps-density")==="cozy")d="cozy";}catch(e){}document.documentElement.setAttribute("data-skin",s);document.documentElement.setAttribute("data-density",d);})();</script>
+</head>
+<body>
+<div class="app"><aside id="nav"></aside>
+  <div class="main"><header id="topbar"></header>
+    <main class="page bd">
+      <div class="bd-bar">
+        <h1>船舶动态</h1>
+        <span class="lab">模拟身份</span><select class="inp" id="viewer"></select>
+        <span class="sp"></span>
+        <button class="btn primary" id="bNew">＋ 新建</button>
+        <button class="btn hid" id="bAdopt" title="演示：从预测页采纳方案后落到协作台">模拟采纳预测</button>
+        <button class="btn hid" id="bExp">导出</button>
+        <button class="btn" id="bCols">列设置</button>
+        <button class="btn hid" id="bGrant">岗位授权</button>
+        <div class="ds-seg" id="dens"><button data-d="cozy">舒适</button><button data-d="compact">紧凑</button></div>
+        <button class="btn hid" id="bRail">预警栏</button>
+        <span class="upd hid" id="upd"></span>
+      </div>
+      <div class="tabs2 bd-views" id="views"></div>
+      <div class="bd-flt">
+        <input class="inp" id="kw" placeholder="船名 / 航次号 / 船次号 / 合同号" style="min-width:220px">
+        <select class="inp" id="fst"></select>
+        <select class="inp" id="fown"></select>
+        <button class="chipf" id="fme">只看我负责的</button>
+        <button class="chipf" id="fstar">重点关注</button>
+        <span id="quick"></span>
+        <span class="cnt" id="cnt"></span>
+      </div>
+      <div class="bd-body" id="body">
+        <section class="card bd-main"><div class="bd-scroll" id="scroll"><table class="bd-t" id="tbl"></table></div><div class="bd-cards" id="cards"></div></section>
+        <aside class="card bd-rail" id="rail"></aside>
+      </div>
+      <div class="card bd-sum" id="sum"></div>
+    </main>
+  </div>
+</div>
+<div class="bd-dr" id="drawer"></div>
+<script src="mock-data.js"></script><script src="engine.js"></script><script src="assets/shell.js"></script><script src="assets/common.js"></script>
+<script>
+(function () {
+  const M = window.MOCK, C = window.C, $ = (id) => document.getElementById(id), esc = C.esc;
+  const SS = { get: (k, d) => { try { const r = sessionStorage.getItem(k); return r ? JSON.parse(r) : d; } catch (e) { return d; } }, set: (k, v) => { try { sessionStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* ignore */ } } };
+  const LS = { get: (k, d) => { try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : d; } catch (e) { return d; } }, set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* ignore */ } } };
+
+  /* ---------- 身份（岗位 = 角色 + 部门） ---------- */
+  const VIEWERS = [['林海川', '大宗采购部', '业务员'], ['周晓棠', '大宗采购部', '部门主管'], ['韩墨', '商务海运部', '业务员'], ['苏望舒', '商务海运部', '部门主管'],
+    ['罗景行', '仓储物流部', '业务员'], ['沈予安', '仓储物流部', '部门主管'], ['顾明远', '仓储物流部', '物流管理员'], ['钟立诚', '—', '系统管理员']];
+  VIEWERS.forEach((x) => { M.people[x[0]] = { dept: x[1], role: x[2] }; });
+  const POSTS = [['p1', '业务员 · 大宗采购部'], ['p2', '业务员 · 商务海运部'], ['p3', '业务员 · 仓储物流部'], ['p4', '部门主管 · 大宗采购部'], ['p5', '部门主管 · 商务海运部'], ['p6', '部门主管 · 仓储物流部'], ['p7', '物流管理员'], ['p8', '系统管理员']];
+  const setMe = (name) => { const x = VIEWERS.find((q) => q[0] === name) || VIEWERS[0]; Object.assign(C.me, { name: x[0], dept: x[1], role: x[2] }); SS.set('ssps-board-viewer', x[0]); };
+  setMe(SS.get('ssps-board-viewer', C.me.name));
+  const role = () => C.me.role, dept = () => C.me.dept;
+  const post = () => role() === '系统管理员' ? 'p8' : role() === '物流管理员' ? 'p7' : (role() === '部门主管' ? { 大宗采购部: 'p4', 商务海运部: 'p5', 仓储物流部: 'p6' } : { 大宗采购部: 'p1', 商务海运部: 'p2', 仓储物流部: 'p3' })[dept()];
+
+  /* ---------- 字段组与授权（方案第 5 节）。取值：own 本人航次 / dept 本部门航次 / any 任意航次；「any:大宗」= 仅大宗采购船 ---------- */
+  const GROUPS = [['G01', '标识与航线'], ['G02', '货物与合同'], ['G03', '计划时间'], ['G04', '外港侧实际节点'], ['G05', '预计到达修订'], ['G06', '本港侧节点与泊位'], ['G07', '卸船作业'],
+    ['G08', '港口费用'], ['G09', '合同结算'], ['G10', '销售扩展'], ['G11', '管理标记'], ['G12', '系统与计算结果'], ['G13', '作业日志']];
+  const GNAME = Object.fromEntries(GROUPS);
+  const GBIZ = { G07: ['大宗采购船'], G08: ['大宗采购船'], G09: ['大宗采购船'], G10: ['成品销售船'] };
+  const base = { p1: 'own', p2: 'own', p3: 'own', p4: 'dept', p5: 'dept', p6: 'dept', p8: 'any' };
+  const GRANT0 = { G01: base, G02: base, G03: base, G04: base, G05: base, G11: base,
+    G06: Object.assign({}, base, { p3: 'own|any:大宗', p6: 'dept|any:大宗' }),
+    G07: { p1: 'own', p4: 'dept', p3: 'any', p6: 'any', p8: 'any' },
+    G08: { p3: 'any', p6: 'any', p8: 'any' },
+    G09: { p1: 'own', p4: 'dept', p8: 'any' },
+    G10: { p2: 'own', p5: 'dept', p8: 'any' },
+    G12: {}, G13: { p3: 'any', p6: 'any', p8: 'any' } };
+  let GRANT = SS.get('ssps-board-grant', null) || JSON.parse(JSON.stringify(GRANT0));
+  const READ = { G08: ['p1', 'p3', 'p4', 'p6', 'p8'], G09: ['p1', 'p4', 'p8'] };            // 金额：不在名单里的岗位，接口不返回
+  const GLOCK = (g, p) => g === 'G12' || p === 'p8' || (READ[g] && !READ[g].includes(p));   // 勾选表里不可改的格子
+  const canRead = (g) => !READ[g] || READ[g].includes(post());
+  const arrived = (v) => !!v.actDischArr;
+  function canWG(v, g) {
+    if (v.readonly || g === 'G12') return false;
+    if (GBIZ[g] && !GBIZ[g].includes(v.biz)) return false;
+    if ((g === 'G07' || g === 'G08' || g === 'G09') && !arrived(v)) return false;          // 船抵卸港后才开始登记
+    const cell = (GRANT[g] || {})[post()]; if (!cell) return false;
+    return cell.split('|').some((c) => { const [sc, lim] = c.split(':'); if (lim === '大宗' && v.biz !== '大宗采购船') return false; return sc === 'any' || (sc === 'own' && v.owner === C.me.name) || (sc === 'dept' && v.dept === dept()); });
+  }
+
+  /* ---------- 作业日志（G13，范围新增）：装船记录挂航次，卸船记录挂货物明细 ---------- */
+  let LOGS = SS.get('ssps-board-logs', null);
+  const day = (off) => C.iso(C.TODAY + off);
+  if (!LOGS) {
+    LOGS = [];
+    M.voyageList.forEach((v, i) => {
+      const st = C.statusOf(v), cg = C.cargoOf(v)[0] || {};
+      if (v.biz === '成品销售船' && st === '装港装货') LOGS.push({ voyage: v.id, date: day(-1), item: cg.name || '线材', shift: '', pcs: 1180, tons: Math.round(C.total(v) * 0.11) });
+      if (v.biz === '大宗采购船' && st === '卸港卸货') { LOGS.push({ voyage: v.id, date: day(-1), item: cg.contract, shift: '白', pcs: 96 + i, tons: Math.round(C.total(v) * 0.14) }, { voyage: v.id, date: day(-1), item: cg.contract, shift: '夜', pcs: 88 + i, tons: Math.round(C.total(v) * 0.12) }); if (i % 2) LOGS.push({ voyage: v.id, date: M.today, item: cg.contract, shift: '白', pcs: 60, tons: Math.round(C.total(v) * 0.08) }); }
+    });
+  }
+  const logsOf = (v) => LOGS.filter((l) => l.voyage === v.id);
+  const logToday = (v) => LOGS.some((l) => l.voyage === v.id && l.date === M.today);
+  const logSum = (v) => logsOf(v).reduce((a, l) => a + (+l.tons || 0), 0);
+
+  /* ---------- 预测依据（演示用：数值来自保存下来的预测结果，协作台不重算） ---------- */
+  const firstNew = M.voyageList.filter((v) => C.statusOf(v) === '待宣船' && !v.pred);
+  if (!SS.get('ssps-board-pred', 0) && firstNew[0]) { firstNew[0].pred = { run: 'PR-20261103-0007', plan: '推荐方案', path: '15 天内 · 按靠船计划', metric: '窗口内最低泊位余量 46%', basis: '历史统计 38 个航次', trust: '正常' }; SS.set('ssps-board-pred', 1); }
+
+  /* ---------- 字段目录（只收 docs/schema 现有字段；prog / todo / updated 是现算的显示项） ---------- */
+  const settle = (v) => M.bulkSettle[v.id] || {}, sales = (v) => M.salesExt[v.id] || {}, cg0 = (v) => C.cargoOf(v)[0] || {};
+  const bulk = (v) => v.biz === '大宗采购船', prod = (v) => v.biz === '成品销售船';
+  const LOADK = ['actLoadArr', 'loadBerth', 'actLoadDep'];
+  const F = {};
+  const def = (k, label, g, type, o) => { F[k] = Object.assign({ k, label, g, type, src: 'v' }, o); };
+  def('id', '航次编号', 'G12', 'id'); def('vessel', '船名', 'G01', 'vessel'); def('biz', '业务类型', 'G12', 'biz'); def('status', '状态', 'G12', 'status');
+  def('todo', '待办', 'G12', 'todo'); def('route', '航线', 'G12', 'route');
+  def('contract', '合同号', 'G02', 'text', { src: 'cargo' }); def('cargo', '货物名称', 'G02', 'text', { src: 'cargo', key: 'name' }); def('unit', '使用单位', 'G02', 'text', { src: 'cargo', na: (v) => !bulk(v) });
+  def('party', '供应商 / 客户', 'G02', 'text', { src: 'cargo' }); def('tons', '总货量（吨）', 'G12', 'num', { get: (v) => C.total(v) });
+  def('laycan', '受载期', 'G03', 'win', { ks: ['laycanS', 'laycanE'] }); def('planLoadArr', '计划抵装港', 'G03', 'dt', { plan: 1 }); def('planLoadDep', '计划离装港', 'G03', 'dt', { plan: 1 });
+  def('planDisch', '计划抵卸港窗口', 'G03', 'win', { ks: ['planDischS', 'planDischE'] });
+  def('actLoadArr', '实际抵装港', 'node', 'dt'); def('loadBerth', '装港靠泊', 'node', 'dt'); def('actLoadDep', '实际离装港', 'node', 'dt');
+  def('eta', '预计到达', 'G05', 'dt', { plan: 1 });
+  def('actDischArr', '实际抵卸港', 'node', 'dt'); def('dischBerth', '卸港靠泊', 'node', 'dt'); def('dischDep', '卸港离港', 'node', 'dt');
+  def('planBerths', '计划泊位', 'G06', 'berth'); def('actBerths', '实际泊位', 'G06', 'berth');
+  [['rate', '卸率（吨/天）', 'num'], ['gauge', '卸港水尺吨位', 'num'], ['truck', '汽运量（吨）', 'num'], ['belt', '管带机运量（吨）', 'num'], ['backDay', '交接签回日', 'date'], ['issue', '异常反馈', 'text']]
+    .forEach((x) => def(x[0], x[1], 'G07', x[2], { src: 'settle', na: (v) => !bulk(v) }));
+  [['fee', '港务费单价', 'money'], ['portFee', '港务费（USD）', 'money'], ['loadFee', '装卸费（USD）', 'money']].forEach((x) => def(x[0], x[1], 'G08', x[2], { src: 'settle', na: (v) => !bulk(v) }));
+  [['demRate', '滞期费率', 'money'], ['demUsd', '滞期 / 速遣费（USD）', 'money']].forEach((x) => def(x[0], x[1], 'G09', x[2], { src: 'settle', na: (v) => !bulk(v) }));
+  def('way', '租船方式', 'G10', 'sel', { src: 'sales', opts: ['CFR', 'FOB'], na: (v) => !prod(v) }); def('salesContract', '海运合同号', 'G10', 'text', { src: 'sales', key: 'contract', na: (v) => !prod(v) });
+  def('focus', '关注', 'G11', 'bool'); def('remark', '备注', 'G11', 'text'); def('owner', '负责业务员', 'G12', 'text');
+  def('prog', '装卸进度', 'G12', 'prog'); def('updated', '最近更新', 'G12', 'upd');
+  const grp = (f, v) => f.g !== 'node' ? f.g : ((LOADK.includes(f.k) ? '装' : '卸') === C.side(v) ? 'G06' : 'G04');   // 本港一端 = G06，另一端 = G04
+  const canW = (v, k) => { const f = F[k]; if (!f || (f.na && f.na(v))) return false; if (['id', 'biz', 'status', 'todo', 'route', 'tons', 'owner', 'prog', 'updated'].includes(k)) return false; return canWG(v, grp(f, v)); };
+  const colReadable = (k) => { const g = F[k].g; return g === 'node' || canRead(g); };
+  const raw = (v, k) => { const f = F[k]; if (!f) return v[k]; /* 窗口类字段的始 / 止直接取航次上的键 */ if (f.get) return f.get(v); const o = f.src === 'cargo' ? cg0(v) : f.src === 'settle' ? settle(v) : f.src === 'sales' ? sales(v) : v; return o[f.key || k]; };
+
+  /* ---------- 接力（方案第 6 节）：由现有状态 + 空缺字段现算，不新增状态和存储字段 ---------- */
+  const past = (s) => !!s && C.dayNum(s) <= C.TODAY;
+  function todos(v) {
+    const st = C.statusOf(v), out = [], add = (who, ks) => { ks = ks.filter(Boolean); if (ks.length) out.push({ who, ks }); };
+    if (v.readonly || st === '已结束（取消）') return out;
+    const local = bulk(v) ? 'wh' : 'own';                 // 本港侧节点：大宗船归仓储物流部，成品与物资备件船归负责业务员
+    if (st === '待宣船') add('own', [!v.vessel && 'vessel', !cg0(v).contract && 'contract', C.side(v) === '装' ? (!v.laycanS && 'laycan') : (!v.planDischS && 'planDisch')]);
+    if (C.side(v) === '装') {
+      if (st === '未到装港' && past(v.planLoadArr)) add(local, ['actLoadArr']);
+      if (st === '装港等泊') add(local, ['loadBerth', !(v.actBerths || []).length && 'actBerths']);
+      if (st === '装港装货') { if (!logToday(v)) add('wh', ['logLoad']); if (past(v.planLoadDep)) add(local, ['actLoadDep']); }
+      if (st === '航行中') { add('own', [(!v.eta || C.etaStale(v)) && 'eta', prod(v) && !sales(v).contract && 'salesContract']); if (past(v.eta)) add('own', ['actDischArr']); }
+      if (st === '卸港等泊') add('own', ['dischBerth']);
+    } else {
+      if (['未到装港', '装港等泊', '装港装货'].includes(st) && past(v.planLoadDep)) add('own', ['actLoadDep']);
+      if (st === '航行中') { add('own', [(!v.eta || C.etaStale(v)) && 'eta']); if (!(v.planBerths || []).length && v.eta && C.dayNum(v.eta) - C.TODAY <= 7) add(local, ['planBerths']); if (past(v.eta)) add(local, ['actDischArr']); }
+      if (st === '卸港等泊') add(local, ['dischBerth', !(v.actBerths || []).length && 'actBerths']);
+      if (st === '卸港卸货' && bulk(v) && !logToday(v)) add('wh', ['logUnload']);
+      if (C.missingDep(v)) add('own', ['actLoadDep']);
+      if (st === '已结束' && bulk(v) && v.dischDep && C.TODAY - C.dayNum(v.dischDep) <= 30) { const x = settle(v); add('wh', [x.portFee == null && 'portFee', !x.backDay && 'backDay']); add('fin', [x.demUsd == null && 'demUsd']); }
+    }
+    return out;
+  }
+  const WHO = { own: '负责人', wh: '仓储', fin: '大宗结算' };
+  const mine = (t, v) => t.who === 'own' ? (v.owner === C.me.name || (role() === '部门主管' && v.dept === dept())) : t.who === 'wh' ? ['p3', 'p6'].includes(post()) : (dept() === '大宗采购部' && (v.owner === C.me.name || role() === '部门主管'));
+  const TL = { logLoad: '今日装船记录', logUnload: '今日卸船记录' };
+  const lab = (k) => TL[k] || F[k].label;
+  const myKeys = (v) => { const s = []; todos(v).forEach((t) => { if (mine(t, v)) t.ks.forEach((k) => s.push(k)); }); return s; };
+
+  /* ---------- 视图（方案 4.3）：列、默认筛选；个人视图存本机（正式实现存服务端） ---------- */
+  const ended = (v) => C.statusOf(v).startsWith('已结束'), inPort = (v) => ['装港等泊', '装港装货', '卸港等泊', '卸港卸货'].includes(C.statusOf(v));
+  const localD = (v) => { const l = C.localDate(v); return l.act || (C.side(v) === '卸' ? v.eta : null) || l.plan; };
+  const VIEWS = [
+    { id: 'todo', name: '待我更新', f: (v) => myKeys(v).length > 0, cols: ['id', 'vessel', 'biz', 'status', 'todo', 'route', 'cargo', 'tons', 'eta', 'owner', 'updated'], dyn: 1 },
+    { id: 'bulk', name: '大宗到船计划', f: (v) => bulk(v) && !ended(v), cols: ['id', 'vessel', 'status', 'todo', 'contract', 'cargo', 'unit', 'tons', 'route', 'planDisch', 'actLoadDep', 'eta', 'actDischArr', 'dischBerth', 'dischDep', 'actBerths', 'focus', 'owner', 'updated'] },
+    { id: 'prod', name: '成品发运', f: (v) => prod(v) && !ended(v), cols: ['id', 'vessel', 'status', 'todo', 'route', 'cargo', 'tons', 'laycan', 'planLoadArr', 'actLoadArr', 'loadBerth', 'actBerths', 'prog', 'actLoadDep', 'eta', 'actDischArr', 'contract', 'salesContract', 'way', 'owner'] },
+    { id: 'mat', name: '物资备件', f: (v) => v.biz === '物资备件船' && !ended(v), cols: ['id', 'vessel', 'status', 'todo', 'route', 'cargo', 'tons', 'planDisch', 'actLoadDep', 'eta', 'actDischArr', 'dischBerth', 'actBerths', 'owner', 'updated'] },
+    { id: 'port', name: '在港与临港作业', f: (v) => { if (v.readonly) return false; const d = localD(v); const n = d ? C.dayNum(d) - C.TODAY : 99; return inPort(v) || (!ended(v) && n >= -3 && n <= 7) || (ended(v) && n >= -3); },
+      cols: ['id', 'vessel', 'biz', 'status', 'todo', 'cargo', 'tons', 'planBerths', 'eta', 'actDischArr', 'dischBerth', 'actBerths', 'prog', 'dischDep', 'rate', 'gauge', 'truck', 'belt', 'portFee', 'loadFee', 'backDay', 'issue'] },
+    { id: 'load', name: '装船进度', f: (v) => prod(v) && ['装港等泊', '装港装货'].includes(C.statusOf(v)), cols: ['id', 'vessel', 'status', 'todo', 'cargo', 'tons', 'actBerths', 'loadBerth', 'prog', 'planLoadDep', 'owner'] },
+    { id: 'fee', name: '费用结算', f: (v) => bulk(v) && arrived(v) && !v.readonly, cols: ['id', 'vessel', 'status', 'todo', 'contract', 'tons', 'dischDep', 'fee', 'portFee', 'loadFee', 'demRate', 'demUsd', 'owner'], need: () => canRead('G08') || canRead('G09') },
+    { id: 'all', name: '全部航次', f: () => true, cols: ['id', 'vessel', 'biz', 'status', 'todo', 'route', 'cargo', 'tons', 'eta', 'actDischArr', 'focus', 'owner', 'updated'] },
+  ];
+  let MYV = LS.get('ssps-board-myviews', []);
+  const allViews = () => VIEWS.filter((x) => !x.need || x.need()).concat(MYV.map((m) => Object.assign({}, VIEWS.find((x) => x.id === m.base), m, { mine: 1 })));
+  const defaultView = () => M.voyageList.some((v) => myKeys(v).length) ? 'todo' : ({ 大宗采购部: 'bulk', 商务海运部: 'prod', 仓储物流部: 'port' }[dept()] || 'all');
+
+  /* ---------- 状态 ---------- */
+  const S = { view: null, cols: {}, kw: '', st: '', own: '', me: false, star: false, quick: '', open: new Set(), edit: null, hit: null, creating: false, rail: true };
+  const DIRTY = {};
+  const view = () => allViews().find((x) => x.id === S.view) || allViews()[0];
+  function cols() {
+    const vw = view(); let cs = (S.cols[vw.id] || vw.cols).slice();
+    if (vw.dyn && !S.cols[vw.id]) { const extra = []; M.voyageList.forEach((v) => myKeys(v).forEach((k) => { if (F[k] && !cs.includes(k) && !extra.includes(k)) extra.push(k); })); cs.splice(5, 0, ...extra); }
+    return cs.filter((k) => F[k] && colReadable(k));
+  }
+  const QUICK = { arrive: ['今日到港', (v) => !ended(v) && !C.localDate(v).act && localD(v) && C.dayNum(localD(v)) === C.TODAY], port: ['在港', inPort], sail: ['航行中', (v) => C.statusOf(v) === '航行中'],
+    todo: ['待我更新', (v) => myKeys(v).length > 0], stale: ['预计到达超期未更新', (v) => C.etaStale(v)], dq: ['数据质量待处理', (v) => openIssues().some((i) => issueVoy(i) === v.id)] };
+  const openIssues = () => M.issues.filter((i) => i.status !== '已关闭');
+  const issueVoy = (i) => i.obj.startsWith('VY-') ? i.obj : ((M.voyageList.find((v) => v.vessel === i.obj) || {}).id);
+  function rows() {
+    const vw = view();
+    return M.voyageList.filter((v) => {
+      if (S.quick ? !QUICK[S.quick][1](v) : !vw.f(v)) return false;
+      if (S.st && C.statusOf(v) !== S.st) return false;
+      if (S.own && v.owner !== S.own) return false;
+      if (S.me && v.owner !== C.me.name) return false;
+      if (S.star && !v.focus) return false;
+      if (S.kw) { const k = S.kw.toLowerCase(); if (![v.vessel || '待宣船', v.id, v.no, C.cargoOf(v).map((c) => c.contract).join(' ')].join(' ').toLowerCase().includes(k)) return false; }
+      return true;
+    }).sort((a, b) => { const ea = ended(a), eb = ended(b); if (ea !== eb) return ea ? 1 : -1; const x = localD(a) || '9', y = localD(b) || '9'; return ea ? y.localeCompare(x) : x.localeCompare(y); });
+  }
+
+  /* ---------- 单元格显示 ---------- */
+  const dval = (v, key) => (DIRTY[v.id] && key in DIRTY[v.id] ? DIRTY[v.id][key] : undefined);
+  const val = (v, k) => { const d = dval(v, k); return d !== undefined ? d : raw(v, k); };
+  const isDirty = (v, k) => { const f = F[k]; return !!DIRTY[v.id] && (f.ks ? f.ks.some((x) => x in DIRTY[v.id]) : k in DIRTY[v.id]); };
+  const dash = '<span style="color:var(--line-strong)">—</span>';
+  const dt2 = (s, plan, tail) => !s ? '' : '<span class="l1">' + (plan ? C.md(s) : '<b>' + C.md(s) + '</b>') + (tail || '') + '</span>' + (s.length > 10 && s.slice(11, 16) !== '00:00' && s.slice(11, 16) !== '23:59' ? '<i>' + s.slice(11, 16) + '</i>' : '');
+  const lastLog = (v) => M.changeLog.filter((l) => l.voyage === v.id).sort((a, b) => b.at.localeCompare(a.at))[0];
+  const vname = (v) => v.vessel || '待宣船';
+  function show(v, k) {
+    const f = F[k], x = val(v, k);
+    switch (f.type) {
+      case 'id': return '<span class="l1"><b>' + v.id + '</b></span>' + (v.no ? '<i>船次号 ' + esc(v.no) + '</i>' : (v.pred ? '<i>来自预测 · ' + v.pred.plan + '</i>' : ''));
+      case 'vessel': return '<span class="l1">' + (x ? '<b>' + esc(x) + '</b>' : '<span class="ph">待宣船</span>') + '</span>' + (x ? (v.mmsi || DIRTY[v.id] && DIRTY[v.id].vessel ? '<i>MMSI ' + esc(v.mmsi || '—') + '</i>' : '<i style="color:var(--warn)">缺 MMSI</i>') : '');
+      case 'biz': return '<span class="tag gray">' + v.biz.replace('采购船', '').replace('销售船', '').replace('备件船', '备件') + '</span>';
+      case 'status': return C.stTag(C.statusOf(v)) + (v.readonly ? ' <span class="tag gray"' + C.tipAttr('历史副本：只读') + '>只读</span>' : '');
+      case 'todo': { const ts = todos(v).sort((a, b) => mine(b, v) - mine(a, v)); if (!ts.length) return dash; const tip = (t) => (mine(t, v) ? '轮到你：' : '轮到' + WHO[t.who] + '：') + t.ks.map(lab).join('、'), t = ts[0];
+        return '<span class="tdc' + (mine(t, v) ? ' me' : '') + '" data-go="' + v.id + '"' + C.tipAttr(tip(t)) + '>' + WHO[t.who] + ' · ' + lab(t.ks[0]) + (t.ks.length > 1 ? ' 等 ' + t.ks.length + ' 项' : '') + '</span>' + (ts.length > 1 ? '<span class="tdc"' + C.tipAttr(ts.slice(1).map(tip).join('；')) + '>+' + (ts.length - 1) + '</span>' : ''); }
+      case 'route': return C.zh(v.load) + ' → ' + C.zh(v.disch) + (v.disch2 ? ' / ' + C.zh(v.disch2) : '');
+      case 'dt': return dt2(x, f.plan, k === 'eta' && C.etaStale(v) && !isDirty(v, k) ? '<span class="stale"' + C.tipAttr('预计到达已 ' + (C.TODAY - C.dayNum(v.etaUpdated)) + ' 天没有更新（阈值暂定 ' + C.ETA_STALE_DAYS + ' 天）') + '></span>' : '') || '';
+      case 'date': return x ? C.md(x) : '';
+      case 'win': { const a = val(v, f.ks[0]), b = val(v, f.ks[1]); return a ? C.md(a) + ' ~ ' + C.md(b || a) : ''; }
+      case 'num': return x == null || x === '' ? '' : C.fmt(x);
+      case 'money': return x == null || x === '' ? '' : (k === 'demRate' ? esc(settle(v).demCur || '') + ' ' : '') + C.fmt(x);
+      case 'berth': return (x || []).join(' / ');
+      case 'bool': return '<span class="star' + (x ? '' : ' off') + '">★</span>';
+      case 'prog': { const tot = C.total(v), s = logSum(v); if (!logsOf(v).length) return ''; return '<span class="pg"><span style="width:' + Math.min(100, Math.round(s / tot * 100)) + '%"></span></span>' + C.fmt(s) + ' / ' + C.fmt(tot); }
+      case 'upd': { const l = lastLog(v); return l ? '<span class="l1">' + C.mdh(l.at) + '</span><i>' + esc(l.by) + ' · ' + esc(l.field) + '</i>' : ''; }
+      default: return x == null ? '' : esc(x);
+    }
+  }
+  const toLocal = (s) => (s ? s.replace(' ', 'T').slice(0, 16) : ''), fromLocal = (s) => (s ? s.replace('T', ' ') : null);
+  function editor(v, k, cls) {
+    const f = F[k], x = val(v, k), a = ' data-ed="' + v.id + '|' + k + '"';
+    if (f.type === 'dt') return '<input class="' + cls + '" type="datetime-local"' + a + ' value="' + toLocal(x) + '">';
+    if (f.type === 'date') return '<input class="' + cls + '" type="date"' + a + ' value="' + (x || '') + '">';
+    if (f.type === 'win') return f.ks.map((kk, i) => '<input class="' + cls + '" type="date" data-ed="' + v.id + '|' + k + '|' + i + '" value="' + (val(v, kk) || '').slice(0, 10) + '">').join('');
+    if (f.type === 'num' || f.type === 'money') return '<input class="' + cls + '" type="number" step="any"' + a + ' value="' + (x == null ? '' : x) + '">';
+    if (f.type === 'vessel') return '<select class="' + cls + '"' + a + '><option value="">（待宣船）</option>' + M.vessels.map((s) => '<option' + (s.name === x ? ' selected' : '') + '>' + esc(s.name) + '</option>').join('') + '</select>';
+    if (f.type === 'berth') return '<select class="' + cls + '"' + a + '><option value="">（未定）</option>' + M.berths.map((b) => '<option' + ((x || [])[0] === b.code ? ' selected' : '') + '>' + b.code + '</option>').join('') + '</select>';
+    if (f.type === 'sel') return '<select class="' + cls + '"' + a + '><option value="">（未选）</option>' + f.opts.map((o) => '<option' + (o === x ? ' selected' : '') + '>' + o + '</option>').join('') + '</select>';
+    return '<input class="' + cls + '" type="text"' + a + ' value="' + esc(x == null ? '' : x) + '">';
+  }
+  function commit(el) {
+    const [id, k, i] = el.dataset.ed.split('|'), f = F[k], v = M.voyageList.find((q) => q.id === id); let nv = el.value;
+    const d = (DIRTY[id] = DIRTY[id] || {});
+    const put = (key, nw, old) => { if ((nw == null ? '' : String(nw)) === (old == null ? '' : String(old))) delete d[key]; else d[key] = nw; };
+    if (f.type === 'win') { const kk = f.ks[+i]; put(kk, nv ? nv + (+i ? ' 23:59' : ' 00:00') : null, v[kk]); }
+    else if (f.type === 'dt') put(k, fromLocal(nv), raw(v, k));
+    else if (f.type === 'num' || f.type === 'money') put(k, nv === '' ? null : +nv, raw(v, k));
+    else if (f.type === 'berth') { const o = raw(v, k) || []; if ((o[0] || '') === nv) delete d[k]; else d[k] = nv ? [nv] : []; }
+    else put(k, nv || null, raw(v, k));
+    if (!Object.keys(d).length) delete DIRTY[id];
+  }
+  const dcount = (id) => Object.keys(DIRTY[id] || {}).length;
+
+  /* ---------- 保存本行：按字段类型分发到现有动作（登记节点 / 修订 ETA / 改基础字段 / 扩展表），校验与留痕不变 ---------- */
+  function saveRow(id, basis) {
+    const v = M.voyageList.find((q) => q.id === id), d = DIRTY[id]; if (!d) return;
+    const err = C.validate(Object.assign({}, v, d)); if (err) { C.toast('保存被拦截：' + err); return; }
+    if ('eta' in d && d.eta && !basis) {
+      C.modal({ title: '修订预计到达 · 请填依据', ok: '保存', width: 420, body: '<div class="field"><label>依据（必填，会留痕）</label><select class="inp" id="eb"><option>船讯网</option><option>船代</option><option>电话</option></select></div><div class="note">' + esc(vname(v)) + '：' + C.mdh(v.eta) + ' → <b>' + C.mdh(d.eta) + '</b></div>', onOk: (m) => { saveRow(id, m.querySelector('#eb').value); } });
+      return;
+    }
+    const before = C.statusOf(v), n = Object.keys(d).length;
+    const log = (field, old, nw, by) => M.changeLog.unshift({ voyage: id, field, old: old == null ? '' : String(old), nw: nw == null ? '' : String(nw), by: by || C.me.name, at: M.now });
+    Object.keys(d).forEach((key) => {
+      const f = F[key] || Object.values(F).find((q) => q.ks && q.ks.includes(key)), nw = d[key], g = f.g === 'node' ? grp(f, v) : f.g;
+      const label = f.ks ? f.label + (f.ks[0] === key ? '始' : '止') : f.label, money = g === 'G08' || g === 'G09';
+      let tgt = v, tk = f.key || key;
+      if (f.src === 'cargo') tgt = cg0(v);
+      else if (f.src === 'settle') tgt = M.bulkSettle[id] = M.bulkSettle[id] || { demCur: 'USD' };
+      else if (f.src === 'sales') tgt = M.salesExt[id] = M.salesExt[id] || {};
+      const old = tgt[tk];
+      log(label, money ? '' : (Array.isArray(old) ? old.join('/') : old), money ? '已修改' : (Array.isArray(nw) ? nw.join('/') : nw));   // 金额变更只记「已修改」
+      tgt[tk] = nw;
+      if (key === 'eta') { M.etaRevisions.unshift({ voyage: id, node: '当前 ETA（卸港）', old: old || '', nw, basis, by: C.me.name, at: M.now }); v.etaUpdated = M.now; }
+      if (key === 'vessel') { const s = M.vessels.find((q) => q.name === nw); v.mmsi = s ? s.mmsi : ''; }
+    });
+    delete DIRTY[id];
+    const after = C.statusOf(v); if (after !== before) log('船舶状态', before, after, '系统');
+    C.persist();
+    const nx = todos(v)[0];
+    C.toast('已保存 ' + n + ' 项' + (after !== before ? ' · 状态 ' + before + ' → ' + after : '') + (nx ? ' · 下一步：' + WHO[nx.who] + '填「' + lab(nx.ks[0]) + '」' : ''));
+    S.edit = null; draw();
+  }
+
+  /* ---------- 行内展开：只读速览 + 待我填 ---------- */
+  function mineBox(v) {
+    const ks = myKeys(v), fk = ks.filter((k) => F[k]);
+    const next = todos(v).filter((t) => !mine(t, v));
+    let h = '<div class="xb me"><h4>待我填' + (ks.length ? ' · ' + ks.length + ' 项' : '') + '</h4>';
+    if (!ks.length) h += '<div class="note" style="color:var(--text)">这条船现在没有轮到你填的内容。' + (next.length ? '<br>当前轮到：' + next.map((t) => WHO[t.who] + '（' + t.ks.map(lab).join('、') + '）').join('；') : '') + '</div>';
+    else {
+      h += '<div class="mef">' + fk.map((k) => '<div><label>' + lab(k) + ' · ' + GNAME[grp(F[k], v)] + '</label><div class="ln">' + (canW(v, k) ? editor(v, k, 'inp') + (F[k].type === 'dt' ? '<button class="now" data-now="' + v.id + '|' + k + '">此刻</button>' : '') : '<span class="note">当前岗位没有这一组的修改权限</span>') + '</div></div>').join('') +
+        (ks.includes('logLoad') || ks.includes('logUnload') ? '<div class="note" style="color:var(--caution)">今天的' + (prod(v) ? '装船' : '卸船') + '记录还没填，请在「作业日志」里追加一行。</div>' : '') + '</div>';
+      if (fk.length) h += '<div class="xf"><button class="rowbtn pri" data-save="' + v.id + '">保存本行' + (dcount(v.id) ? '（' + dcount(v.id) + '）' : '') + '</button></div>';
+    }
+    return h + '</div>';
+  }
+  function logBox(v) {
+    const ls = logsOf(v).sort((a, b) => (b.date + b.shift).localeCompare(a.date + a.shift)), tot = C.total(v), sum = logSum(v), isLoad = prod(v), can = canWG(v, 'G13') && inPort(v);
+    let h = '<div class="xb"><h4>作业日志 · ' + (isLoad ? '装船记录' : '卸船记录') + '<span class="tag amber">范围新增</span></h4>';
+    if (!ls.length && !can) return h + '<div class="note">' + (inPort(v) ? '还没有记录。' : '船到港作业后，由仓储物流部按' + (isLoad ? '天' : '班次') + '追加记录。') + '</div></div>';
+    h += '<table class="mini"><thead><tr><th>日期</th>' + (isLoad ? '<th>产品</th><th class="r">本日支数</th>' : '<th>班次</th><th>合同号</th><th class="r">车次</th>') + '<th class="r">本日重量（吨）</th></tr></thead><tbody>' +
+      (ls.length ? ls.map((l) => '<tr><td>' + C.md(l.date) + '</td>' + (isLoad ? '<td>' + esc(l.item) + '</td>' : '<td>' + l.shift + '</td><td>' + esc(l.item) + '</td>') + '<td class="r">' + C.fmt(l.pcs) + '</td><td class="r">' + C.fmt(l.tons) + '</td></tr>').join('') : '<tr><td colspan="5" class="note">还没有记录</td></tr>') + '</tbody></table>' +
+      '<div class="note" style="margin-top:5px">累计 <b style="color:var(--ink)">' + C.fmt(sum) + '</b> 吨 · ' + (isLoad ? '待装' : '待卸') + ' <b style="color:var(--ink)">' + C.fmt(Math.max(0, tot - sum)) + '</b> 吨（由系统计算，不手填）</div>';
+    if (can) h += '<div class="logf" data-log="' + v.id + '"><input class="inp" type="date" value="' + M.today + '">' + (isLoad ? '' : '<select class="inp" style="width:58px"><option>白</option><option>夜</option></select>') + '<input class="inp" type="number" placeholder="' + (isLoad ? '本日支数' : '车次') + '"><input class="inp" type="number" placeholder="本日重量"><button class="rowbtn pri" data-addlog="' + v.id + '">追加一行</button></div>';
+    return h + '</div>';
+  }
+  function expand(v) {
+    const NODES = [['抵装港', v.planLoadArr || v.laycanS, v.actLoadArr], ['装港靠泊', null, v.loadBerth], ['离装港', v.planLoadDep, v.actLoadDep], ['抵卸港', v.eta || v.planDischS, v.actDischArr], ['卸港靠泊', null, v.dischBerth], ['卸港离港', null, v.dischDep]];
+    const x = settle(v), cgs = C.cargoOf(v);
+    const tl = '<div class="xb xt"><h4>时间轴 · 计划与实际<span style="margin-left:auto;letter-spacing:0;text-transform:none">' + C.stTag(C.statusOf(v)) + '</span></h4><div class="tl">' + NODES.map((n) => '<div class="' + (n[2] ? 'done' : '') + (n[1] && n[2] && n[2].slice(0, 10) > n[1].slice(0, 10) ? ' late' : '') + '"><small>' + n[0] + '</small><b>' + (n[2] ? C.mdh(n[2]) : '—') + '</b><span>' + (n[1] ? '计划 ' + C.md(n[1]) : '&nbsp;') + '</span></div>').join('') + '</div>' +
+      (v.remark ? '<div class="note" style="margin-top:8px">备注：' + esc(v.remark) + '</div>' : '') + '</div>';
+    const cargo = '<div class="xb"><h4>货物与合同</h4><table class="mini"><tbody>' + cgs.map((c) => '<tr><td>' + esc(c.contract || '（待补合同号）') + '</td><td>' + esc(c.name || '（待补充）') + '</td><td class="r">' + C.fmt(c.tons) + '</td></tr>').join('') + '</tbody></table>' +
+      (bulk(v) && arrived(v) ? '<div class="kv2" style="margin-top:8px"><span>卸率</span><b>' + (x.rate ? C.fmt(x.rate) + ' 吨/天' : '—') + '</b><span>水尺吨位</span><b>' + C.fmt(x.gauge) + '</b>' + (canRead('G08') ? '<span>港务费 / 装卸费</span><b>' + C.fmt(x.portFee) + ' / ' + C.fmt(x.loadFee) + '</b>' : '') + (canRead('G09') ? '<span>滞期 / 速遣费</span><b>' + C.fmt(x.demUsd) + '</b>' : '') + '</div>' : '') +
+      (prod(v) ? '<div class="kv2" style="margin-top:8px"><span>租船方式</span><b>' + esc(sales(v).way || '—') + '</b><span>海运合同号</span><b>' + esc(sales(v).contract || '—') + '</b></div>' : '') + '</div>';
+    const pred = v.pred ? '<div class="xb"><h4>预测依据<span class="tag gray">只读 · 不重算</span></h4><div class="pred"><div class="kv2"><span>来源</span><b>' + v.pred.run + ' · ' + v.pred.plan + '</b><span>计算路径</span><b>' + v.pred.path + '</b><span>结果</span><b>' + v.pred.metric + '</b><span>航程口径</span><b>' + v.pred.basis + '</b><span>可信度</span><b>' + (v.pred.trust === '低可信' ? '<span class="tag lowtrust">低可信</span> <span class="tag nodata">窗口内有无数据的日期</span>' : '正常') + '</b></div></div><div class="xf"><a href="P03-prediction-detail.html">看数据依据 →</a></div></div>' : '';
+    const mid = prod(v) || bulk(v) ? logBox(v) : '';
+    return '<div class="xin">' + tl + cargo + (pred && mid ? '<div style="display:grid;gap:10px;min-width:0">' + pred + mid + '</div>' : (pred || mid || '<div class="xb"><h4>作业</h4><div class="note">物资备件船不记装卸日志。</div></div>')) + '<div class="xm">' + mineBox(v) +
+      '<div class="xf"><a data-drawer="' + v.id + '">全部字段与修改记录</a><a href="P05-voyage-detail.html?id=' + v.id + '">在详情页打开</a></div></div></div>';
+  }
+
+  /* ---------- 主表 ---------- */
+  function draw() {
+    const cs = cols(), rs = rows(), vs = allViews();
+    $('views').innerHTML = vs.map((x) => { const keep = S.quick; S.quick = ''; const n = M.voyageList.filter(x.f).length; S.quick = keep; return '<button data-v="' + x.id + '" class="' + (x.id === view().id && !S.quick ? 'on' : '') + (x.mine ? ' mine' : '') + '">' + esc(x.name) + '<small>' + n + '</small></button>'; }).join('');
+    const body = cs.filter((k) => k !== 'id' && k !== 'vessel');
+    const th = (k) => '<th class="' + (rs.some((v) => canW(v, k)) ? 'can' : '') + '"' + C.tipAttr(F[k].label + ' · ' + (F[k].g === 'node' ? '实际节点（本港一端 / 外港一端）' : GNAME[F[k].g])) + '>' + F[k].label + '</th>';
+    let h = '<thead><tr><th class="fz f0"></th><th class="fz f1">航次编号</th><th class="fz f2' + (rs.some((v) => canW(v, 'vessel')) ? ' can' : '') + '">船名</th>' + body.map(th).join('') + '<th class="fr">操作</th></tr></thead><tbody>';
+    if (S.creating) h += '<tr class="crow"><td colspan="' + (body.length + 4) + '"><div class="f" style="position:sticky;left:10px;width:max-content"><b>新建发船计划</b><select class="inp" id="nb"><option>大宗采购船</option><option>成品销售船</option><option>物资备件船</option></select><span class="muted">装港</span><select class="inp" id="nl">' + M.ports.map((p) => '<option value="' + p.en + '"' + (p.en === 'SURIGAO' ? ' selected' : '') + '>' + C.zh(p.en) + '</option>').join('') + '</select><span class="muted">卸港</span><select class="inp" id="nd">' + M.ports.map((p) => '<option value="' + p.en + '"' + (p.isLocal ? ' selected' : '') + '>' + C.zh(p.en) + '</option>').join('') + '</select><input class="inp" id="nt" type="number" placeholder="预计货量（吨）" style="width:130px"><button class="rowbtn pri" id="nOk">创建</button><button class="rowbtn" id="nNo">取消</button><span class="note">其余字段留给后面的岗位接力补；负责业务员默认是你。</span></div></td></tr>';
+    rs.forEach((v) => {
+      const open = S.open.has(v.id), need = new Set(myKeys(v)), bad = C.etaStale(v) || C.missingDep(v);
+      const td = (k, extra) => {
+        const f = F[k]; if (f.na && f.na(v)) return '<td class="na ' + (extra || '') + '">·</td>';
+        const w = canW(v, k), ed = S.edit && S.edit.id === v.id && S.edit.k === k, s = ed ? editor(v, k, '') : show(v, k);
+        const cls = [extra || '', ['num', 'money'].includes(f.type) ? 'r' : '', w ? 'ed' : '', need.has(k) && w && !isDirty(v, k) ? 'need' : '', isDirty(v, k) ? 'dirty' : '', ed ? 'editing' : ''].join(' ');
+        return '<td class="' + cls + '"' + (w ? ' data-c="' + v.id + '|' + k + '"' : '') + '>' + (s || (need.has(k) && w ? '<span class="ph">待填</span>' : (ed ? '' : dash))) + '</td>';
+      };
+      h += '<tr data-r="' + v.id + '" class="' + (open ? 'open ' : '') + (S.hit === v.id ? 'hit ' : '') + (need.size ? 'myrow' : (bad ? 'alertrow' : '')) + '"><td class="fz f0"><button class="xp" data-x="' + v.id + '">' + (open ? '▾' : '▸') + '</button></td>' + td('id', 'fz f1') + td('vessel', 'fz f2') + body.map((k) => td(k)).join('') +
+        '<td class="fr">' + (dcount(v.id) ? '<button class="rowbtn pri" data-save="' + v.id + '">保存 ' + dcount(v.id) + '</button> <button class="rowbtn" data-undo="' + v.id + '">撤销</button>' : '<button class="rowbtn" data-drawer="' + v.id + '">详情</button>') + '</td></tr>';
+      if (open) h += '<tr class="xrow"><td colspan="' + (body.length + 4) + '">' + expand(v) + '</td></tr>';
+    });
+    if (!rs.length) h += '<tr><td colspan="' + (body.length + 4) + '"><div class="empty" style="position:sticky;left:0;width:60vw">' + (view().id === 'todo' && !S.quick ? '现在没有轮到你更新的航次。' : '没有符合条件的航次') + '</div></td></tr>';
+    $('scroll').style.setProperty('--bdw', $('scroll').clientWidth + 'px');
+    $('tbl').innerHTML = h + '</tbody>';
+    $('cards').innerHTML = rs.length ? rs.map((v) => '<div class="vc" data-r="' + v.id + '"><div class="r1"><b>' + esc(vname(v)) + '</b>' + C.stTag(C.statusOf(v)) + '</div><div class="r2">' + v.id + ' · ' + show(v, 'route') + ' · ' + C.fmt(C.total(v)) + ' 吨</div><div data-x="' + v.id + '">' + show(v, 'todo') + '</div>' + (S.open.has(v.id) ? '<div class="xin">' + mineBox(v) + (prod(v) || bulk(v) ? logBox(v) : '') + '</div>' : '') + '</div>').join('') : '<div class="empty">没有符合条件的航次</div>';
+    $('cnt').textContent = '共 ' + rs.length + ' 条 · ' + cs.length + ' 列' + (Object.keys(DIRTY).length ? ' · ' + Object.keys(DIRTY).length + ' 行未保存' : '');
+    $('quick').innerHTML = S.quick ? '<span class="quick" id="qx">' + QUICK[S.quick][0] + ' ×</span>' : '';
+    $('fme').classList.toggle('on', S.me); $('fstar').classList.toggle('on', S.star);
+    $('body').classList.toggle('norail', !S.rail);
+    drawRail(); drawSum();
+    const ei = $('tbl').querySelector('td.editing input,td.editing select'); if (ei) { ei.focus(); if (ei.select && ei.type === 'text') ei.select(); }
+  }
+
+  /* ---------- 预警栏（只聚合现有规则已定义的问题） ---------- */
+  function alerts() {
+    const A = { 1: [], 2: [], 3: [] };
+    M.voyageList.forEach((v) => {
+      todos(v).forEach((t) => { if (mine(t, v)) A[1].push({ id: v.id, t: '轮到你填：' + t.ks.map(lab).join('、'), d: vname(v) + ' · ' + C.statusOf(v) }); });
+      if (C.etaStale(v)) A[2].push({ id: v.id, t: '预计到达 ' + (C.TODAY - C.dayNum(v.etaUpdated)) + ' 天未更新', d: vname(v) + ' · 负责人 ' + v.owner });
+      if (C.missingDep(v)) A[2].push({ id: v.id, t: '已抵卸港但缺实际离装港', d: vname(v) + ' · 航程样本无法记入' });
+      if (C.derive(v).overdue && !ended(v)) A[2].push({ id: v.id, t: '装港逾期', d: vname(v) + ' · 实际抵装港晚于受载期止' });
+    });
+    openIssues().forEach((i) => { if (['ETA 超期未更新', '缺离装港时间'].includes(i.type)) return; const id = issueVoy(i); (i.owner === C.me.name ? A[1] : A[2]).push({ id, t: i.type + (i.owner === C.me.name ? '（责任人是你）' : ''), d: i.obj + ' · ' + i.note }); });
+    const cover = (M.berthPlanRows || []).reduce((a, r) => (r.start > a ? r.start : a), '');
+    if (cover) A[3].push({ t: '靠船计划覆盖到 ' + C.md(cover), d: '之后的日期在容量日历里是<span class="tag nodata" style="margin:0 3px">无数据</span>，不显示为 0' });
+    return A;
+  }
+  function drawRail() {
+    const A = alerts(), G = [[1, '待我处理'], [2, '需关注'], [3, '提醒']];
+    $('rail').innerHTML = '<div class="rh">预警<span class="muted" style="font-weight:400;font-size:11px">' + (A[1].length + A[2].length + A[3].length) + ' 条</span></div><div class="rb">' +
+      G.map(([l, name]) => '<div class="grp">' + name + '<b>' + A[l].length + '</b></div>' + (A[l].length ? A[l].slice(0, 12).map((a) => '<div class="al l' + l + '"' + (a.id ? ' data-go="' + a.id + '"' : '') + '><b>' + esc(a.t) + '</b><span>' + a.d + '</span></div>').join('') + (A[l].length > 12 ? '<div class="note" style="padding:5px 12px">还有 ' + (A[l].length - 12) + ' 条，用底部汇总带筛选查看</div>' : '') : '<div class="note" style="padding:2px 12px 6px">没有</div>')).join('') +
+      '</div><div class="rf">数据更新于 ' + M.now.slice(11) + ' · 每 60 秒取一次变化</div>';
+  }
+  function drawSum() {
+    const n = (k) => M.voyageList.filter(QUICK[k][1]).length, it = (k, cls) => '<div data-q="' + k + '" class="' + (S.quick === k ? 'on' : '') + '"><small>' + QUICK[k][0] + '</small><b class="' + (n(k) && cls ? cls : '') + '">' + n(k) + '</b></div>';
+    $('sum').innerHTML = it('arrive') + it('port') + it('sail') + it('todo', 'c') + it('stale', 'w') + it('dq', 'w') + '<div><small>当前视图</small><b>' + rows().length + '</b> <span class="muted" style="font-size:11px">条</span></div>';
+  }
+
+  /* ---------- 抽屉：全部字段（按字段组，标明能否修改）与修改记录 ---------- */
+  function drawer(id) {
+    const v = M.voyageList.find((q) => q.id === id); if (!v) return;
+    const byG = {}; Object.values(F).forEach((f) => { if (['todo', 'prog', 'updated'].includes(f.k) || (f.na && f.na(v))) return; const g = grp(f, v); (byG[g] = byG[g] || []).push(f); });
+    const logs = M.changeLog.filter((l) => l.voyage === id), etas = M.etaRevisions.filter((l) => l.voyage === id);
+    $('drawer').innerHTML = '<div class="dh"><b>' + esc(vname(v)) + '</b><span class="muted">' + v.id + '</span>' + C.stTag(C.statusOf(v)) + '<button data-close>×</button></div><div class="db">' +
+      GROUPS.filter(([g]) => byG[g]).map(([g, name]) => '<h5>' + name + (!canRead(g) ? '' : canWG(v, g) ? '<span class="tag amber">你可改</span>' : '<span class="tag gray">只读</span>') + '</h5>' +
+        (canRead(g) ? '<div class="kvg" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 16px">' + byG[g].map((f) => '<div><div class="k">' + f.label + '</div><div class="v">' + (show(v, f.k) || '—') + '</div></div>').join('') + '</div>' : '<div class="note">当前岗位无权查看这一组（接口不返回）。</div>')).join('') +
+      '<h5>预计到达修订记录</h5>' + (etas.length ? '<table class="mini"><tbody>' + etas.map((l) => '<tr><td>' + C.mdh(l.at) + '</td><td>' + C.mdh(l.old) + ' → ' + C.mdh(l.nw) + '</td><td>' + esc(l.basis) + '</td><td>' + esc(l.by) + '</td></tr>').join('') + '</tbody></table>' : '<div class="note">没有修订记录</div>') +
+      '<h5>修改记录</h5>' + (logs.length ? '<table class="mini"><tbody>' + logs.slice(0, 20).map((l) => '<tr><td>' + C.mdh(l.at) + '</td><td>' + esc(l.field) + '</td><td style="white-space:normal">' + esc(l.old || '（空）') + ' → ' + esc(l.nw || '（空）') + '</td><td>' + esc(l.by) + '</td></tr>').join('') + '</tbody></table>' : '<div class="note">没有修改记录</div>') +
+      '</div><div class="df"><span class="note" style="margin-right:auto">货物明细增删、异常标记仍在详情页操作</span><a class="btn" href="P05-voyage-detail.html?id=' + id + '">在详情页打开</a></div>';
+    $('drawer').classList.add('on');
+  }
+
+  /* ---------- 列设置：在自己可读的字段里挑选、排序，另存为我的视图 ---------- */
+  function colSettings() {
+    const vw = view(); let cur = cols();
+    const render = () => {
+      const rest = Object.keys(F).filter((k) => colReadable(k) && !cur.includes(k)), hidden = Object.keys(F).filter((k) => !colReadable(k)).length;
+      $('drawer').innerHTML = '<div class="dh"><b>列设置</b><span class="muted">视图：' + esc(vw.name) + '</span><button data-close>×</button></div><div class="db"><h5>显示中 · ' + cur.length + ' 列（可上下调整顺序）</h5>' +
+        cur.map((k, i) => '<div class="colrow"><input type="checkbox" checked data-ck="' + k + '"' + (i < 2 ? ' disabled' : '') + '>' + F[k].label + ' <span class="muted" style="font-size:11px">' + (F[k].g === 'node' ? '实际节点' : GNAME[F[k].g]) + '</span>' + (i < 2 ? '<span class="tag gray" style="margin-left:auto">冻结</span>' : '<span class="mv"><button data-up="' + k + '">▲</button><button data-dn="' + k + '">▼</button></span>') + '</div>').join('') +
+        '<h5>未显示 · ' + rest.length + ' 列</h5>' + rest.map((k) => '<div class="colrow"><input type="checkbox" data-ck="' + k + '">' + F[k].label + ' <span class="muted" style="font-size:11px">' + (F[k].g === 'node' ? '实际节点' : GNAME[F[k].g]) + '</span></div>').join('') +
+        '<div class="note" style="margin-top:12px">只能在你有权查看的字段里挑选。' + (hidden ? '有 ' + hidden + ' 个金额字段当前岗位不可见，这里不会列出（正式实现中接口不返回）。' : '') + '导出同样按权限裁剪。</div></div>' +
+        '<div class="df"><button class="btn" id="cReset">恢复默认</button><button class="btn" id="cSave">另存为我的视图</button><button class="btn primary" id="cOk">应用</button></div>';
+      const d = $('drawer');
+      d.querySelectorAll('[data-ck]').forEach((c) => c.onchange = () => { const k = c.dataset.ck; if (c.checked) cur.push(k); else cur = cur.filter((x) => x !== k); render(); });
+      d.querySelectorAll('[data-up],[data-dn]').forEach((b) => b.onclick = () => { const k = b.dataset.up || b.dataset.dn, i = cur.indexOf(k), j = b.dataset.up ? i - 1 : i + 1; if (j < 2 || j >= cur.length) return; cur.splice(i, 1); cur.splice(j, 0, k); render(); });
+      $('cOk').onclick = () => { S.cols[vw.id] = cur; d.classList.remove('on'); draw(); };
+      $('cReset').onclick = () => { delete S.cols[vw.id]; d.classList.remove('on'); draw(); C.toast('已恢复「' + vw.name + '」的默认列'); };
+      $('cSave').onclick = () => C.modal({ title: '另存为我的视图', ok: '保存', width: 400, body: '<div class="field"><label>视图名称</label><input class="inp" id="vn" value="' + esc(vw.name.replace(/^我的 · /, '')) + '（我的）"></div><div class="note">保存当前的列和顺序。原型存在本机浏览器；正式实现存服务端，换设备也在。</div>',
+        onOk: (m) => { const name = m.querySelector('#vn').value.trim(); if (!name) return false; const id = 'my' + Date.now(); MYV.push({ id, name, base: vw.base || vw.id, cols: cur }); LS.set('ssps-board-myviews', MYV); S.view = id; d.classList.remove('on'); draw(); C.toast('已保存视图「' + name + '」'); } });
+    };
+    render(); $('drawer').classList.add('on');
+  }
+
+  /* ---------- 岗位授权表：13 个字段组 × 8 个岗位，系统管理员可调 ---------- */
+  function grantModal() {
+    const admin = post() === 'p8', TXT = { '': '—', own: '本人航次', dept: '本部门', any: '任意航次' }, CYC = ['', 'own', 'dept', 'any'];
+    const txt = (c) => !c ? '—' : c.split('|').map((x) => { const [s, l] = x.split(':'); return TXT[s] + (l ? '（仅' + l + '）' : ''); }).join(' + ');
+    const m = C.modal({ title: '岗位字段组授权（谁能改哪一组）', ok: false, hideCancel: true, width: 1120, body: '<div id="gtw" style="overflow:auto;max-height:62vh"></div><div class="note" style="margin-top:10px">' + (admin ? '点格子切换：— → 本人航次 → 本部门 → 任意航次。改动立即生效并留痕。' : '只有系统管理员能调整；你现在是「' + POSTS.find((p) => p[0] === post())[1] + '」，仅可查看。') + ' 灰色格子是不能通过配置突破的底线：系统与计算结果任何人不可改；合同结算只能授予大宗采购部；港口费用只能授予仓储物流部和大宗采购部。标 ● 的是与默认值不同的格子。</div>' });
+    const render = () => {
+      m.querySelector('#gtw').innerHTML = '<table class="gt"><thead><tr><th>字段组</th>' + POSTS.map((p) => '<th>' + p[1].replace(' · ', '<br>') + '</th>').join('') + '</tr></thead><tbody>' +
+        GROUPS.map(([g, name]) => '<tr><td><b>' + name + '</b>' + (GBIZ[g] ? ' <span class="muted">· 仅' + GBIZ[g][0].slice(0, 2) + '船</span>' : '') + '</td>' + POSTS.map(([p]) => { const c = (GRANT[g] || {})[p] || '', lk = GLOCK(g, p), chg = c !== ((GRANT0[g] || {})[p] || ''); return '<td class="' + (lk ? 'lk' : 'g') + (c ? ' on' : '') + (chg ? ' chg' : '') + '"' + (lk || !admin ? '' : ' data-g="' + g + '|' + p + '"') + '>' + (chg ? '● ' : '') + txt(c) + '</td>'; }).join('') + '</tr>').join('') + '</tbody></table>';
+      m.querySelectorAll('[data-g]').forEach((td) => td.onclick = () => { const [g, p] = td.dataset.g.split('|'), cur = ((GRANT[g] || {})[p] || '').split('|')[0].split(':')[0], nx = CYC[(CYC.indexOf(cur) + 1) % 4]; GRANT[g] = GRANT[g] || {}; if (nx) GRANT[g][p] = nx; else delete GRANT[g][p]; SS.set('ssps-board-grant', GRANT); render(); draw(); });
+    };
+    render();
+  }
+
+  /* ---------- 定位到行（预警、待办、采纳后都走这里） ---------- */
+  function locate(id) {
+    S.quick = ''; if (!rows().some((v) => v.id === id)) { S.view = 'all'; Object.assign(S, { kw: '', st: '', own: '', me: false, star: false }); $('kw').value = ''; $('fst').value = ''; $('fown').value = ''; }
+    S.open.add(id); S.hit = id; draw();
+    const tr = $('tbl').querySelector('tr[data-r="' + id + '"]') || $('cards').querySelector('[data-r="' + id + '"]'); if (tr) tr.scrollIntoView({ block: 'center' });
+    setTimeout(() => { if (S.hit === id) { S.hit = null; const t = $('tbl').querySelector('tr.hit'); if (t) t.classList.remove('hit'); } }, 2600);
+  }
+  function newVoyage(o) {
+    const id = 'VY-2026-' + String(450 + M.voyageList.length - 39).padStart(4, '0'), biz = o.biz;
+    M.voyageList.push(Object.assign({ id, biz, attr: biz === '成品销售船' ? '外贸' : '内贸', no: '', vessel: null, carrier: '', shipVoy: '', disch2: null, finalPort: null, laycanS: null, laycanE: null, planLoadArr: null, actLoadArr: null, loadBerth: null, planLoadDep: null, actLoadDep: null, planDischS: null, planDischE: null, eta: null, actDischArr: null, dischBerth: null, dischDep: null,
+      flags: [], planBerths: [], actBerths: [], owner: C.me.name, dept: dept(), focus: false, review: '待审核', source: '应用录入', origKey: '', readonly: false, remark: '', mmsi: '' }, o));
+    M.cargoLines.push({ voyage: id, no: 'CL-' + String(M.cargoLines.length + 1).padStart(4, '0'), contract: '', ea: '', big: biz === '成品销售船' ? '成品' : '原料', kind: '', name: o.cargoName || '', alias: '', unit: '', dept2: '', party: '', tons: o.tons, loadTons: null, dry: null, over: '', exec: C.me.name });
+    M.changeLog.unshift({ voyage: id, field: o.pred ? '采纳预测方案新建航次' : '新建航次', old: '', nw: id, by: C.me.name, at: M.now });
+    C.persist(); return id;
+  }
+
+  /* ---------- 事件 ---------- */
+  const mount = () => SHELL.mount({ active: 'P04', title: '船舶动态', user: [C.me.name, C.me.dept, C.me.role] });
+  function boot() { mount(); S.view = defaultView(); S.quick = ''; S.open.clear(); S.edit = null;
+    $('fown').innerHTML = '<option value="">全部业务员</option>' + [...new Set(M.voyageList.map((v) => v.owner))].map((o) => '<option>' + o + '</option>').join('');
+    $('dens').querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.d === document.documentElement.getAttribute('data-density')));
+    $('upd').textContent = '数据更新于 ' + M.now.slice(11); draw(); }
+  $('viewer').innerHTML = VIEWERS.map((x) => '<option value="' + x[0] + '"' + (x[0] === C.me.name ? ' selected' : '') + '>' + x[2] + (x[1] === '—' ? '' : ' · ' + x[1]) + '（' + x[0] + '）</option>').join('');
+  $('viewer').onchange = (e) => { if (Object.keys(DIRTY).length) Object.keys(DIRTY).forEach((k) => delete DIRTY[k]); setMe(e.target.value); boot(); C.toast('已切换为 ' + C.me.role + (C.me.dept === '—' ? '' : ' · ' + C.me.dept) + '：视图、可改的列和金额列随岗位变化'); };
+  $('fst').innerHTML = '<option value="">全部状态</option>' + C.STATUS.concat(['已结束（取消）']).map((s) => '<option>' + s + '</option>').join('');
+  $('fst').onchange = (e) => { S.st = e.target.value; draw(); }; $('fown').onchange = (e) => { S.own = e.target.value; draw(); };
+  $('kw').oninput = (e) => { S.kw = e.target.value.trim(); draw(); $('kw').focus(); };
+  $('fme').onclick = () => { S.me = !S.me; draw(); }; $('fstar').onclick = () => { S.star = !S.star; draw(); };
+  $('bRail').onclick = () => { S.rail = !S.rail; draw(); };
+  $('bCols').onclick = colSettings; $('bGrant').onclick = grantModal;
+  $('bNew').onclick = () => { S.creating = !S.creating; draw(); $('scroll').scrollTop = 0; };
+  $('dens').onclick = (e) => { const b = e.target.closest('[data-d]'); if (!b) return; document.documentElement.setAttribute('data-density', b.dataset.d); LS.set('ssps-density', b.dataset.d); try { localStorage.setItem('ssps-density', b.dataset.d); } catch (er) { /* ignore */ } $('dens').querySelectorAll('button').forEach((x) => x.classList.toggle('on', x === b)); };
+  $('bAdopt').onclick = () => {
+    if (!['业务员', '部门主管'].includes(role())) { C.toast('采纳预测方案只有业务员和部门主管可以操作'); return; }
+    const id = newVoyage({ biz: '大宗采购船', load: 'SURIGAO', disch: 'BAHODOPI', tons: 50000, cargoName: '红土镍矿', planDischS: day(18) + ' 00:00', planDischE: day(20) + ' 23:59',
+      pred: { run: 'PR-20261104-0003', plan: '备选方案', path: '15 天后 · 按航次表', metric: '同期最多 4 艘（能装下的泊位 11 个）', basis: '业务员估算', trust: '低可信' } });
+    locate(id); C.toast('已采纳备选方案：新建待宣船航次 ' + id + '，计划到达窗口已写入，已定位到这一行');
+  };
+  $('bExp').onclick = () => { const cs = cols().filter((k) => !['todo', 'prog', 'updated'].includes(k)), strip = (s) => String(s || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    C.download('船舶动态_' + view().name + '_' + M.today.replace(/-/g, '') + '.csv', [cs.map((k) => F[k].label)].concat(rows().map((v) => cs.map((k) => strip(show(v, k))))).map((r) => r.map((x) => '"' + String(x).replace(/"/g, '""') + '"').join(',')).join('\n'));
+    C.toast('已导出当前视图 ' + rows().length + ' 条、' + cs.length + ' 列（按权限裁剪，不含无权查看的金额列）'); };
+
+  document.addEventListener('mousedown', (e) => {                       // 点格子进入编辑；先把正在编辑的格子收进暂存
+    const td = e.target.closest('td[data-c]'); const cur = $('tbl').querySelector('td.editing');
+    if (cur && cur.contains(e.target)) return;
+    if (cur) cur.querySelectorAll('[data-ed]').forEach(commit);
+    if (!td || e.target.closest('button,.tdc')) { if (cur) { S.edit = null; draw(); } return; }
+    const [id, k] = td.dataset.c.split('|');
+    if (F[k].type === 'bool') { const v = M.voyageList.find((q) => q.id === id), d = (DIRTY[id] = DIRTY[id] || {}); const nv = !val(v, k); if (nv === !!v[k]) delete d[k]; else d[k] = nv; if (!Object.keys(d).length) delete DIRTY[id]; S.edit = null; draw(); e.preventDefault(); return; }
+    S.edit = { id, k }; e.preventDefault(); draw();
+  });
+  document.addEventListener('keydown', (e) => {
+    const cur = $('tbl').querySelector('td.editing'); if (!cur || !cur.contains(e.target)) return;
+    if (e.key === 'Enter' || e.key === 'Escape') { if (e.key === 'Enter') cur.querySelectorAll('[data-ed]').forEach(commit); S.edit = null; draw(); }
+    if (e.key === 'Tab') { const ins = [...cur.querySelectorAll('[data-ed]')]; if (ins.indexOf(e.target) < ins.length - 1 && !e.shiftKey) return; e.preventDefault(); ins.forEach(commit); const cells = [...cur.parentNode.querySelectorAll('td[data-c]')].filter((c) => F[c.dataset.c.split('|')[1]].type !== 'bool'), nx = cells[cells.indexOf(cur) + (e.shiftKey ? -1 : 1)]; if (nx) { const [id, k] = nx.dataset.c.split('|'); S.edit = { id, k }; } else S.edit = null; draw(); }
+  });
+  document.addEventListener('change', (e) => { const el = e.target.closest('[data-ed]'); if (!el || el.closest('td.editing')) return; commit(el); const id = el.dataset.ed.split('|')[0], n = dcount(id);       // 展开区里的输入：只更新按钮，不重画
+    document.querySelectorAll('.xin [data-save="' + id + '"]').forEach((b) => b.textContent = '保存本行' + (n ? '（' + n + '）' : '')); const tr = $('tbl').querySelector('tr[data-r="' + id + '"] td.fr'); if (tr) tr.innerHTML = n ? '<button class="rowbtn pri" data-save="' + id + '">保存 ' + n + '</button> <button class="rowbtn" data-undo="' + id + '">撤销</button>' : '<button class="rowbtn" data-drawer="' + id + '">详情</button>'; });
+  document.addEventListener('click', (e) => {
+    const t = e.target, q = (s) => t.closest(s);
+    if (q('[data-close]')) { $('drawer').classList.remove('on'); return; }
+    if (q('#views [data-v]')) { S.view = q('[data-v]').dataset.v; S.quick = ''; S.edit = null; draw(); $('scroll').scrollTop = 0; return; }
+    if (q('#qx')) { S.quick = ''; draw(); return; }
+    if (q('#sum [data-q]')) { const k = q('[data-q]').dataset.q; S.quick = S.quick === k ? '' : k; draw(); return; }
+    if (q('[data-save]')) { saveRow(q('[data-save]').dataset.save); return; }
+    if (q('[data-undo]')) { delete DIRTY[q('[data-undo]').dataset.undo]; S.edit = null; draw(); return; }
+    if (q('[data-drawer]')) { drawer(q('[data-drawer]').dataset.drawer); return; }
+    if (q('[data-now]')) { const [id, k] = q('[data-now]').dataset.now.split('|'), inp = q('.ln').querySelector('[data-ed]'); inp.value = toLocal(M.now); commit(inp); inp.dispatchEvent(new Event('change', { bubbles: true })); return; }
+    if (q('[data-addlog]')) { const id = q('[data-addlog]').dataset.addlog, v = M.voyageList.find((x) => x.id === id), ins = q('.logf').querySelectorAll('input,select'), isLoad = prod(v);
+      const date = ins[0].value, shift = isLoad ? '' : ins[1].value, pcs = +ins[isLoad ? 1 : 2].value, tons = +ins[isLoad ? 2 : 3].value;
+      if (!date || !(tons > 0)) { C.toast('请填日期和本日重量'); return; }
+      LOGS.push({ voyage: id, date, item: isLoad ? (cg0(v).name || '') : (cg0(v).contract || ''), shift, pcs: pcs || 0, tons }); SS.set('ssps-board-logs', LOGS);
+      M.changeLog.unshift({ voyage: id, field: isLoad ? '装船记录' : '卸船记录', old: '', nw: C.md(date) + (shift ? ' ' + shift + '班' : '') + ' ' + C.fmt(tons) + ' 吨', by: C.me.name, at: M.now }); C.persist();
+      draw(); C.toast('已追加' + (isLoad ? '装船' : '卸船') + '记录；累计 ' + C.fmt(logSum(v)) + ' 吨，' + (isLoad ? '待装 ' : '待卸 ') + C.fmt(Math.max(0, C.total(v) - logSum(v))) + ' 吨'); return; }
+    if (q('[data-go]')) { locate(q('[data-go]').dataset.go); return; }
+    if (q('[data-x]')) { const id = q('[data-x]').dataset.x; if (S.open.has(id)) S.open.delete(id); else S.open.add(id); draw(); return; }
+    if (q('#nNo')) { S.creating = false; draw(); return; }
+    if (q('#nOk')) { const biz = $('nb').value, load = $('nl').value, disch = $('nd').value, tons = +$('nt').value;
+      if (!['业务员', '部门主管', '系统管理员'].includes(role())) { C.toast('物流管理员不能新建航次'); return; }
+      if (load === disch) { C.toast('装港和卸港不能相同'); return; } if (!(tons > 0)) { C.toast('请填写预计货量'); return; }
+      S.creating = false; const id = newVoyage({ biz, load, disch, tons }); locate(id); C.toast('已新建 ' + id + '（待宣船）；其余字段在这一行里继续补'); return; }
+  });
+  document.addEventListener('change', (e) => { if (e.target.id === 'nb') { const p = e.target.value === '成品销售船'; $('nl').value = p ? 'BAHODOPI' : 'SURIGAO'; $('nd').value = p ? 'HAIPHONG' : 'BAHODOPI'; } });
+  window.addEventListener('resize', () => $('scroll').style.setProperty('--bdw', $('scroll').clientWidth + 'px'));
+  boot();
+  if (C.qs.get('go')) locate(C.qs.get('go'));
+})();
+</script>
+</body>
+</html>
